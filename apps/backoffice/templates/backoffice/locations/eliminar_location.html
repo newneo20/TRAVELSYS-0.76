@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Location{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Eliminar Location</h2>
+    <p>¿Estás seguro de que deseas eliminar el location {{ location.nombre }}?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'backoffice:listar_locations' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

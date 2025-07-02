@@ -1,0 +1,12 @@
+(venv) manager@build ~/app » python manage.py runserver build.dev.travel-sys.loc:8000
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+
+You have 56 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): admin, auth, backoffice, contenttypes, django_celery_beat, finanzas, gestion_economica, renta_hoteles, sessions, usuarios.
+Run 'python manage.py migrate' to apply them.
+May 16, 2025 - 22:54:32
+Django version 4.2.7, using settings 'viajero_plus.settings'
+Starting development server at http://build.dev.travel-sys.loc:8000/
+Quit the server with CONTROL-C.

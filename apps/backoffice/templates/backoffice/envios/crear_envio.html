@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %} 
+
+{% block title %}Crear Envío{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title">Crear Envío</h1>
+    <form class="needs-validation" method="post" novalidate>
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="remitente" class="form-label">Remitente</label>
+                <input type="text" class="form-control" id="remitente" name="remitente" required>
+                <div class="invalid-feedback">Por favor, ingresa el nombre del remitente.</div>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="destinatario" class="form-label">Destinatario</label>
+                <input type="text" class="form-control" id="destinatario" name="destinatario" required>
+                <div class="invalid-feedback">Por favor, ingresa el nombre del destinatario.</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <textarea class="form-control" id="descripcion" name="descripcion" required></textarea>
+                <div class="invalid-feedback">Por favor, describe los artículos enviados.</div>
+            </div>
+            <div class="col-md-3 form-group">
+                <label for="peso" class="form-label">Peso (kg)</label>
+                <input type="number" step="0.01" class="form-control" id="peso" name="peso" required>
+                <div class="invalid-feedback">Por favor, ingresa el peso.</div>
+            </div>
+            <div class="col-md-3 form-group">
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input type="number" class="form-control" id="cantidad" name="cantidad" required>
+                <div class="invalid-feedback">Por favor, indica la cantidad.</div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

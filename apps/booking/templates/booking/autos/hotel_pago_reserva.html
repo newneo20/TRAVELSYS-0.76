@@ -1,0 +1,256 @@
+{% extends 'booking/base_tabs.html' %}
+
+{% load static %}
+
+{% block title %}Pago y Reserva{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Pago y Reserva</h1>
+    
+    <div class="form-section">
+        <h4>1. Datos de los Pasajeros.</h4>
+        <p>Introduzca datos de pasajeros por producto.</p>
+
+        <!-- Información de Pasajeros -->
+        <form method="post" action="{% url 'booking:complete_solicitud' hotel.id %}" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="habitacion_count" value="{{ habitaciones|length }}">
+            <div id="pasajeros">
+                {% for habitacion in habitaciones %}
+                <div class="pasajero">
+                    <div class="divider"></div>
+                    <h4 class="texto-rojo">HABITACIÓN {{ forloop.counter }}</h4>
+                    {% if habitacion.opcion %}
+                    <div>
+                        <h5>Opción seleccionada: {{ habitacion.opcion.nombre }}</h5>
+                        <p><strong>Precio:</strong> ${{ habitacion.precio }} 
+                            <strong>Adultos:</strong> {{ habitacion.adultos }} 
+                            <strong>Niños:</strong> {{ habitacion.ninos }} 
+                            <strong>Fechas de Viaje:</strong> ({{ habitacion.fechas_viaje }})
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <input type="hidden" name="habitacion_{{ forloop.counter }}_adultos" value="{{ habitacion.adultos }}">
+                    <input type="hidden" name="habitacion_{{ forloop.counter }}_ninos" value="{{ habitacion.ninos }}">
+                    <input type="hidden" name="habitacion_{{ forloop.counter }}_precio" value="{{ habitacion.precio }}">
+                    <input type="hidden" name="habitacion_fechas_viaje" value="{{ habitacion.fechas_viaje }}">
+
+                    {% for i in habitacion.adultos_numeros %}
+                    <div{% if not forloop.first %} class="divider"{% endif %}>
+                        <h5><i class="fas fa-user"></i> Adulto {{ i }}</h5>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}">Nombre(s) y Apellido(s):</label>
+                                <input type="text" class="form-control" id="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}" name="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}" placeholder="Nombre(s) y Apellido(s) idéntico al pasaporte" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un nombre válido.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="fecha_nacimiento{{ forloop.parentloop.counter }}_adulto{{ i }}">Fecha de nacimiento:</label>
+                                <input type="text" name="fecha_nacimiento{{ forloop.parentloop.counter }}_adulto{{ i }}" class="form-control datepicker" placeholder="YYYY/MM/DD" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese una fecha válida.
+                                </div>
+                            </div>                    
+                            <div class="col-md-4">
+                                <label for="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}">Número de pasaporte:</label>
+                                <input type="text" class="form-control" id="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}" name="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un número de pasaporte válido.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="caducidad{{ forloop.parentloop.counter }}_adulto{{ i }}">Caducidad del pasaporte:</label>
+                                <input type="text" name="caducidad{{ forloop.parentloop.counter }}_adulto{{ i }}" class="form-control datepicker" placeholder="YYYY/MM/DD" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese una fecha de caducidad válida.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}">País de emisión del pasaporte:</label>
+                                <select class="form-control" id="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}" name="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}" required>
+                                    <option value="CUBA" selected>CUBA</option>
+                                    <!-- Otros países si es necesario -->
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, seleccione un país de emisión válido.
+                                </div>
+                            </div>
+                        </div>
+                        {% if forloop.first %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="email{{ forloop.parentloop.counter }}_adulto{{ i }}">E-mail:</label>
+                                <input type="email" class="form-control" id="email{{ forloop.parentloop.counter }}_adulto{{ i }}" name="email{{ forloop.parentloop.counter }}_adulto{{ i }}" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un correo electrónico válido.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}">Teléfono:</label>
+                                <input type="tel" class="form-control" id="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}" name="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un número de teléfono válido.
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% for nino in habitacion.ninos_numeros %}
+                    <div class="divider"></div>
+                    <div>
+                        <h5><i class="fas fa-child"></i> Niño {{ nino }}</h5>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}">Nombre(s) y Apellido(s):</label>
+                                <input type="text" class="form-control" id="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}" name="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}" placeholder="Nombre(s) y Apellido(s) idéntico al pasaporte" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un nombre válido.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="fecha_nacimiento{{ forloop.parentloop.counter }}_nino{{ nino }}">Fecha de nacimiento:</label>
+                                <input type="text" name="fecha_nacimiento{{ forloop.parentloop.counter }}_nino{{ nino }}" class="form-control datepicker" placeholder="YYYY/MM/DD" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese una fecha válida.
+                                </div>
+                            </div>                    
+                            <div class="col-md-4">
+                                <label for="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}">Número de pasaporte:</label>
+                                <input type="text" class="form-control" id="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}" name="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese un número de pasaporte válido.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="caducidad{{ forloop.parentloop.counter }}_nino{{ nino }}">Caducidad del pasaporte:</label>
+                                <input type="text" name="caducidad{{ forloop.parentloop.counter }}_nino{{ nino }}" class="form-control datepicker" placeholder="YYYY/MM/DD" required>
+                                <div class="invalid-feedback">
+                                    Por favor, ingrese una fecha de caducidad válida.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}">País de emisión del pasaporte:</label>
+                                <select class="form-control" id="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}" name="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}" required>
+                                    <option value="CUBA" selected>CUBA</option>
+                                    <!-- Otros países si es necesario -->
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, seleccione un país de emisión válido.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-section">
+                <h4>2. Notas.</h4>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="notas">Nombre del usuario:</label>
+                        <input type="text" class="form-control" id="notas" name="notas" placeholder="Empleado que solicita" required>
+                        <div class="invalid-feedback">
+                            Por favor, ingrese un nombre válido.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email_empleado">E-mail:</label>
+                        <input type="email" class="form-control" id="email_empleado" name="email_empleado" placeholder="Email del empleado que solicita" required>
+                        <div class="invalid-feedback">
+                            Por favor, ingrese un correo electrónico válido.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>3. Si desea solo cotización del servicio.</h4>                
+                <div class="mt-2">
+                    <p class="font-weight-bold">Información importante de reserva:</p>
+                    <p>Cuando el servicio se solicite, si está disponible, la reserva se confirmará automáticamente.</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <button class="btn btn-info btn-block" type="submit">ENVIAR COTIZACION</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>4. Completar la reserva.</h4>                
+                <div class="mt-2">
+                    <p class="font-weight-bold">Información importante de reserva:</p>
+                    <p>Al completar su solicitud la reserva se procesará de forma inmediata. </p>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-success btn-block">COMPLETE LA SOLICITUD</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="compras">
+                <h4>Resumen de la reserva:</h4>        
+                <div class="item">
+                    <p><strong>Hotel: </strong>{{hotel.hotel_nombre}}</p>
+                    <p><strong>Has seleccionado:</strong></p>
+                    {% for habitacion in habitaciones %}                
+                        <p>Habitación: {{ habitacion.opcion.nombre }}<br>                
+                        Personas {% for i in habitacion.adultos_numeros %}<i class="fas fa-user"></i>{% endfor %} + {% for i in habitacion.ninos_numeros %}<i class="fas fa-child"></i>{% endfor %}
+                        Precio ${{ habitacion.precio }}</p>                
+                    {% endfor %}
+                    <p>En caso de cancelación puede aplicar penalidad.</p>
+                </div>
+            
+                <div class="total">
+                    <p><strong>Total ${{ precio_total }}</strong></p>
+                </div>
+                                      
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts de Bootstrap y jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<script>
+$(function() {
+  $('input.datepicker').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    minYear: 1924,
+    maxYear: parseInt(moment().format('YYYY'),10),
+    locale: {
+      format: 'YYYY/MM/DD'
+    }
+  });
+
+  // Bootstrap validation
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+});
+</script>
+{% endblock %}

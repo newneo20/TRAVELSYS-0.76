@@ -1,0 +1,375 @@
+{% load static %}
+
+<!-- Incluye Flatpickr CSS si quieres estilo por defecto -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<div
+  x-show="tab === 'ofertas'"
+  x-cloak
+  x-data="offersComponent()"
+  class="space-y-6"
+>
+  <!-- Header y botón de creación -->
+  <div class="flex justify-between items-center">
+    <h3 class="text-xl font-semibold">Lista de Ofertas</h3>
+    <button
+      @click="openForm()"
+      class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    >
+      <i class="fas fa-plus mr-2"></i>Crear Oferta
+    </button>
+  </div>
+
+  <!-- Tabla de Ofertas -->
+  <div class="overflow-x-auto bg-white rounded-lg shadow">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Editar</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Disponible</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Código</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Tipo Habitación</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Temporada</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Booking Window</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Doble</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Triple</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Sencilla</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Primer Niño</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Segundo Niño</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Edad Niño</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Edad Infante</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Noches Mínimas</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Cant. Habitaciones</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Tipo de Fee</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Fee Doble</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Fee Triple</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Fee Sencilla</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <template x-for="oferta in ofertas" :key="oferta.id">
+          <tr class="hover:bg-gray-50">
+            <!-- EDITAR -->
+            <td class="px-4 py-2 text-center">
+              <button
+                @click="openForm(oferta)"
+                class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 focus:outline-none"
+              >
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+            </td>
+            <!-- DISPONIBLE -->
+            <td class="px-4 py-2 text-center">
+              <input type="checkbox" x-model="oferta.disponible" disabled class="h-4 w-4 text-indigo-600">
+            </td>
+            <!-- RESTO DE CAMPOS -->
+            <td class="px-4 py-2 text-center" x-text="oferta.codigo"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.tipo_habitacion"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.temporada"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.booking_window"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.doble"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.triple"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.sencilla"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.primer_nino"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.segundo_nino"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.edad_nino"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.edad_infante"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.noches_minimas"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.cantidad_habitaciones"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.tipo_fee"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.fee_doble"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.fee_triple"></td>
+            <td class="px-4 py-2 text-center" x-text="oferta.fee_sencilla"></td>
+          </tr>
+        </template>
+        <!-- EMPTY -->
+        <tr>
+          <td colspan="19" class="px-4 py-2 text-center text-gray-500">
+            No hay ofertas registradas.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Crear/Editar Oferta -->
+  <div
+    x-show="showModal"
+    x-cloak
+    class="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl p-6 relative">
+      <!-- Cerrar -->
+      <button @click="closeForm()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900">
+        <i class="fas fa-times"></i>
+      </button>
+      <!-- Título -->
+      <h2 x-text="modalTitle" class="text-xl font-bold mb-4"></h2>
+
+      <!-- Formulario en 4 columnas -->
+      <form id="ofertaForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {% csrf_token %}
+        <!-- Hidden hotel_id + oferta_id -->
+        <input type="hidden" name="hotel_id" x-model="form.hotel_id">
+        <input type="hidden" name="oferta_id" x-model="form.id">
+
+        <!-- Código -->
+        <div>
+          <label for="codigo" class="block text-sm font-medium text-gray-700">Código</label>
+          <input id="codigo" name="codigo" x-model="form.codigo" required
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Tipo Habitación -->
+        <div>
+          <label for="tipo_habitacion" class="block text-sm font-medium text-gray-700">Tipo Habitación</label>
+          <input id="tipo_habitacion" name="tipo_habitacion" x-model="form.tipo_habitacion" required
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Temporada (rango fechas) -->
+        <div>
+          <label for="temporada" class="block text-sm font-medium text-gray-700">Temporada</label>
+          <input
+            type="text"
+            id="temporada"
+            name="temporada"
+            x-model="form.temporada"
+            placeholder="Selecciona rango de fechas"
+            class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm datepicker-range"
+          >
+        </div>
+        <!-- Disponible -->
+        <div class="flex items-center mt-6 md:mt-0">
+          <input id="disponible" name="disponible" type="checkbox" x-model="form.disponible"
+                 class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="disponible" class="ml-2 text-sm text-gray-700">Disponible</label>
+        </div>
+        <!-- Booking Window (rango fechas) -->
+        <div>
+          <label for="booking_window" class="block text-sm font-medium text-gray-700">Booking Window</label>
+          <input
+            type="text"
+            id="booking_window"
+            name="booking_window"
+            x-model="form.booking_window"
+            placeholder="Selecciona rango de fechas"
+            class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm datepicker-range"
+          >
+        </div>
+        <!-- Doble -->
+        <div>
+          <label for="doble" class="block text-sm font-medium text-gray-700">Doble</label>
+          <input id="doble" name="doble" x-model="form.doble"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Triple -->
+        <div>
+          <label for="triple" class="block text-sm font-medium text-gray-700">Triple</label>
+          <input id="triple" name="triple" x-model="form.triple"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Sencilla -->
+        <div>
+          <label for="sencilla" class="block text-sm font-medium text-gray-700">Sencilla</label>
+          <input id="sencilla" name="sencilla" x-model="form.sencilla"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Primer Niño -->
+        <div>
+          <label for="primer_nino" class="block text-sm font-medium text-gray-700">Primer Niño</label>
+          <input id="primer_nino" name="primer_nino" x-model="form.primer_nino"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Segundo Niño -->
+        <div>
+          <label for="segundo_nino" class="block text-sm font-medium text-gray-700">Segundo Niño</label>
+          <input id="segundo_nino" name="segundo_nino" x-model="form.segundo_nino"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Edad Niño -->
+        <div>
+          <label for="edad_nino" class="block text-sm font-medium text-gray-700">Edad Niño</label>
+          <input id="edad_nino" name="edad_nino" type="number" x-model="form.edad_nino"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Edad Infante -->
+        <div>
+          <label for="edad_infante" class="block text-sm font-medium text-gray-700">Edad Infante</label>
+          <input id="edad_infante" name="edad_infante" type="number" x-model="form.edad_infante"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Noches Mínimas -->
+        <div>
+          <label for="noches_minimas" class="block text-sm font-medium text-gray-700">Noches Mínimas</label>
+          <input id="noches_minimas" name="noches_minimas" type="number" x-model="form.noches_minimas"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Cant. Habitaciones -->
+        <div>
+          <label for="cantidad_habitaciones" class="block text-sm font-medium text-gray-700">Cant. Habitaciones</label>
+          <input id="cantidad_habitaciones" name="cantidad_habitaciones" type="number" x-model="form.cantidad_habitaciones"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Tipo de Fee -->
+        <div>
+          <label for="tipo_fee" class="block text-sm font-medium text-gray-700">Tipo de Fee</label>
+          <select id="tipo_fee" name="tipo_fee" x-model="form.tipo_fee"
+                  class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+            <option value="">Seleccione un tipo</option>
+            <option value="porcentaje">Porcentaje</option>
+            <option value="fijo">Fijo</option>
+          </select>
+        </div>
+        <!-- Fee Doble -->
+        <div>
+          <label for="fee_doble" class="block text-sm font-medium text-gray-700">Fee Doble</label>
+          <input id="fee_doble" name="fee_doble" x-model="form.fee_doble"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Fee Triple -->
+        <div>
+          <label for="fee_triple" class="block text-sm font-medium text-gray-700">Fee Triple</label>
+          <input id="fee_triple" name="fee_triple" x-model="form.fee_triple"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+        <!-- Fee Sencilla -->
+        <div>
+          <label for="fee_sencilla" class="block text-sm font-medium text-gray-700">Fee Sencilla</label>
+          <input id="fee_sencilla" name="fee_sencilla" x-model="form.fee_sencilla"
+                 class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+        </div>
+      </form>
+
+      <!-- Botones -->
+      <div class="mt-6 flex justify-end space-x-2">
+        <button @click="closeForm()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">Cerrar</button>
+        <button @click="saveOffer()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none">Guardar Oferta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('offersComponent', () => ({
+      ofertas: [
+        {% for o in ofertas %}
+        {
+          id: {{ o.id }},
+          hotel_id: {{ o.hotel_id }},           // <-- aquí
+          disponible: {{ o.disponible|yesno:"true,false" }},
+          codigo: '{{ o.codigo|escapejs }}',
+          tipo_habitacion: '{{ o.tipo_habitacion|escapejs }}',
+          temporada: '{{ o.temporada|escapejs }}',
+          booking_window: '{{ o.booking_window|escapejs }}',
+          doble: '{{ o.doble|escapejs }}',
+          triple: '{{ o.triple|escapejs }}',
+          sencilla: '{{ o.sencilla|escapejs }}',
+          primer_nino: '{{ o.primer_nino|default_if_none:""|escapejs }}',
+          segundo_nino: '{{ o.segundo_nino|default_if_none:""|escapejs }}',
+          edad_nino: {{ o.edad_nino|default:"null" }},
+          edad_infante: {{ o.edad_infante|default:"null" }},
+          noches_minimas: {{ o.noches_minimas|default:"null" }},
+          cantidad_habitaciones: {{ o.cantidad_habitaciones|default:"null" }},
+          tipo_fee: '{{ o.tipo_fee|default_if_none:""|escapejs }}',
+          fee_doble: '{{ o.fee_doble|default_if_none:""|escapejs }}',
+          fee_triple: '{{ o.fee_triple|default_if_none:""|escapejs }}',
+          fee_sencilla: '{{ o.fee_sencilla|default_if_none:""|escapejs }}'
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ],
+
+      form: {
+        id: '',
+        hotel_id: {{ hotel.id }},               // <-- aquí también
+        disponible: true,
+        codigo: '',
+        tipo_habitacion: '',
+        temporada: '',
+        booking_window: '',
+        doble: '',
+        triple: '',
+        sencilla: '',
+        primer_nino: '',
+        segundo_nino: '',
+        edad_nino: null,
+        edad_infante: null,
+        noches_minimas: null,
+        cantidad_habitaciones: null,
+        tipo_fee: '',
+        fee_doble: '',
+        fee_triple: '',
+        fee_sencilla: ''
+      },
+
+      modalTitle: '',
+      showModal: false,
+
+      init() {
+        flatpickr('.datepicker-range', {
+          mode: 'range',
+          dateFormat: 'Y-m-d'
+        });
+      },
+
+      openForm(oferta) {
+        if (oferta) {
+          // al editar, preservamos hotel_id porque viene en oferta.hotel_id
+          this.form = { ...oferta };
+          this.modalTitle = 'Editar Oferta';
+        } else {
+          // al crear, guardamos solo hotel_id del estado actual
+          this.form = {
+            id: '',
+            hotel_id: this.form.hotel_id,
+            disponible: true,
+            codigo: '',
+            tipo_habitacion: '',
+            temporada: '',
+            booking_window: '',
+            doble: '',
+            triple: '',
+            sencilla: '',
+            primer_nino: '',
+            segundo_nino: '',
+            edad_nino: null,
+            edad_infante: null,
+            noches_minimas: null,
+            cantidad_habitaciones: null,
+            tipo_fee: '',
+            fee_doble: '',
+            fee_triple: '',
+            fee_sencilla: ''
+          };
+          this.modalTitle = 'Crear Oferta';
+        }
+        this.showModal = true;
+      },
+
+      closeForm() {
+        this.showModal = false;
+      },
+
+      saveOffer() {
+        fetch("{% url 'backoffice:crear_editar_oferta' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify(this.form)
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'success') {
+            location.reload();
+          } else {
+            alert('Error: ' + data.message);
+          }
+        })
+        .catch(() => alert('Error de red'));
+      }
+    }));
+  });
+</script>

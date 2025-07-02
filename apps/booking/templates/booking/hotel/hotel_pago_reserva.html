@@ -1,0 +1,474 @@
+{% extends 'booking/hotel/base_hotel.html' %}
+{% load static %}
+
+{% block title %}Pago y Reserva{% endblock %}
+
+{% block hotel_content %}
+<div class="mx-auto mt-5 px-4" style="max-width: 85%;">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Contenedor Principal: Formulario de Pago y Reserva -->
+        <div class="md:col-span-9 space-y-4">
+            <!-- Tarjeta contenedora -->
+            <div class="border rounded shadow-sm p-4">
+                <h4 class="text-lg font-bold mb-2">1. Datos de los Pasajeros</h4>
+                <p class="text-sm text-gray-600 mb-4">Introduzca datos de pasajeros por producto.</p>
+
+                <form 
+                    method="post" 
+                    action="{% url 'booking:complete_solicitud' hotel.id %}" 
+                    class="space-y-6"
+                    novalidate
+                    id="pagoReservaForm"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="habitacion_count" value="{{ habitaciones|length }}">
+
+                    <!-- Iterar habitaciones -->
+                    {% for habitacion in habitaciones %}
+                        <div class="bg-gray-50 border rounded mb-4 p-4">
+                            <h5 class="text-blue-600 text-base font-semibold mb-2">
+                                HABITACIÓN {{ forloop.counter }}
+                            </h5>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <strong>Habitación seleccionada:</strong> {{ habitacion.opcion.nombre }}<br>
+                                <strong>Precio:</strong> ${{ habitacion.opcion.precio }} |
+                                <strong>Adultos:</strong> {{ habitacion.adultos }} |
+                                <strong>Niños:</strong> {{ habitacion.ninos }} |
+                                <strong>Fechas de Viaje:</strong> ({{ habitacion.fechas_viaje }})
+                            </p>
+
+                            <!-- Campos ocultos para esta habitación -->
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_precio" value="{{ habitacion.precio }}">
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_precio_sin_fee" value="{{ habitacion.opcion.precio_sin_fee }}">
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_total_fee" value="{{ habitacion.opcion.total_fee }}">
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_adultos" value="{{ habitacion.adultos }}">
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_ninos" value="{{ habitacion.ninos }}">
+                            <input type="hidden" name="habitacion_fechas_viaje" value="{{ habitacion.fechas_viaje }}">
+                            <input type="hidden" name="habitacion_{{ forloop.counter }}_nombre" value="{{ habitacion.opcion.nombre }}">
+                            <input type="hidden" name="precio_total" value="{{ precio_total }}">
+
+                            <!-- Adultos -->
+                            {% for i in habitacion.adultos_numeros %}
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-3">
+                                    <h6 class="md:col-span-12 text-base font-semibold text-blue-600">
+                                        <i class="fas fa-user mr-1"></i>
+                                        Adulto {{ i }}
+                                    </h6>
+                                    
+                                    <div class="md:col-span-6">
+                                        <label 
+                                            for="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Nombre(s) y Apellido(s):
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            id="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            name="nombre{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            placeholder="Como aparece en el pasaporte"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="fecha_nacimiento{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Fecha de nacimiento:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                            id="fecha_nacimiento{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            name="fecha_nacimiento{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            placeholder="YYYY/MM/DD"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Número de pasaporte:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            id="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            name="pasaporte{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="caducidad{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Caducidad del pasaporte:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                            id="caducidad{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            name="caducidad{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            placeholder="YYYY/MM/DD"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            País de emisión del pasaporte:
+                                        </label>
+                                        <select 
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            id="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            name="pais_emision{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                            required
+                                        >
+                                            <option value="" disabled selected>Seleccione un país</option>
+                                            <option value="CUBA">CUBA</option>
+                                            <option value="ESPANA">ESPAÑA</option>
+                                            <option value="ESTADOS UNIDOS">ESTADOS UNIDOS</option>
+                                            <option value="MEXICO">MEXICO</option>
+                                            <option value="OTRO">OTRO</option>
+                                        </select>
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+
+                                    <!-- Solo la primera vez, para email y teléfono -->
+                                    {% if forloop.first and forloop.parentloop.first %}
+                                        <div class="md:col-span-4">
+                                            <label 
+                                                for="email{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                class="block text-sm font-medium text-gray-700 mb-1"
+                                            >
+                                                E-mail:
+                                            </label>
+                                            <input 
+                                                type="email"
+                                                class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                                id="email{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                name="email{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                required
+                                            />
+                                            <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label 
+                                                for="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                class="block text-sm font-medium text-gray-700 mb-1"
+                                            >
+                                                Teléfono:
+                                            </label>
+                                            <input 
+                                                type="tel"
+                                                class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                                id="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                name="telefono{{ forloop.parentloop.counter }}_adulto{{ i }}"
+                                                required
+                                            />
+                                            <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                        </div>
+                                    {% endif %}
+                                </div> <!-- fin row adulto -->
+                            {% endfor %}
+
+                            <!-- Niños -->
+                            {% for nino in habitacion.ninos_numeros %}
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-3">
+                                    <h6 class="md:col-span-12 text-base font-semibold text-blue-600">
+                                        <i class="fas fa-child mr-1"></i>
+                                        Niño {{ nino }}
+                                    </h6>
+
+                                    <div class="md:col-span-6">
+                                        <label 
+                                            for="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Nombre(s) y Apellido(s):
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            id="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            name="nombre{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            placeholder="Como aparece en el pasaporte"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="fecha_nacimiento{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Fecha de nacimiento:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                            id="fecha_nacimiento{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            name="fecha_nacimiento{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            placeholder="YYYY/MM/DD"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Número de pasaporte:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            id="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            name="pasaporte{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="caducidad{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            Caducidad del pasaporte:
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                            id="caducidad{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            name="caducidad{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            placeholder="YYYY/MM/DD"
+                                            required
+                                        />
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label 
+                                            for="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                        >
+                                            País de emisión del pasaporte:
+                                        </label>
+                                        <select 
+                                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                            id="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            name="pais_emision{{ forloop.parentloop.counter }}_nino{{ nino }}"
+                                            required
+                                        >
+                                            <option value="" disabled selected>Seleccione un país</option>
+                                            <option value="CUBA">CUBA</option>
+                                            <option value="ESPANA">ESPAÑA</option>
+                                            <option value="ESTADOS UNIDOS">ESTADOS UNIDOS</option>
+                                            <option value="MEXICO">MEXICO</option>
+                                            <option value="OTRO">OTRO</option>
+                                        </select>
+                                        <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                                    </div>
+                                </div> <!-- fin row niño -->
+                            {% endfor %}
+                        </div> <!-- fin card hab -->
+                    {% endfor %}
+
+                    <!-- Datos del agente que solicita -->
+                    <div class="bg-gray-50 border rounded mb-4 p-4">
+                        <h4 class="text-base font-bold mb-2">2. Datos del agente que solicita.</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="notas" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del usuario:
+                                </label>
+                                <input 
+                                    type="text"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    id="notas" 
+                                    name="notas"
+                                    placeholder="Empleado que solicita"
+                                    required
+                                />
+                                <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                            </div>
+                            <div>
+                                <label for="email_empleado" class="block text-sm font-medium text-gray-700 mb-1">
+                                    E-mail:
+                                </label>
+                                <input 
+                                    type="email"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    id="email_empleado"
+                                    name="email_empleado"
+                                    placeholder="Email del empleado que solicita"
+                                    required
+                                />
+                                <p class="error-msg text-red-500 text-sm hidden mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cotización -->
+                    <div class="bg-gray-50 border rounded mb-4 p-4">
+                        <h4 class="text-base font-bold mb-2">3. Si desea solo cotización del servicio.</h4>
+                        <p class="text-sm text-gray-600 mb-2">
+                            Información importante de reserva: Cuando el servicio se solicite, si está disponible, la reserva se confirmará automáticamente.
+                        </p>
+                        <button 
+                            class="bg-blue-100 text-blue-700 w-full py-2 rounded font-semibold hover:bg-blue-200 transition-colors"
+                            type="submit"
+                            name="action"
+                            value="cotizacion"
+                        >
+                            ENVIAR COTIZACIÓN
+                        </button>
+                    </div>
+
+                    <!-- Completar la reserva -->
+                    <div class="bg-gray-50 border rounded p-4">
+                        <h4 class="text-base font-bold mb-2">4. Completar la reserva.</h4>
+                        <p class="text-sm text-gray-600 mb-2">
+                            Información importante de reserva: Al completar su solicitud la reserva se procesará de forma inmediata.
+                        </p>
+                        <button 
+                            type="submit"
+                            class="bg-green-600 text-white w-full py-2 rounded font-semibold hover:bg-green-700 transition-colors"
+                            name="action"
+                            value="reserva"
+                        >
+                            COMPLETE LA SOLICITUD
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contenedor Lateral: Resumen de la Reserva -->
+        <div class="md:col-span-3">
+            <div class="border shadow-sm rounded bg-blue-50 p-4 sticky top-4">
+                <h3 class="text-lg font-bold mb-3">Resumen de la reserva:</h3>
+                <p class="mb-3">
+                    <strong>Hotel:</strong> {{hotel.hotel_nombre}}
+                </p>
+                <p class="mb-3">
+                    <strong>Has seleccionado:</strong>
+                </p>
+                {% for habitacion in habitaciones %}
+                    <p class="text-sm mb-3">
+                        <strong>Habitación:</strong> {{ habitacion.opcion.nombre }}<br>
+                        Personas 
+                        {% for i in habitacion.adultos_numeros %}<i class="fas fa-user"></i>{% endfor %}
+                        +
+                        {% for i in habitacion.ninos_numeros %}<i class="fas fa-child"></i>{% endfor %}
+                        <br>
+                        <strong>Precio:</strong> ${{ habitacion.opcion.precio }}
+                    </p>
+                {% endfor %}
+                <p class="text-sm text-gray-600 mb-3">
+                    En caso de cancelación puede aplicar penalidad.
+                </p>
+                <h4 class="text-base font-semibold">
+                    Total de la Reserva: ${{ precio_total }}
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-msg {
+        /* Mensaje de error oculto por defecto (se muestra al invalidar) */
+    }
+    .is-invalid {
+        border-color: red !important;
+        /* Podrías agregar ring-red-500 o algo similar */
+    }
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script 
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJ+0l1kUA8Zim7CtzAm7B2OJcOAQ52pmtzKwg="
+    crossorigin="anonymous">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js">
+</script>
+<link 
+    rel="stylesheet"
+    type="text/css"
+    href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
+
+<script>
+    $(function() {
+        // Configuración del datepicker con daterangepicker (solo un día)
+        $('input.datepicker').daterangepicker({
+            singleDatePicker: true,
+            showDropdowns: true,
+            minYear: 1924,
+            maxYear: 2034,
+            locale: {
+                format: 'YYYY/MM/DD'
+            }
+        });
+
+        // Validación JS manual, emulando "is-invalid"
+        $('#pagoReservaForm').on('submit', function(e) {
+            let formValid = true;
+
+            // Limpiar errores previos
+            $('.required-field').removeClass('border-red-500 ring ring-red-500');
+            $('.error-msg').addClass('hidden').text('');
+
+            // Revisar cada campo .required-field
+            $(this).find('.required-field').each(function() {
+                if (!$(this).val()) {
+                    formValid = false;
+                    // Resaltar
+                    $(this).addClass('border-red-500 ring ring-red-500');
+                    // Mostrar error
+                    $(this).siblings('.error-msg')
+                        .removeClass('hidden')
+                        .text('Este campo es obligatorio.');
+                }
+            });
+
+            // Si no es válido, prevenir submit
+            if (!formValid) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // Quitar errores al escribir
+        $('.required-field').on('input change', function() {
+            if ($(this).val()) {
+                $(this).removeClass('border-red-500 ring ring-red-500');
+                $(this).siblings('.error-msg').addClass('hidden').text('');
+            }
+        });
+    });
+</script>
+{% endblock extra_js %}

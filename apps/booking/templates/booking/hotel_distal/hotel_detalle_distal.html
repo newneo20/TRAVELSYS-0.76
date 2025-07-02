@@ -1,0 +1,188 @@
+{% extends 'booking/hotel_distal/base_hotel.html' %}
+{% load i18n %}
+
+{% block title %}Detalles – {{ hotel.HotelName }}{% endblock %}
+
+{% block hotel_content %}
+<div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <div class="md:grid md:grid-cols-2 gap-6">
+    <div class="rounded-lg overflow-hidden shadow-lg">
+      {% if hotel.Images %}
+        <img src="{{ hotel.Images.0 }}" alt="{{ hotel.HotelName }}" class="w-full h-64 object-cover">
+      {% else %}
+        <div class="w-full h-64 bg-gray-100 flex items-center justify-center text-gray-400">
+          {% trans "Sin imagen disponible" %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-lg space-y-4">
+      <h1 class="text-3xl font-bold">{{ hotel.HotelName }}</h1>
+      <div class="flex items-center space-x-2 text-sm">
+        <div class="flex space-x-0.5 text-yellow-400">
+          {% for _ in "12345" %}
+            <i class="fas fa-star{% if forloop.counter > hotel.Rating %} text-gray-300{% endif %}"></i>
+          {% endfor %}
+        </div>
+        <span>({{ hotel.Rating }})</span>
+      </div>
+
+      <p class="text-gray-700 text-sm">
+        <i class="fas fa-map-marker-alt text-blue-600 mr-1"></i>
+        {{ hotel.AddressLines|join:", " }}{% if hotel.CityName %}, {{ hotel.CityName }}{% endif %}
+      </p>
+
+      <p class="text-gray-700 text-sm line-clamp-3">
+        {% if hotel.Notes %}
+          {{ hotel.Notes.0.Text }}
+        {% else %}
+          <em>{% trans "Sin descripción disponible." %}</em>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- TABS PRINCIPALES -->
+  <div x-data="{ tab: 'rooms' }" class="space-y-4">
+    <nav class="flex space-x-4 border-b">
+      <button @click="tab='rooms'" :class="tab==='rooms' ? 'border-blue-600 text-blue-600' : 'text-gray-600'" class="pb-2 border-b-2 font-medium text-sm">{% trans "Habitaciones" %}</button>
+      <button @click="tab='services'" :class="tab==='services' ? 'border-blue-600 text-blue-600' : 'text-gray-600'" class="pb-2 border-b-2 font-medium text-sm">{% trans "Servicios" %}</button>
+      <button @click="tab='location'" :class="tab==='location' ? 'border-blue-600 text-blue-600' : 'text-gray-600'" class="pb-2 border-b-2 font-medium text-sm">{% trans "Ubicación" %}</button>
+    </nav>
+
+    <!-- HABITACIONES -->
+    <div x-show="tab==='rooms'" class="space-y-6">
+      <form method="POST" action="{% url 'booking:hotel_pago_reserva_distal' hotel_code %}" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="destino" value="{{ destino }}">
+        <input type="hidden" name="fechas_viaje" value="{{ fechas }}">
+        <input type="hidden" name="info_habitaciones" value="{{ info_habitaciones|escapejs }}">
+
+        {% for hab in habitaciones_data %}
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="bg-blue-600 px-4 py-2 flex justify-between items-center text-white">
+            <span class="font-semibold">🛏️ Habitación {{ hab.habitacion }}</span>
+            <span class="text-sm">
+              <i class="fas fa-user"></i> {{ hab.adultos }}
+              <i class="fas fa-child ml-2"></i> {{ hab.ninos }}
+            </span>
+          </div>
+
+          <div class="divide-y divide-gray-200">
+            {% for opcion in hab.opciones %}
+            <label class="flex justify-between items-start gap-4 p-4 hover:bg-gray-100 cursor-pointer transition rounded-lg">
+              <div class="flex gap-4">
+                <input type="radio" name="opcion_{{ forloop.parentloop.counter0 }}"                  
+                  value="{{ opcion.id }}|{{ opcion.nombre }}|{{ opcion.precio_cliente }}|{{ opcion.costo_total }}|{{ opcion.precio_base }}|{{ opcion.moneda }}|{{ opcion.booking_code }}"
+                  required class="mt-1 h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-400">
+
+                <div class="flex flex-col">
+                  <div class="font-semibold text-gray-800">{{ opcion.nombre }}</div>
+
+                  {% if opcion.plan %}
+                  <div class="text-sm text-gray-600 italic">{% trans "Plan:" %} {{ opcion.plan }}</div>
+                  {% endif %}
+
+                  {% if opcion.capacidad_adultos or opcion.capacidad_ninos %}
+                  <div class="text-sm text-gray-600">
+                    {% trans "Capacidad:" %}
+                    {% if opcion.capacidad_adultos %}
+                      {{ opcion.capacidad_adultos }} adulto{{ opcion.capacidad_adultos|pluralize }}
+                    {% endif %}
+                    {% if opcion.capacidad_ninos %}
+                      + {{ opcion.capacidad_ninos }} niño{{ opcion.capacidad_ninos|pluralize }}
+                    {% endif %}
+                  </div>
+                  {% endif %}
+
+                  {# NUEVO: Política de cancelación #}
+                  {% if opcion.cancel_policy %}
+                  <div class="text-sm text-orange-600 mt-1">
+                    {% trans "Cancelación hasta" %} {{ opcion.cancel_policy.Deadline }} — {{ opcion.cancel_policy.PenaltyDescription }}
+                  </div>
+                  {% endif %}
+
+                  {# NUEVO: Días de antelación #}
+                  {% if opcion.release %}
+                  <div class="text-xs text-blue-500 mt-1">
+                    {% trans "Debe reservar con" %} {{ opcion.release }}
+                  </div>
+                  {% endif %}
+
+                  {# Etiquetas de vista (opcional) #}
+                  {% if "ocean view" in opcion.nombre|lower %}
+                    <span class="text-blue-600 text-sm mt-1">🌊 {% trans "Vista al mar" %}</span>
+                  {% elif "pool view" in opcion.nombre|lower %}
+                    <span class="text-teal-600 text-sm mt-1">🏊 {% trans "Vista a la piscina" %}</span>
+                  {% endif %}
+
+                  {% if opcion.descripcion %}
+                    <div class="text-xs text-gray-500 mt-1">{{ opcion.descripcion }}</div>
+                  {% endif %}
+
+                  {% if opcion.reembolsable == False %}
+                  <div class="text-xs mt-1 text-red-500 font-medium">{% trans "No reembolsable" %}</div>
+                  {% else %}
+                  <div class="text-xs mt-1 text-green-600 font-medium">{% trans "Reembolsable" %}</div>
+                  {% endif %}
+
+                  <!-- Precios -->
+                  <div class="text-xs text-gray-400 mt-1">{% trans "Costo base API:" %} {{ opcion.precio_base|floatformat:2 }} {{ opcion.moneda }}</div>
+                  <div class="text-xs text-gray-400 mt-1">{% trans "Costo total (con margen):" %} {{ opcion.costo_total|floatformat:2 }} {{ opcion.moneda }}</div>
+                  <div class="text-xs text-gray-400 mt-1">{% trans "Precio cliente (final):" %} {{ opcion.precio_cliente|floatformat:2 }} {{ opcion.moneda }}</div>
+
+                </div>
+              </div>
+
+              <div class="text-right">
+                <div class="font-semibold text-gray-900 text-sm">{{ opcion.precio_cliente|floatformat:2 }} {{ opcion.moneda }}</div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+
+        <div class="text-center">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium">{% trans "Reservar ahora" %}</button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- SERVICIOS -->
+    <div x-show="tab==='services'" class="bg-white rounded-lg shadow p-4 text-sm">
+      {% if hotel.Services %}
+        <div class="flex flex-wrap gap-2">
+          {% for svc in hotel.Services %}
+            <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full uppercase text-xs">{{ svc.Description }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p><em>{% trans "No hay servicios listados." %}</em></p>
+      {% endif %}
+    </div>
+
+    <!-- UBICACIÓN CON MAPA -->
+    <div x-show="tab==='location'" class="bg-white rounded-lg shadow p-4 text-sm">
+      <i class="fas fa-map-marker-alt text-blue-600 mr-1"></i> {{ hotel.AddressLines|join:", " }}{% if hotel.CityName %}, {{ hotel.CityName }}{% endif %}
+      
+      {% if hotel.Latitude and hotel.Longitude %}
+      <div class="mt-4">
+        <iframe
+          width="100%"
+          height="300"
+          frameborder="0"
+          style="border:0"
+          src="https://www.google.com/maps?q={{ hotel.Latitude }},{{ hotel.Longitude }}&hl=es&z=15&output=embed"
+          allowfullscreen>
+        </iframe>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

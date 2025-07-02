@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load rangex_filters %}
+{% load i18n %}
+{% block content %}
+<!-- Asegúrate de tener incluido Tailwind CSS en tu base.html 
+     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+-->
+
+<main class="container mx-auto px-4 py-6">
+    <!-- Encabezado + Botón de Crear -->
+    <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold mb-4 md:mb-0">
+            {% trans "Lista de Hoteles" %}
+        </h1>
+        <a href="{% url 'backoffice:crear_hotel' %}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+                  text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 
+                  focus:ring-offset-2 focus:ring-indigo-500">
+            <i class="fas fa-plus mr-2"></i>
+            {% trans "Crear Hotel" %}
+        </a>
+    </section>
+
+    <!-- Formulario de Búsqueda -->
+    <section class="mb-6">
+        <form method="GET" action="">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-10">
+                    <input 
+                        type="text"
+                        class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 
+                               focus:ring-indigo-500"
+                        placeholder="{% trans 'Buscar por: (Hotel, Proveedor, Polo Turistico o Cadena Hotelera)' %}"
+                        name="q"
+                        value="{{ query }}"
+                    >
+                </div>
+                <div class="md:col-span-2 flex">
+                    <button 
+                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent 
+                               text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        type="submit">
+                        {% trans "Buscar" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabla de Hoteles -->
+    <section class="overflow-x-auto bg-white shadow rounded">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Nombre" %}
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Polo Turístico" %}
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Plan Alimenticio" %}
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Categoría" %}
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Acciones" %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for hotel in hoteles %}
+                <tr class="hover:bg-gray-100">
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ hotel.hotel_nombre }}
+                    </td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ hotel.polo_turistico }}
+                    </td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ hotel.plan_alimenticio }}
+                    </td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {% for star in hotel.categoria|rangex %}
+                            <i class="fa-regular fa-star"></i>
+                        {% endfor %}
+                    </td>
+                    <td class="px-4 py-2 text-center text-sm">
+                        <div class="flex justify-center space-x-2">
+                            <a href="{% url 'backoffice:editar_hotel' hotel.id %}"
+                               class="inline-flex items-center px-2 py-1 border border-transparent text-sm 
+                                      font-medium rounded text-yellow-600 bg-yellow-100 hover:bg-yellow-200"
+                               title="{% trans 'Editar hotel' %}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'backoffice:eliminar_hotel' hotel.id %}"
+                               class="inline-flex items-center px-2 py-1 border border-transparent text-sm 
+                                      font-medium rounded text-red-600 bg-red-100 hover:bg-red-200"
+                               title="{% trans 'Eliminar hotel' %}"
+                               onclick="return confirm('{% trans '¿Estás seguro de que deseas eliminar este hotel?' %}');">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-4 text-center text-gray-500">
+                        {% trans "No hay hoteles registrados." %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Paginación -->
+    <section class="mt-6">
+        <nav aria-label="{% trans 'Paginación' %}">
+            <ul class="inline-flex items-center -space-x-px">
+                {% if hoteles.has_previous %}
+                <li>
+                    <a class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 
+                               rounded-l-lg hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page=1{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="{% trans 'Primera' %}">
+                        &laquo;&laquo;
+                    </a>
+                </li>
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page={{ hoteles.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="{% trans 'Anterior' %}">
+                        &laquo;
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in hoteles.paginator.page_range %}
+                    {% if hoteles.number == num %}
+                        <li>
+                            <span class="py-2 px-3 leading-tight text-white bg-indigo-600 border border-gray-300">
+                                {{ num }}
+                            </span>
+                        </li>
+                    {% elif num > hoteles.number|add:'-5' and num < hoteles.number|add:'5' %}
+                        <li>
+                            <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300
+                                       hover:bg-gray-100 hover:text-gray-700" 
+                               href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if hoteles.has_next %}
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page={{ hoteles.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="{% trans 'Siguiente' %}">
+                        &raquo;
+                    </a>
+                </li>
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+                       href="?page={{ hoteles.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="{% trans 'Última' %}">
+                        &raquo;&raquo;
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </section>
+</main>
+
+{% endblock %}

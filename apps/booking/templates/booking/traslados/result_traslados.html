@@ -1,0 +1,138 @@
+{% extends 'booking/traslados/base_traslados.html' %}
+{% load static %}
+{% load dictionary_extras %}
+
+{% block title %}Resultados de la búsqueda de Traslados{% endblock %}
+
+{% block hotel_content %}
+
+<!-- Contenedor principal -->
+<div class="mx-auto mt-5 px-4 max-w-6xl">
+
+    <!-- Campo de búsqueda y encabezado -->
+    <div class="mb-4">
+        <input 
+            type="text" 
+            id="trasladoSearchInput"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Buscar traslado por transportista..."
+        />
+        <h2 class="text-2xl font-bold mb-3 mt-4">Resultados de la búsqueda:</h2>
+        <p class="text-lg" id="trasladoCountText">
+            Encontramos {{ traslados|length }} traslados para tu búsqueda en {{ destino }}
+        </p>
+    </div>
+
+    <!-- Lista de traslados -->
+    <div class="flex justify-center">
+        <div id="trasladosContainer" class="w-full md:w-11/12">
+            {% for traslado in traslados %}
+                <div 
+                    class="traslado-card mb-4 border shadow-sm rounded p-3 transition-all"
+                    data-traslado-name="{{ traslado.transportista.nombre|lower }}"
+                >
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                        
+                        <!-- Imagen del Vehículo -->
+                        <div class="md:col-span-4 flex items-center justify-center md:justify-start">
+                            {% if traslado.vehiculo.foto %}
+                                <img 
+                                    src="{{ traslado.vehiculo.foto.url }}" 
+                                    alt="{{ traslado.vehiculo.tipo }}"
+                                    class="rounded object-cover w-full h-40 md:h-48"
+                                />
+                            {% else %}
+                                <img 
+                                    src="{% static 'backoffice/fotos_vehiculos/default.jpg' %}" 
+                                    alt="Vehículo sin imagen"
+                                    class="rounded object-cover w-full h-40 md:h-48"
+                                />
+                            {% endif %}
+                        </div>
+
+                        <!-- Información del traslado -->
+                        <div class="md:col-span-5">
+                            <h5 class="mb-2 text-base font-semibold">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                {{ traslado.origen.nombre }} - {{ traslado.destino.nombre }}
+                            </h5>
+                            <p class="mb-1 text-sm text-gray-700">
+                                <strong>Vehículo:</strong> {{ traslado.vehiculo.tipo|title }} <br>
+                                <strong>Capacidad:</strong> {{ traslado.vehiculo.capacidad_min }} - {{ traslado.vehiculo.capacidad_max }} pasajeros
+                            </p>
+                            <span class="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                                {{ traslado.vehiculo.tipo|upper }}
+                            </span>
+                        </div>
+
+                        <!-- Precio y botón de detalles -->
+                        <div class="md:col-span-3 text-center">
+                            <div class="flex flex-col items-center space-y-2">
+                                <span class="bg-yellow-300 text-gray-800 px-3 py-1 rounded text-sm inline-block">
+                                    <i class="fas fa-user mr-1"></i> {{ pax }} pasajeros
+                                </span>
+                                <span class="text-blue-600 text-2xl font-bold">
+                                    ${{ traslado.costo|floatformat:2 }}
+                                </span>
+
+                                <!-- Formulario POST para enviar datos a detalle_traslados -->
+                                <form action="{% url 'booking:detalle_traslados' traslado.id %}" method="POST" class="w-full">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="tipologia" value="{{ tipologia }}">
+                                    <input type="hidden" name="origen" value="{{ origen }}">
+                                    <input type="hidden" name="destino" value="{{ destino }}">
+                                    <input type="hidden" name="fecha_traslado" value="{{ fecha_traslado }}">
+                                    <input type="hidden" name="adultos" value="{{ adultos }}">
+                                    <input type="hidden" name="ninos" value="{{ ninos }}">
+                                    <input type="hidden" name="infantes" value="{{ infantes }}">
+                                    <button 
+                                        type="submit" 
+                                        class="bg-blue-600 text-white w-full mt-2 py-2 rounded hover:bg-blue-700 transition-colors text-sm"
+                                    >
+                                        Detalles
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded mb-4 text-sm">
+                    No se encontraron traslados que coincidan con tu búsqueda. Por favor, intenta con diferentes criterios.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Rellenar campos con valores del backend (si fuera necesario)
+        // Ejemplo: si tienes un select #tipologia, #origen, etc., y los rellenas
+        // con .val() o .append().
+
+        // Filtrado de traslados en tiempo real
+        $('#trasladoSearchInput').on('input', function() {
+            var searchText = $(this).val().toLowerCase();
+            var visibleTraslados = 0;
+
+            $('.traslado-card').each(function() {
+                var trasladoName = $(this).data('traslado-name');
+                if (trasladoName.includes(searchText)) {
+                    $(this).removeClass('hidden');
+                    visibleTraslados++;
+                } else {
+                    $(this).addClass('hidden');
+                }
+            });
+
+            $('#trasladoCountText').text(
+                `Encontramos ${visibleTraslados} traslados para tu búsqueda en {{ destino }}`
+            );
+        });
+    });
+</script>
+{% endblock extra_js %}

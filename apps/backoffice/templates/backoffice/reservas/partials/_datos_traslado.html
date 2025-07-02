@@ -1,0 +1,55 @@
+{% load i18n %}
+<section class="mb-8">
+  <div class="bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-6 text-center">{% trans "Datos del Traslado" %}</h2>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-2 items-center">
+      
+      <!-- Origen -->
+      <div>
+        <label for="origen" class="block text-sm font-medium text-gray-700 text-center">
+          <strong>{% trans "Origen" %}</strong>
+        </label>
+        <input type="text" name="origen" id="origen" value="{{ traslado.origen }}"
+               class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 shadow-sm text-center focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      
+      <!-- Destino -->
+      <div>
+        <label for="destino" class="block text-sm font-medium text-gray-700 text-center">
+          <strong>{% trans "Destino" %}</strong>
+        </label>
+        <input type="text" name="destino" id="destino" value="{{ traslado.destino }}"
+               class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 shadow-sm text-center focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      
+      <!-- Vehículo -->
+      <div>
+        <label for="vehiculo" class="block text-sm font-medium text-gray-700 text-center">
+          <strong>{% trans "Vehículo" %}</strong>
+        </label>
+        <input type="text" name="vehiculo" id="vehiculo" value="{{ traslado.vehiculo }}"
+               class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 shadow-sm text-center focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      
+      <!-- Fecha del Traslado -->
+      <div>
+        <label for="fecha" class="block text-sm font-medium text-gray-700 text-center">
+          <strong>{% trans "Fecha del Traslado" %}</strong>
+        </label>
+        <input type="date" name="fecha" id="fecha" value="{{ traslado.fecha|date:'Y-m-d' }}"
+               class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 shadow-sm text-center focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      
+      <!-- Hora del Traslado -->
+      <div>
+        <label for="hora" class="block text-sm font-medium text-gray-700 text-center">
+          <strong>{% trans "Hora del Traslado" %}</strong>
+        </label>
+        <input type="time" name="hora" id="hora" value="{{ traslado.hora|time:'H:i' }}"
+               class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 shadow-sm text-center focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+      </div>
+      
+    </div>
+  </div>
+</section>

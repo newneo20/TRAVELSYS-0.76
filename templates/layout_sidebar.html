@@ -1,0 +1,132 @@
+{# base.html #}
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{% block title %}TravelSYS{% endblock %}</title>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- CSS personalizado -->
+  <link rel="stylesheet" type="text/css" href="{% static 'usuarios/styles.css' %}">
+
+  <!-- Select2 CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
+
+  <!-- Date Range Picker CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+  <!-- HEADER / NAVBAR -->
+  <header class="bg-gray-800 fixed top-0 w-full z-50" x-data="{ navOpen: false }">
+    <nav class="container mx-auto px-4 flex items-center justify-between h-16">
+      <div class="flex items-center">
+        {% if request.user.is_authenticated and request.user.is_manager %}
+          <a href="{% url 'dashboard' %}" class="flex items-center">
+            <img src="{% static 'images/TRAVELSYS_logo_B.png' %}" alt="{% trans 'Logo TravelSYS' %}" class="mr-2" style="height: 40px;">
+            <span class="text-white font-semibold">
+              <span class="text-blue-400">TRAVEL</span><span class="text-whitespace-normal-400">SYS</span>
+            </span>
+          </a>
+        {% else %}
+          <span class="flex items-center">
+            <img src="{% static 'images/TRAVELSYS_logo_B.png' %}" alt="{% trans 'Logo TravelSYS' %}" class="mr-2" style="height: 40px;">
+            <span class="text-white font-semibold">
+              <span class="text-blue-400">TRAVEL</span><span class="text-whitespace-normal-400">SYS</span>
+            </span>
+          </span>
+        {% endif %}
+      </div>
+      <!-- Menú desktop -->
+      <div class="hidden md:flex space-x-4 items-center">
+        {% if user.is_authenticated %}
+          <span class="text-white">{% trans "Bienvenido" %}, {{ user.first_name }} {{ user.last_name }}</span>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="border border-white text-white px-3 py-1 rounded hover:bg-gray-700" aria-label="{% trans 'Cerrar sesión' %}">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="text-white hover:text-gray-300">{% trans "Iniciar sesión" %}</a>
+        {% endif %}
+      </div>
+      <!-- Botón menú móvil -->
+      <button @click="navOpen = !navOpen" class="md:hidden text-white focus:outline-none">
+        <i class="fas fa-bars"></i>
+      </button>
+    </nav>
+    <!-- Menú móvil -->
+    <div x-show="navOpen" class="md:hidden bg-gray-800">
+      <ul class="px-4 py-2 space-y-2">
+        {% if user.is_authenticated %}
+          <li class="text-white">{% trans "Bienvenido" %}, {{ user.first_name }} {{ user.last_name }}</li>
+          <li>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="w-full text-left border border-white text-white px-3 py-1 rounded hover:bg-gray-700" aria-label="{% trans 'Cerrar sesión' %}">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> {% trans "Cerrar sesión" %}
+              </button>
+            </form>
+          </li>
+        {% else %}
+          <li><a href="{% url 'login' %}" class="block text-white hover:text-gray-300">{% trans "Iniciar sesión" %}</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </header>
+
+  <!-- AQUÍ VIENE EL CONTENIDO (INCLUIDO EL SIDEBAR) DESDE EL OTRO TEMPLATE -->
+  {% block content %}
+  {% endblock %}
+
+  <!-- FOOTER -->
+  <footer class="py-4 text-center bg-gray-200 mt-4">
+    <div class="container mx-auto">
+      <p>&copy; 2024 TravelSYS.com {% trans "Todos los derechos reservados." %}</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <!-- Alpine.js para la interactividad -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <!-- Se mantienen Select2 y Date Range Picker (sin dependencias de Bootstrap) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Asegúrate de cargar jQuery antes de Select2 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar Select2
+      const selects = document.querySelectorAll('.form-select');
+      selects.forEach(select => {
+        $(select).select2({ theme: 'default' });
+      });
+      // Inicializar Date Range Picker
+      const datePickers = document.querySelectorAll('.date-picker');
+      datePickers.forEach(dp => {
+        $(dp).daterangepicker({
+          singleDatePicker: true,
+          locale: { format: 'YYYY-MM-DD' }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

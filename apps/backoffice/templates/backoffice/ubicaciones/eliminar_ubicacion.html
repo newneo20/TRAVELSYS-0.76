@@ -1,0 +1,38 @@
+{# usuarios/templates/usuarios/eliminar_ubicacion.html #}
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Eliminar Ubicación" %}{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+  <section class="bg-white p-6 shadow-md rounded">
+    <h1 class="text-2xl font-bold mb-4">{% trans "Eliminar Ubicación" %}</h1>
+    <p class="mb-4 text-gray-700">
+      {% blocktrans with nombre=ubicacion.nombre %}
+        ¿Estás seguro de que deseas eliminar la ubicación <strong>{{ nombre }}</strong>?
+      {% endblocktrans %}
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="flex gap-2">
+        <button
+          type="submit"
+          class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          {% trans "Eliminar" %}
+        </button>
+        <a
+          href="{% url 'backoffice:listar_ubicaciones' %}"
+          class="px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          role="button"
+        >
+          {% trans "Cancelar" %}
+        </a>
+      </div>
+    </form>
+  </section>
+</main>
+{% endblock %}

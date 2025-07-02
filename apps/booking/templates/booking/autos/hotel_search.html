@@ -1,0 +1,259 @@
+{% extends 'booking/base_tabs.html' %}
+{% load static %}
+
+{% block title %}Buscar Hoteles{% endblock %}
+
+{% block content %}
+<form method="GET" action="{% url 'booking:hotel_results' %}">
+    <div class="container mt-4 search-bar">
+        <div class="row">
+            <div class="col-md-3">
+                <select class="custom-select" id="destino" name="destino">
+                    <option value="todos-los-destinos" {% if request.GET.destino == "todos-los-destinos" %}selected{% endif %}>Todos los destinos</option>
+                    {% for destino in destinos %}
+                        <option value="{{ destino.nombre|slugify }}" {% if request.GET.destino == destino.nombre|slugify %}selected{% endif %}>{{ destino.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="star-rating">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="fechas_viaje" name="fechas_viaje" value="{{ request.GET.fechas_viaje }}">
+                    <div class="input-group-append">
+                        <span class="input-group-text">
+                            <i class="fa fa-calendar"></i>
+                        </span>
+                    </div>
+                </div>
+                <script>
+                    $(function() {
+                        $('input[name="fechas_viaje"]').daterangepicker({
+                            startDate: moment(),
+                            endDate: moment().add(1, 'days'),
+                            locale: {
+                                format: 'YYYY-MM-DD'
+                            }
+                        });
+                    });
+                </script>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#habitacionesModal">
+                    <i class="fas fa-bed"></i> {{ request.GET.habitaciones|default:"1" }} <i class="fas fa-user"></i> {{ request.GET.adultos|default:"2" }} <i class="fas fa-child"></i> {{ request.GET.ninos|default:"0" }}
+                </button>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Búsqueda</button>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="habitaciones_input" name="habitaciones" value="{{ request.GET.habitaciones|default:"1" }}">
+    <input type="hidden" id="adultos_input" name="adultos" value="{{ request.GET.adultos|default:"2" }}">
+    <input type="hidden" id="ninos_input" name="ninos" value="{{ request.GET.ninos|default:"0" }}">
+    <input type="hidden" id="infoHabitacionesInput" name="info_habitaciones" value="">
+</form>
+<div class="modal fade" id="habitacionesModal" tabindex="-1" role="dialog" aria-labelledby="habitacionesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="habitacionesModalLabel">Seleccionar habitaciones y pasajeros</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group col-md-2">
+                        <label for="habitaciones">Habitaciones</label>
+                        <select id="habitaciones" class="custom-select">
+                            <option value="1" {% if request.GET.habitaciones == "1" %}selected{% endif %}>1</option>
+                            <option value="2" {% if request.GET.habitaciones == "2" %}selected{% endif %}>2</option>
+                            <option value="3" {% if request.GET.habitaciones == "3" %}selected{% endif %}>3</option>
+                            <option value="4" {% if request.GET.habitaciones == "4" %}selected{% endif %}>4</option>
+                            <option value="5" {% if request.GET.habitaciones == "5" %}selected{% endif %}>5</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="adultos1">Adultos</label>
+                        <select id="adultos1" class="custom-select">
+                            <option value="1" {% if request.GET.adultos == "1" %}selected{% endif %}>1</option>
+                            <option value="2" {% if request.GET.adultos == "2" %}selected{% endif %}>2</option>
+                            <option value="3" {% if request.GET.adultos == "3" %}selected{% endif %}>3</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="ninos1">Niños</label>
+                        <select id="ninos1" class="custom-select ninos-select" data-habitacion="1">
+                            <option value="0" {% if request.GET.ninos == "0" %}selected{% endif %}>0</option>
+                            <option value="1" {% if request.GET.ninos == "1" %}selected{% endif %}>1</option>
+                            <option value="2" {% if request.GET.ninos == "2" %}selected{% endif %}>2</option>
+                        </select>
+                    </div>
+                    <div class="form-row" id="edadesNinos1">
+                    </div>
+                </div>
+                <div id="habitacionesContainer">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarHabitaciones">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        $('#fechas_viaje').daterangepicker({
+            startDate: moment(),
+            endDate: moment().add(1, 'days'),
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        });
+
+        function actualizarHabitaciones() {
+            var numHabitaciones = parseInt($('#habitaciones').val());
+            var habitacionesContainer = $('#habitacionesContainer');
+            habitacionesContainer.empty();
+
+            for (var i = 2; i <= numHabitaciones; i++) {
+                var habitacionHtml = `
+                    <div class="form-row mt-3">
+                        <div class="form-group col-md-2">
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="adultos${i}">Adultos</label>
+                            <select id="adultos${i}" class="custom-select">
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="ninos${i}">Niños</label>
+                            <select id="ninos${i}" class="custom-select ninos-select" data-habitacion="${i}">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="form-row" id="edadesNinos${i}">
+                        </div>
+                    </div>
+                `;
+                habitacionesContainer.append(habitacionHtml);
+            }
+        }
+
+        function actualizarCamposEdadNinos(habitacion) {
+            var numNinos = parseInt($(`#ninos${habitacion}`).val());
+            var edadesNinosDiv = $(`#edadesNinos${habitacion}`);
+            edadesNinosDiv.empty();
+
+            for (var i = 1; i <= numNinos; i++) {
+                var campoEdad = `
+                    <div class="form-group col-md-6">
+                        <label for="edadNino${habitacion}_${i}">Edad</label>
+                        <select id="edadNino${habitacion}_${i}" class="custom-select">
+                            <option value="" selected>-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                        </select>                        
+                    </div>
+                `;
+                edadesNinosDiv.append(campoEdad);
+            }
+        }
+
+        $('#habitaciones').change(function() {
+            actualizarHabitaciones();
+            actualizarCamposEdadNinos(1);
+        });
+
+        $(document).on('change', '.ninos-select', function() {
+            var habitacion = $(this).data('habitacion');
+            actualizarCamposEdadNinos(habitacion);
+        });
+
+        $('#guardarHabitaciones').click(function() {
+            var numHabitaciones = $('#habitaciones').val();
+            var datosHabitaciones = [];
+            var totalAdultos = 0;
+            var totalNinos = 0;
+
+            for (var i = 1; i <= numHabitaciones; i++) {
+                var adultos = $(`#adultos${i}`).val();
+                var ninos = $(`#ninos${i}`).val();
+                var edadesNinos = [];
+
+                for (var j = 1; j <= ninos; j++) {
+                    edadesNinos.push($(`#edadNino${i}_${j}`).val());
+                }
+
+                totalAdultos += parseInt(adultos);
+                totalNinos += parseInt(ninos);
+
+                datosHabitaciones.push({
+                    habitacion: i,
+                    adultos: adultos,
+                    ninos: ninos,
+                    edadesNinos: edadesNinos
+                });
+            }
+
+            var infoHabitaciones = {
+                numHabitaciones: numHabitaciones,
+                totalAdultos: totalAdultos,
+                totalNinos: totalNinos,
+                datosHabitaciones: datosHabitaciones
+            };
+
+            // Puedes imprimir la variable en la consola para verificar
+            console.log(infoHabitaciones);
+
+            // También puedes guardar esta variable en un campo oculto o enviarla a un servidor si es necesario
+            // Por ejemplo, en un campo oculto:
+            $('#infoHabitacionesInput').val(JSON.stringify(infoHabitaciones));
+
+            $('#habitaciones_input').val(numHabitaciones);
+            $('#adultos_input').val(totalAdultos);
+            $('#ninos_input').val(totalNinos);
+
+            var habitacionesTexto = `<i class="fas fa-bed"></i> ${numHabitaciones}`;
+            var adultosTexto = `<i class="fas fa-user"></i> ${totalAdultos}`;
+            var ninosTexto = `<i class="fas fa-child"></i> ${totalNinos}`;
+            $('.btn-outline-primary').html(`${habitacionesTexto} ${adultosTexto} ${ninosTexto}`);
+
+            $('#habitacionesModal').modal('hide');
+        });
+
+        $('#habitaciones').val('1').trigger('change');
+        actualizarCamposEdadNinos(1);
+    });
+</script>
+{% endblock %}

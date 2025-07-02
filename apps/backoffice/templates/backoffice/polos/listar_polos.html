@@ -1,0 +1,137 @@
+{# backoffice/templates/polos/listar_polos.html #}
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Polos Turísticos" %}{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado + botón Crear -->
+  <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold mb-4 md:mb-0">{% trans "Polos Turísticos" %}</h1>
+    <a href="{% url 'backoffice:crear_polo' %}"
+       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <i class="fas fa-plus mr-2"></i> {% trans "Crear Polo Turístico" %}
+    </a>
+  </section>
+
+  <!-- Formulario de búsqueda -->
+  <section class="mb-6">
+    <form method="GET" action="">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div class="md:col-span-10">
+          <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="{% trans 'Buscar por: Nombre o País' %}"
+            class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+        </div>
+        <div class="md:col-span-2">
+          <button
+            type="submit"
+            class="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            {% trans "Buscar" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Tabla de Polos Turísticos -->
+  <section class="overflow-x-auto bg-white shadow rounded">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Nombre" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "País" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Acciones" %}
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for polo in page_obj %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ polo.nombre }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ polo.pais }}</td>
+          <td class="px-4 py-2 text-center text-sm">
+            <div class="flex justify-center space-x-2">
+              <a href="{% url 'backoffice:editar_polo_turistico' polo.pk %}"
+                 class="px-2 py-1 text-yellow-600 bg-yellow-100 rounded hover:bg-yellow-200"
+                 title="{% trans 'Editar polo' %}">
+                <i class="fas fa-pencil-alt"></i>
+              </a>
+              <a href="{% url 'backoffice:eliminar_polo' polo.pk %}"
+                 class="px-2 py-1 text-red-600 bg-red-100 rounded hover:bg-red-200"
+                 title="{% trans 'Eliminar polo' %}"
+                 onclick="return confirm('{% trans '¿Estás seguro de que deseas eliminar este polo?' %}');">
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="px-4 py-4 text-center text-gray-500">
+            {% trans "No hay polos turísticos registrados." %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Paginación -->
+  <section class="mt-6">
+    <nav aria-label="{% trans 'Paginación' %}">
+      <ul class="inline-flex items-center -space-x-px">
+        {% if page_obj.has_previous %}
+        <li>
+          <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-l hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Primera página' %}">&laquo;&laquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Página anterior' %}">&laquo;</a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li><span class="px-3 py-2 text-white bg-indigo-600 border border-gray-300">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-5' and num < page_obj.number|add:'5' %}
+            <li>
+              <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
+                 class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li>
+          <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Página siguiente' %}">&raquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-r hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Última página' %}">&raquo;&raquo;</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </section>
+
+</main>
+{% endblock %}

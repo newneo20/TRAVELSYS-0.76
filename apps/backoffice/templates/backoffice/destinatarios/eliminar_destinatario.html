@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}Eliminar Destinatario{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 bg-white shadow-md rounded">
+  <h1 class="text-2xl font-bold mb-4">Eliminar Destinatario</h1>
+  <p class="mb-4 text-gray-700">
+    ¿Estás seguro de que deseas eliminar al destinatario <strong>{{ destinatario.primer_nombre }} {{ destinatario.primer_apellido }}</strong>?
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex gap-4">
+      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Eliminar</button>
+      <a href="{% url 'backoffice:listar_destinatarios' %}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

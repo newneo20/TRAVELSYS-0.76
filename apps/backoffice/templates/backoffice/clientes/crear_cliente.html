@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6 max-w-screen-lg">
+
+    <h1 class="text-2xl font-bold mb-6">Crear Cliente</h1>
+    
+    <!-- FORMULARIO DE CREACIÓN DEL CLIENTE -->
+    <form method="POST" action="" class="bg-white p-4 shadow-md rounded">
+        {% csrf_token %}
+
+        <!-- DATOS PERSONALES -->
+        <h2 class="text-lg font-semibold mb-2">Datos Personales</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <!-- Nombre -->
+            <div>
+                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input 
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    placeholder="Ej: Juan"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ nombre|default_if_none:'' }}"
+                >
+            </div>
+            <!-- Apellidos -->
+            <div>
+                <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                <input 
+                    type="text"
+                    id="apellidos"
+                    name="apellidos"
+                    placeholder="Ej: Pérez Díaz"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ apellidos|default_if_none:'' }}"
+                >
+            </div>
+        </div>
+
+        <!-- IDENTIFICACIÓN -->
+        <h2 class="text-lg font-semibold mb-2">Identificación</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <!-- Pasaporte -->
+            <div>
+                <label for="pasaporte" class="block text-sm font-medium text-gray-700">Pasaporte</label>
+                <input 
+                    type="text"
+                    id="pasaporte"
+                    name="pasaporte"
+                    placeholder="Ej: H1234567"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ pasaporte|default_if_none:'' }}"
+                >
+            </div>
+            <!-- Carnet de Identidad -->
+            <div>
+                <label for="carnet_identidad" class="block text-sm font-medium text-gray-700">Carnet de Identidad</label>
+                <input 
+                    type="text"
+                    id="carnet_identidad"
+                    name="carnet_identidad"
+                    placeholder="Ej: 90123456789"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ carnet_identidad|default_if_none:'' }}"
+                >
+            </div>
+            <!-- Licencia -->
+            <div>
+                <label for="licencia" class="block text-sm font-medium text-gray-700">Licencia</label>
+                <input 
+                    type="text"
+                    id="licencia"
+                    name="licencia"
+                    placeholder="Ej: B123456"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ licencia|default_if_none:'' }}"
+                >
+            </div>
+            <!-- Pasaporte / Licencia (campo extra) -->
+            <div>
+                <label for="pasaporte_licencia" class="block text-sm font-medium text-gray-700">
+                    Pasaporte/Licencia (Extra)
+                </label>
+                <input 
+                    type="text"
+                    id="pasaporte_licencia"
+                    name="pasaporte_licencia"
+                    placeholder="Ej: Info adicional"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ pasaporte_licencia|default_if_none:'' }}"
+                >
+            </div>
+        </div>
+
+        <!-- DATOS DE CONTACTO -->
+        <h2 class="text-lg font-semibold mb-2">Datos de Contacto</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <!-- Teléfono principal -->
+            <div>
+                <label for="telefono_principal" class="block text-sm font-medium text-gray-700">
+                    Teléfono Principal
+                </label>
+                <input 
+                    type="text"
+                    id="telefono_principal"
+                    name="telefono_principal"
+                    placeholder="Ej: +53 55555555"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ telefono_principal|default_if_none:'' }}"
+                >
+            </div>
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input 
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="cliente@ejemplo.com"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ email|default_if_none:'' }}"
+                >
+            </div>
+        </div>
+
+        <!-- DIRECCIÓN -->
+        <h2 class="text-lg font-semibold mb-2">Dirección</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+            <!-- direccio (o direccion) -->
+            <div>
+                <label for="direccio" class="block text-sm font-medium text-gray-700">
+                    Dirección
+                </label>
+                <input 
+                    type="text"
+                    id="direccio"
+                    name="direccio"
+                    placeholder="Ej: Calle 10 No. 50"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ direccio|default_if_none:'' }}"
+                >
+            </div>
+            <!-- ciudad -->
+            <div>
+                <label for="ciudad" class="block text-sm font-medium text-gray-700">Ciudad</label>
+                <input 
+                    type="text"
+                    id="ciudad"
+                    name="ciudad"
+                    placeholder="Ej: Miami"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ ciudad|default_if_none:'' }}"
+                >
+            </div>
+            <!-- estado -->
+            <div>
+                <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                <input 
+                    type="text"
+                    id="estado"
+                    name="estado"
+                    placeholder="Ej: Florida"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ estado|default_if_none:'' }}"
+                >
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <!-- Pais -->
+            <div>
+                <label for="pais" class="block text-sm font-medium text-gray-700">País</label>
+                <input 
+                    type="text"
+                    id="pais"
+                    name="pais"
+                    placeholder="Ej: USA"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ pais|default_if_none:'' }}"
+                >
+            </div>
+            <!-- zip -->
+            <div>
+                <label for="zip" class="block text-sm font-medium text-gray-700">ZIP</label>
+                <input 
+                    type="text"
+                    id="zip"
+                    name="zip"
+                    placeholder="Ej: 33174"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ zip|default_if_none:'' }}"
+                >
+            </div>
+        </div>
+
+        <!-- OTROS -->
+        <h2 class="text-lg font-semibold mb-2">Otros</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <div>
+                <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">
+                    Fecha de Nacimiento
+                </label>
+                <input 
+                    type="date"
+                    id="fecha_nacimiento"
+                    name="fecha_nacimiento"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ fecha_nacimiento|default_if_none:'' }}"
+                >
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    ¿VIP?
+                </label>
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox"
+                        id="es_vip"
+                        name="es_vip"
+                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        {% if es_vip == True or es_vip == 'on' %}checked{% endif %}
+                    >
+                    <label for="es_vip" class="ml-2 text-sm text-gray-700">
+                        Marcar como VIP
+                    </label>
+                </div>
+            </div>
+        </div>
+        <!-- Observaciones (a lo ancho) -->
+        <div class="mb-4">
+            <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                Observaciones
+            </label>
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                rows="3"
+                placeholder="Notas importantes..."
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                       focus:ring-1 focus:ring-indigo-500 text-sm"
+            >{{ observaciones|default_if_none:'' }}</textarea>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="mt-2">
+            <button 
+                type="submit"
+                class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm"
+            >
+                Guardar
+            </button>
+            <a 
+                href="{% url 'backoffice:listar_clientes' %}"
+                class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+</main>
+{% endblock %}

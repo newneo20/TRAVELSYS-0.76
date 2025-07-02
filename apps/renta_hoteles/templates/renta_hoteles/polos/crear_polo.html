@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Polo Turístico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Crear Polo Turístico</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nombre" class="form-label"><strong>Nombre</strong></label>
+                        {{ form.nombre }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="pais" class="form-label"><strong>País</strong></label>
+                        {{ form.pais }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Guardar</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

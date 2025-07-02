@@ -1,0 +1,78 @@
+{% block content %}
+    <div class="container mt-4">  
+        
+        <div class="progress-container mb-4">
+            <h1>Habitaciones</h1>
+        </div>
+        <div class="card">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="card-body">                
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label for="tipo_habitacion" class="form-label"><strong>Tipo Habitación</strong></label>
+                            <input type="text" class="form-control" id="tipo_habitacion" name="tipo_habitacion">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="descripcion_habitacion" class="form-label"><strong>Descripción</strong></label>                            
+                            <textarea class="form-control" id="descripcion_habitacion" rows="3" placeholder="Descripcion de la Habitacion"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="datetimes" class="form-label"><strong>Deshabilitado por este rango de fechas</strong></label>
+                            <input type="text" class="form-control" id="datetimes" name="datetimes" />
+                            <script>
+                                $(function() {
+                                    $('input[name="datetimes"]').daterangepicker({
+                                        timePicker: true,
+                                        startDate: moment().startOf('hour'),
+                                        endDate: moment().startOf('hour').add(32, 'hour'),
+                                        locale: {
+                                            format: 'Y/MM/DD hh:mm A'
+                                        }
+                                    });
+                                });
+                            </script>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="foto_habitacion" class="form-label"><strong>Foto</strong></label>
+                            <input type="text" class="form-control" id="foto_habitacion" name="foto_habitacion">
+                        </div>                        
+                        
+                        <label for="capacidad_habitacion" class="form-label"><strong>Capacidad de la Habitación</strong></label>
+
+                        <div class="col-md-3">
+                            <label for="adultos_habitacion" class="form-label"><strong>Adultos</strong></label>
+                            <input type="text" class="form-control" id="adultos_habitacion" name="adultos_habitacion">
+                        </div>                    
+                        <div class="col-md-3">
+                            <label for="child_habitacion" class="form-label"><strong>Niños</strong></label>
+                            <input type="text" class="form-control" id="child_habitacion" name="child_habitacion">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="maxCapacidad_habitacion" class="form-label"><strong>Máxima Capacidad</strong></label>
+                            <input type="text" class="form-control" id="maxCapacidad_habitacion" name="maxCapacidad_habitacion">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="minimCapacidad_habitacion" class="form-label"><strong>Mínima Capacidad</strong></label>
+                            <input type="text" class="form-control" id="minimCapacidad_habitacion" name="minimCapacidad_habitacion">
+                        </div>
+                        <div class="col-md-12">
+                            <label for="descripcionCapacidad_habitacion" class="form-label"><strong>Descripción</strong></label>                            
+                            <textarea class="form-control" id="descripcionCapacidad_habitacion" rows="3" placeholder="Descripcion de la Capacidad de la Habitacion"></textarea>
+                        </div>                                 
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function(){
+            $('#datepicker').datepicker({
+                format: 'mm/dd/yyyy',
+                todayHighlight: true,
+                autoclose: true
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,38 @@
+En macOS, puedes usar el **SSH File Transfer Protocol (SFTP)** directamente desde el Finder para acceder a archivos en un servidor remoto. Aquí te explico cómo hacerlo:
+
+### **1. Conectarse a un servidor SFTP desde el Finder**
+1. **Abre el Finder**.
+2. En la barra de menú, haz clic en **Ir** > **Conectar al servidor** (o presiona **⌘ + K**).
+3. En el campo **Dirección del servidor**, ingresa la URL en el siguiente formato:
+   ```
+   sftp://usuario@direccion-del-servidor
+   ```
+   - Ejemplo: `sftp://usuario@ejemplo.com` o `sftp://192.168.1.100`.
+4. Haz clic en **Conectar**.
+5. Ingresa tu **contraseña** cuando se solicite (o usa autenticación por clave SSH si está configurada).
+
+### **2. Montar el servidor SFTP como una unidad de red (opcional)**
+Si necesitas acceder frecuentemente, puedes guardar la conexión:
+- Después de conectarte, en la ventana de autenticación, marca **"Recordar esta contraseña en el llavero"**.
+- Luego, en la ventana de conexión del Finder, haz clic en el botón **"+"** para guardar el servidor en tus favoritos.
+
+### **3. Alternativa: Usar Terminal para SFTP**
+Si prefieres una solución más avanzada, puedes usar la terminal:
+```bash
+sftp usuario@direccion-del-servidor
+```
+Una vez dentro, usa comandos como:
+- `ls` (listar archivos)
+- `get archivo` (descargar)
+- `put archivo` (subir)
+- `exit` (salir)
+
+### **4. Solución de problemas**
+- **Error de conexión**: Verifica que el servidor SSH/SFTP esté activo (`sudo service ssh status` en Linux).
+- **Permisos denegados**: Asegúrate de que el usuario tenga acceso al directorio remoto.
+- **Clave SSH no reconocida**: Si usas autenticación por clave, asegúrate de que tu clave pública esté en `~/.ssh/authorized_keys` en el servidor.
+
+### **Conclusión**
+El Finder de macOS soporta SFTP de forma nativa, lo que facilita la transferencia de archivos con servidores remotos sin software adicional. Si necesitas más funcionalidad, considera usar clientes como **Cyberduck**, **FileZilla** o **Transmit**.
+
+¿Necesitas ayuda con algo más? 😊

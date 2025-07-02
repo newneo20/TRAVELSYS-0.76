@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Crear Ubicación{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title">Crear Ubicación</h1>
+    <form class="needs-validation" method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="nombre" class="form-label">Nombre de la Ubicación</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona el nombre de la ubicación.
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

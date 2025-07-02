@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6 max-w-screen-lg">
+
+    <h1 class="text-2xl font-bold mb-6">Editar Contacto</h1>
+    
+    <!-- FORMULARIO DE EDICIÓN DEL CONTACTO -->
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        <!-- DATOS PERSONALES -->
+        <h2 class="text-lg font-semibold mb-2">Datos Personales</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <!-- Nombre -->
+            <div>
+                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    placeholder="Ej: Pedro"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.nombre }}"
+                >
+            </div>
+            <!-- Apellidos -->
+            <div>
+                <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                <input
+                    type="text"
+                    id="apellidos"
+                    name="apellidos"
+                    placeholder="Ej: Pérez López"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.apellidos }}"
+                >
+            </div>
+            <!-- Carnet de Identidad -->
+            <div>
+                <label for="carnet_identidad" class="block text-sm font-medium text-gray-700">
+                    Carné de Identidad
+                </label>
+                <input
+                    type="text"
+                    id="carnet_identidad"
+                    name="carnet_identidad"
+                    placeholder="Ej: 90123456789"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.carnet_identidad }}"
+                >
+            </div>
+            <!-- Pasaporte / Licencia -->
+            <div>
+                <label for="pasaporte_licencia" class="block text-sm font-medium text-gray-700">
+                    Pasaporte / Licencia
+                </label>
+                <input
+                    type="text"
+                    id="pasaporte_licencia"
+                    name="pasaporte_licencia"
+                    placeholder="Ej: H1234567"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.pasaporte_licencia }}"
+                >
+            </div>
+        </div>
+
+        <!-- DATOS DE CONTACTO -->
+        <h2 class="text-lg font-semibold mb-2">Datos de Contacto</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+            <!-- Teléfono Primario -->
+            <div>
+                <label for="telefono_primario" class="block text-sm font-medium text-gray-700">
+                    Teléfono Primario
+                </label>
+                <input
+                    type="text"
+                    id="telefono_primario"
+                    name="telefono_primario"
+                    placeholder="Ej: +53 55555555"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.telefono_primario }}"
+                >
+            </div>
+            <!-- Teléfono Secundario -->
+            <div>
+                <label for="telefono_secundario" class="block text-sm font-medium text-gray-700">
+                    Teléfono Secundario
+                </label>
+                <input
+                    type="text"
+                    id="telefono_secundario"
+                    name="telefono_secundario"
+                    placeholder="Ej: +1 305 1234567"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.telefono_secundario }}"
+                >
+            </div>
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="contacto@ejemplo.com"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.email }}"
+                >
+            </div>
+        </div>
+
+        <!-- DIRECCIÓN -->
+        <h2 class="text-lg font-semibold mb-2">Dirección</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+            <!-- Calle -->
+            <div>
+                <label for="calle" class="block text-sm font-medium text-gray-700">Calle</label>
+                <input
+                    type="text"
+                    id="calle"
+                    name="calle"
+                    placeholder="Ej: Calle 23"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.calle }}"
+                >
+            </div>
+            <!-- Número (No) -->
+            <div>
+                <label for="No" class="block text-sm font-medium text-gray-700">No.</label>
+                <input
+                    type="text"
+                    id="No"
+                    name="No"
+                    placeholder="Ej: #1001"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.No }}"
+                >
+            </div>
+            <!-- Entre calle -->
+            <div>
+                <label for="entre_calle" class="block text-sm font-medium text-gray-700">Entre calle</label>
+                <input
+                    type="text"
+                    id="entre_calle"
+                    name="entre_calle"
+                    placeholder="Ej: 10 y 12"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.entre_calle }}"
+                >
+            </div>
+            <!-- Y calle -->
+            <div>
+                <label for="y_calle" class="block text-sm font-medium text-gray-700">Y calle</label>
+                <input
+                    type="text"
+                    id="y_calle"
+                    name="y_calle"
+                    placeholder="(opcional)"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.y_calle }}"
+                >
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <!-- Apto / Reparto -->
+            <div>
+                <label for="apto_reparto" class="block text-sm font-medium text-gray-700">
+                    Apto / Reparto
+                </label>
+                <input
+                    type="text"
+                    id="apto_reparto"
+                    name="apto_reparto"
+                    placeholder="Ej: Apto 2 / Reparto"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.apto_reparto }}"
+                >
+            </div>
+            <!-- Piso -->
+            <div>
+                <label for="piso" class="block text-sm font-medium text-gray-700">Piso</label>
+                <input
+                    type="text"
+                    id="piso"
+                    name="piso"
+                    placeholder="Ej: 3"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.piso }}"
+                >
+            </div>
+            <!-- Municipio -->
+            <div>
+                <label for="municipio" class="block text-sm font-medium text-gray-700">Municipio</label>
+                <input
+                    type="text"
+                    id="municipio"
+                    name="municipio"
+                    placeholder="Ej: Cerro"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.municipio }}"
+                >
+            </div>
+            <!-- Provincia -->
+            <div>
+                <label for="provincia" class="block text-sm font-medium text-gray-700">Provincia</label>
+                <input
+                    type="text"
+                    id="provincia"
+                    name="provincia"
+                    placeholder="Ej: La Habana"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.provincia }}"
+                >
+            </div>
+        </div>
+
+        <!-- OTROS -->
+        <h2 class="text-lg font-semibold mb-2">Otros</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <!-- Fecha de Nacimiento -->
+            <div>
+                <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">
+                    Fecha de Nacimiento
+                </label>
+                <input 
+                    type="date"
+                    id="fecha_nacimiento"
+                    name="fecha_nacimiento"
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                    value="{{ contacto.fecha_nacimiento|date:'Y-m-d' }}"
+                >
+            </div>
+        </div>
+        <!-- Observaciones -->
+        <div class="mb-4">
+            <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                Observaciones
+            </label>
+            <textarea
+                id="observaciones"
+                name="observaciones"
+                rows="3"
+                placeholder="Notas importantes..."
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                       focus:ring-1 focus:ring-indigo-500 text-sm"
+            >{{ contacto.observaciones }}</textarea>
+        </div>
+
+        <!-- BOTONES -->
+        <div>
+            <button 
+                type="submit"
+                class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm"
+            >
+                Guardar Cambios
+            </button>
+            <a 
+                href="{% url 'backoffice:editar_cliente' contacto.cliente.id %}"
+                class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+</main>
+{% endblock %}

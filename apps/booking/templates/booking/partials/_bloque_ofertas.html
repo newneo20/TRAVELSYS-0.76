@@ -1,0 +1,40 @@
+{% load i18n %}
+
+{% for offer in ofertas %}
+  <div class="min-w-[240px] bg-white dark:bg-gray-800 rounded-md shadow p-4 hover:shadow-md hover:scale-[1.02] transition">
+    <div class="text-center text-3xl mb-2 text-indigo-500 dark:text-indigo-300">
+      {% if offer.tipo == 'hoteles' %}
+        <i class="fas fa-hotel"></i>
+      {% elif offer.tipo == 'carros' %}
+        <i class="fas fa-car"></i>
+      {% elif offer.tipo == 'vuelos' %}
+        <i class="fas fa-plane"></i>
+      {% elif offer.tipo == 'traslados' %}
+        <i class="fas fa-shuttle-van"></i>
+      {% elif offer.tipo == 'remesas' %}
+        <i class="fas fa-money-bill"></i>
+      {% else %}
+        <i class="fas fa-tag"></i>
+      {% endif %}
+    </div>
+
+    <h4 class="font-semibold text-center text-gray-700 dark:text-gray-100">{{ offer.nombre }}</h4>
+
+    <p class="text-sm text-gray-500 dark:text-gray-300 text-center mt-1 mb-2">
+      {{ offer.descripcion|truncatechars:50 }}
+    </p>
+
+    <div class="text-center mb-2">
+      <span class="inline-block bg-indigo-500 text-white px-2 py-1 rounded text-xs">
+        {% trans "Código:" %} {{ offer.codigo }}
+      </span>
+    </div>
+
+  </div>
+{% empty %}
+  <div class="min-w-full flex justify-center">
+    <div class="bg-blue-100 text-blue-700 p-4 rounded text-center shadow">
+      <i class="fas fa-info-circle mr-2"></i> {% trans "No hay ofertas disponibles." %}
+    </div>
+  </div>
+{% endfor %}

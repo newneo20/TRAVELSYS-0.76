@@ -1,0 +1,295 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TravelSYS – Dashboard{% endblock %}</title>
+
+  <!-- Google Fonts + Tailwind -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Alpine.js -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-gray-100 font-sans text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+
+<!-- NAVBAR -->
+<nav class="fixed top-0 w-full bg-white border-b z-50 dark:bg-gray-800 dark:border-gray-700">
+  <div class="flex justify-between items-center px-4 py-3">
+    <div class="flex items-center space-x-3">
+      <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" class="sm:hidden">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+      <a href="{% url 'dashboard' %}" class="flex items-center">
+        <img src="{% static 'images/TRAVELSYS LOGO.jpeg' %}" class="h-8 mr-2">
+        <span class="text-xl font-semibold"><span class="text-blue-500">Travel</span>SYS</span>
+      </a>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <button id="theme-toggle" class="p-2 rounded">
+        <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
+        <i class="fas fa-sun hidden" id="theme-toggle-light-icon"></i>
+      </button>
+
+      {% if user.is_authenticated %}
+      <div class="relative">
+        <button id="user-menu-btn" class="rounded-full bg-gray-800 p-1">
+          {% if user.logo %}
+            <img class="w-8 h-8 rounded-full" src="{{ user.logo.url }}" alt="Avatar">
+          {% else %}
+            <img class="w-8 h-8 rounded-full" src="{% static 'images/default_avatar.png' %}" alt="Avatar por defecto">
+          {% endif %}
+
+        </button>
+        <div id="dropdown-user" class="hidden absolute right-0 mt-3 w-48 bg-white dark:bg-gray-700 rounded shadow">
+          <div class="p-3 border-b">
+            <p class="font-medium">{{ user.get_full_name|default:user.username }}</p>
+            <p class="text-sm text-gray-500">{{ user.email }}</p>
+          </div>
+          <ul class="divide-y">
+            <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">{% trans "Perfil" %}</a></li>
+            <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">{% trans "Ajustes" %}</a></li>
+            <li>
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">{% trans "Cerrar sesión" %}</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+      {% else %}
+      <a href="{% url 'login' %}" class="text-gray-600 hover:text-blue-600">{% trans "Iniciar sesión" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- SIDEBAR ULTRA PRO MAX -->
+<aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 bg-gradient-to-b from-[#111827] via-[#1f2937] to-[#374151] rounded-r-3xl shadow-xl transition-all duration-300">
+  <div class="h-full px-4 pb-6 overflow-y-auto text-white">
+    <ul class="space-y-2 font-semibold text-sm">
+
+      <!-- Panel de Control -->
+      <li>
+        <a href="{% url 'dashboard' %}" class="flex items-center w-full p-3 rounded-lg hover:bg-blue-600 transition-all">
+          <i class="fas fa-chart-pie w-6 h-6 text-blue-400 mr-3"></i>
+          <span>Panel de Control</span>
+        </a>
+      </li>
+
+      <!-- Finanzas -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-emerald-600" data-collapse-toggle="finanzas-menu">
+          <i class="fas fa-hand-holding-usd w-6 h-6 text-emerald-400 mr-3"></i>
+          <span>Finanzas</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="finanzas-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li>
+            <a href="{% url 'listar_reservas_finanzas' %}" class="flex items-center p-2 rounded hover:bg-emerald-600">
+              <i class="fas fa-file-invoice-dollar w-5 h-5 mr-2"></i> Reservas
+            </a>
+          </li>
+        </ul>
+      </li>
+
+
+
+      <!-- Booking -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-cyan-600" data-collapse-toggle="booking-menu">
+          <i class="fas fa-book w-6 h-6 text-cyan-400 mr-3"></i>
+          <span>Booking</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="booking-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'booking:user_dashboard' %}" class="flex items-center p-2 rounded hover:bg-cyan-600"><i class="fas fa-user-circle w-5 h-5 mr-2"></i> Dashboard Usuarios</a></li>
+          <li><a href="{% url 'booking:hotel_dashboard' %}" class="flex items-center p-2 rounded hover:bg-cyan-600"><i class="fas fa-hotel w-5 h-5 mr-2"></i> Buscar Hoteles</a></li>
+        </ul>
+      </li>
+
+      <!-- Reservas y Usuarios -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-green-600" data-collapse-toggle="reservas-menu">
+          <i class="fas fa-cogs w-6 h-6 text-green-400 mr-3"></i>
+          <span>Backoffice</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="reservas-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_reservas' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-calendar-check w-5 h-5 mr-2"></i> Reservas</a></li>
+          <li><a href="{% url 'listar_usuarios' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-users w-5 h-5 mr-2"></i> Usuarios</a></li>
+          <li><a href="{% url 'backoffice:listar_ofertas_especiales' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-gift w-5 h-5 mr-2"></i> Ofertas</a></li>
+          <li><a href="{% url 'backoffice:listar_proveedores' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-truck w-5 h-5 mr-2"></i> Proveedores</a></li>
+          <li><a href="{% url 'backoffice:listar_clientes' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-user-friends w-5 h-5 mr-2"></i> Clientes</a></li>
+          <li><a href="{% url 'backoffice:listar_tasas_cambio' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-exchange-alt w-5 h-5 mr-2"></i> Tasa de Cambio</a></li>
+        </ul>
+      </li>
+
+      <!-- Hoteles -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-purple-600" data-collapse-toggle="hoteles-menu">
+          <i class="fas fa-hotel w-6 h-6 text-purple-400 mr-3"></i>
+          <span>Hoteles</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="hoteles-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_hoteles' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas fa-bed w-5 h-5 mr-2"></i> Listado</a></li>
+          <li><a href="{% url 'backoffice:listar_polos' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas fa-globe w-5 h-5 mr-2"></i> Polos</a></li>
+          <li><a href="{% url 'backoffice:listar_cadenas_hoteleras' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas fa-building w-5 h-5 mr-2"></i> Cadenas</a></li>
+        </ul>
+      </li>
+
+      <!-- Carros -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-yellow-400" data-collapse-toggle="carros-menu">
+          <i class="fas fa-car w-6 h-6 text-yellow-400 mr-3"></i>
+          <span>Carros</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="carros-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_rentadoras' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-building w-5 h-5 mr-2"></i> Rentadoras</a></li>
+          <li><a href="{% url 'backoffice:listar_categorias' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-tags w-5 h-5 mr-2"></i> Categorías</a></li>
+          <li><a href="{% url 'backoffice:listar_modelos_autos' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-car w-5 h-5 mr-2"></i> Modelos Autos</a></li>
+        </ul>
+      </li>
+
+      <!-- Traslados -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-pink-600" data-collapse-toggle="traslados-menu">
+          <i class="fas fa-shuttle-van w-6 h-6 text-pink-400 mr-3"></i>
+          <span>Traslados</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="traslados-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_traslados' %}" class="flex items-center p-2 rounded hover:bg-pink-600"><i class="fas fa-list w-5 h-5 mr-2"></i> Listado</a></li>
+          <li><a href="{% url 'backoffice:listar_transportistas' %}" class="flex items-center p-2 rounded hover:bg-pink-600"><i class="fas fa-truck-moving w-5 h-5 mr-2"></i> Transportistas</a></li>
+        </ul>
+      </li>
+
+      <!-- Certificados -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-amber-500" data-collapse-toggle="certificados-menu">
+          <i class="fas fa-certificate w-6 h-6 text-amber-400 mr-3"></i>
+          <span>Certificados</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="certificados-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_certificados' %}" class="flex items-center p-2 rounded hover:bg-amber-500"><i class="fas fa-file-alt w-5 h-5 mr-2"></i> Certificados</a></li>
+          <li><a href="{% url 'backoffice:listar_opciones_certificado' %}" class="flex items-center p-2 rounded hover:bg-amber-500"><i class="fas fa-star w-5 h-5 mr-2"></i> Opciones</a></li>
+        </ul>
+      </li>
+
+      <!-- Envíos -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-fuchsia-600" data-collapse-toggle="envios-menu">
+          <i class="fas fa-box-open w-6 h-6 text-fuchsia-400 mr-3"></i>
+          <span>Envíos</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="envios-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li><a href="{% url 'backoffice:listar_remitentes' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-user-tie w-5 h-5 mr-2"></i> Remitentes</a></li>
+          <li><a href="{% url 'backoffice:listar_destinatarios' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-user-tag w-5 h-5 mr-2"></i> Destinatarios</a></li>
+          <li><a href="{% url 'backoffice:listar_envios' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-truck-loading w-5 h-5 mr-2"></i> Envíos</a></li>
+          <li><a href="{% url 'backoffice:listar_items_envio' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-boxes w-5 h-5 mr-2"></i> Ítems</a></li>
+        </ul>
+      </li>
+
+      <!-- Remesas -->
+      <li>
+        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-green-600" data-collapse-toggle="remesas-menu">
+          <i class="fas fa-money-bill-wave w-6 h-6 text-green-400 mr-3"></i>
+          <span>Remesas</span>
+          <i class="fas fa-chevron-down ml-auto"></i>
+        </button>
+        <ul id="remesas-menu" class="hidden pl-6 space-y-2 mt-2">
+          <li>
+            <a href="{% url 'backoffice:listar_remesas' %}" class="flex items-center p-2 rounded hover:bg-green-600">
+              <i class="fas fa-list-alt w-5 h-5 mr-2"></i> Listar Remesas
+            </a>
+          </li>
+        </ul>
+      </li>
+
+
+    </ul>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="sm:ml-64 pt-20 p-4 min-h-screen">
+  {% block content %}{% endblock %}
+</main>
+
+{% block extra_scripts %}
+<script>
+  // Drawer toggle
+  document.querySelectorAll("[data-drawer-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("logo-sidebar").classList.toggle("-translate-x-full");
+    });
+  });
+
+  // Dark Mode PRO MAX
+  const themeToggleBtn = document.getElementById('theme-toggle');
+  const darkIcon = document.getElementById('theme-toggle-dark-icon');
+  const lightIcon = document.getElementById('theme-toggle-light-icon');
+  const enableDark = () => { document.documentElement.classList.add('dark'); darkIcon.classList.add('hidden'); lightIcon.classList.remove('hidden'); localStorage.setItem('theme', 'dark'); }
+  const disableDark = () => { document.documentElement.classList.remove('dark'); darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden'); localStorage.setItem('theme', 'light'); }
+  (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) ? enableDark() : disableDark();
+  themeToggleBtn.addEventListener('click', () => document.documentElement.classList.contains('dark') ? disableDark() : enableDark());
+
+  // Sidebar state memory (super inteligente)
+  document.addEventListener("DOMContentLoaded", () => {
+    const buttons = document.querySelectorAll("[data-collapse-toggle]");
+    const savedMenuId = localStorage.getItem("sidebarOpen");
+    buttons.forEach(btn => {
+      const menuId = btn.getAttribute("data-collapse-toggle");
+      const menu = document.getElementById(menuId);
+      if (menuId === savedMenuId) menu?.classList.remove("hidden");
+      btn.addEventListener("click", () => {
+        const isOpen = !menu.classList.contains("hidden");
+        document.querySelectorAll("ul[id$='-menu']").forEach(m => m.classList.add("hidden"));
+        if (!isOpen) {
+          menu.classList.remove("hidden");
+          localStorage.setItem("sidebarOpen", menuId);
+        } else {
+          menu.classList.add("hidden");
+          localStorage.removeItem("sidebarOpen");
+        }
+      });
+    });
+    document.querySelectorAll("ul[id$='-menu'] a").forEach(link => {
+      link.addEventListener("click", () => {
+        const parentMenu = link.closest("ul[id]");
+        if (parentMenu) localStorage.setItem("sidebarOpen", parentMenu.id);
+      });
+    });
+  });
+
+  // User dropdown
+  const userBtn = document.getElementById('user-menu-btn');
+  const userDropdown = document.getElementById('dropdown-user');
+  if (userBtn && userDropdown) {
+    userBtn.addEventListener('click', e => { e.stopPropagation(); userDropdown.classList.toggle('hidden'); });
+    document.addEventListener('click', e => {
+      if (!userDropdown.contains(e.target) && !userBtn.contains(e.target)) userDropdown.classList.add('hidden');
+    });
+  }
+</script>
+{% endblock %}
+
+</body>
+</html>

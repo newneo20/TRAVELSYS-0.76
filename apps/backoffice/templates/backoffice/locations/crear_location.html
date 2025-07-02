@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% load static %} 
+
+{% block title %}Crear Location{% endblock %}
+
+{% block content %}
+
+<!-- Incluir el archivo de estilos CSS -->
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title">Crear Location</h1>
+    <form class="needs-validation" method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="nombre" class="form-label">Nombre del Location</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona el nombre del location.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="pais" class="form-label">País</label>
+            <input type="text" class="form-control" id="pais" name="pais" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona el país.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="nomenclatura" class="form-label">Nomenclatura</label>
+            <input type="text" class="form-control" id="nomenclatura" name="nomenclatura" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona la nomenclatura.
+            </div>
+        </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="es_aeropuerto" name="es_aeropuerto">
+            <label for="es_aeropuerto" class="form-check-label">Es Aeropuerto</label>
+        </div>
+        <div class="form-group">
+            <label for="disponibilidad_carros" class="form-label">Disponibilidad de Carros</label>
+            <input type="number" class="form-control" id="disponibilidad_carros" name="disponibilidad_carros" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona la disponibilidad de carros.
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="categoria" class="form-label">Categoría</label>
+            <select class="form-control" id="categoria" name="categoria" required>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona una categoría.
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        'use strict'
+
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+{% endblock %}

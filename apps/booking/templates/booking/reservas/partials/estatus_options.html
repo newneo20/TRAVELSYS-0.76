@@ -1,0 +1,7 @@
+<option value="solicitada" {% if reserva.estatus == 'solicitada' %}selected{% endif %}>Solicitada</option>
+<option value="pendiente" {% if reserva.estatus == 'pendiente' %}selected{% endif %}>Pendiente</option>
+<option value="confirmada" {% if reserva.estatus == 'confirmada' %}selected{% endif %}>Confirmada</option>
+<option value="modificada" {% if reserva.estatus == 'modificada' %}selected{% endif %}>Modificada</option>
+<option value="ejecutada" {% if reserva.estatus == 'ejecutada' %}selected{% endif %}>Ejecutada</option>
+<option value="cancelada" {% if reserva.estatus == 'cancelada' %}selected{% endif %}>Cancelada</option>
+<option value="reembolsada" {% if reserva.estatus == 'reembolsada' %}selected{% endif %}>Reembolsada</option>

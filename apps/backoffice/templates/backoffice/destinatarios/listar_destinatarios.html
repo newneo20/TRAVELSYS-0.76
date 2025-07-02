@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Destinatarios" %}{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado + Botón Crear -->
+  <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold mb-4 md:mb-0">{% trans "Destinatarios" %}</h1>
+    <a href="{% url 'backoffice:crear_destinatario' %}"
+       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <i class="fas fa-plus mr-2"></i> {% trans "Crear Destinatario" %}
+    </a>
+  </section>
+
+  <!-- Formulario de búsqueda -->
+  <section class="mb-6">
+    <form method="get">
+      <input type="text" name="q" value="{{ query }}"
+             placeholder="{% trans 'Buscar por nombre o teléfono' %}"
+             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    </form>
+  </section>
+
+  <!-- Tabla de Destinatarios -->
+  <section class="overflow-x-auto bg-white shadow rounded">
+    <table class="min-w-full divide-y divide-gray-200 text-center">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Nombre" %}</th>
+          <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Teléfono" %}</th>
+          <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">{% trans "Acciones" %}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 bg-white">
+        {% for destinatario in page_obj %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2 text-sm text-gray-700">
+            {{ destinatario.primer_nombre }} {{ destinatario.primer_apellido }}
+          </td>
+          <td class="px-4 py-2 text-sm text-gray-700">
+            {{ destinatario.telefono }}
+          </td>
+          <td class="px-4 py-2 text-sm">
+            <div class="flex justify-center space-x-2">
+              <a href="{% url 'backoffice:editar_destinatario' destinatario.id %}"
+                 class="inline-flex items-center px-2 py-1 rounded bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                 title="{% trans 'Editar destinatario' %}">
+                <i class="fas fa-pencil-alt"></i>
+              </a>
+              <a href="{% url 'backoffice:eliminar_destinatario' destinatario.id %}"
+                 class="inline-flex items-center px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200"
+                 title="{% trans 'Eliminar destinatario' %}"
+                 onclick="return confirm('{% trans '¿Estás seguro de que deseas eliminar este destinatario?' %}');">
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="px-4 py-4 text-center text-gray-500">
+            {% trans "No hay destinatarios registrados." %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Paginación -->
+  <section class="mt-6">
+    <nav aria-label="{% trans 'Paginación' %}">
+      <ul class="inline-flex items-center -space-x-px">
+        {% if page_obj.has_previous %}
+        <li>
+          <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
+             class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 
+                    rounded-l-lg hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Primera' %}">&laquo;&laquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                    hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Anterior' %}">&laquo;</a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li>
+            <span class="py-2 px-3 leading-tight text-white bg-indigo-600 border border-gray-300">
+              {{ num }}
+            </span>
+          </li>
+          {% elif num > page_obj.number|add:'-5' and num < page_obj.number|add:'5' %}
+          <li>
+            <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
+               class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                      hover:bg-gray-100 hover:text-gray-700">
+              {{ num }}
+            </a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li>
+          <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                    hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Siguiente' %}">&raquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
+             class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                    rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Última' %}">&raquo;&raquo;</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </section>
+
+</main>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'booking/hotel_distal/base_hotel.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Política de Privacidad" %}{% endblock %}
+
+{% block hotel_content %}
+<div class="container mx-auto px-4 py-6">
+  <h1 class="text-2xl font-bold mb-4">{% trans "Política de Privacidad" %}</h1>
+  <p class="mb-4">
+    Tus datos se usarán únicamente para gestionar esta reserva, conforme a nuestra 
+    Política de Privacidad.
+  </p>
+  <p class="mb-2">
+    <strong>{% trans "Responsable del Tratamiento:" %}</strong> RutaMultiservice – info@rutamultiservice.com
+  </p>
+  <p class="mb-2">
+    <strong>{% trans "Finalidad:" %}</strong> Gestionar reservas, pagos y confirmaciones.
+  </p>
+  <p class="mb-2">
+    <strong>{% trans "Legitimación:" %}</strong> Ejecución de contrato de reserva.
+  </p>
+  <p class="mb-2">
+    <strong>{% trans "Destinatarios:" %}</strong> No se cederán datos a terceros, salvo obligación legal.
+  </p>
+  <p class="mb-2">
+    <strong>{% trans "Derechos:" %}</strong> Acceso, rectificación, supresión, oposición, limitación y portabilidad. 
+    Puedes ejercerlos contactando a info@rutamultiservice.com
+  </p>
+  <p class="mt-4 text-sm text-gray-600">
+    {% trans "Para más información, consulta nuestra página web o contáctanos directamente." %}
+  </p>
+</div>
+{% endblock %}

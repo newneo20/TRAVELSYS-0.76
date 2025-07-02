@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Crear Certificado de Vacaciones{% endblock %}
+
+{% block content %}
+
+<!-- Incluir el archivo de estilos CSS -->
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title">Crear Certificado de Vacaciones</h1>
+    <form class="needs-validation" method="post" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="nombre" class="form-label">Nombre del Certificado</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona el nombre del certificado.
+            </div>
+        </div>
+        
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="es_solo_adultos" name="es_solo_adultos">
+            <label for="es_solo_adultos" class="form-check-label">Es Solo para Adultos</label>
+        </div>
+        
+        <div class="form-group">
+            <label for="pasajero" class="form-label">Pasajero</label>
+            <select class="form-control" id="pasajero" name="pasajero" required>
+                {% for pasajero in pasajeros %}
+                    <option value="{{ pasajero.id }}">{{ pasajero.nombre }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona un pasajero.
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="opciones" class="form-label">Opciones de Certificado</label>
+            <select class="form-control" id="opciones" name="opciones" multiple>
+                {% for opcion in opciones %}
+                    <option value="{{ opcion.id }}">{{ opcion.nombre }} - {{ opcion.categoria }} Estrellas</option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples opciones.</small>
+            <div class="invalid-feedback">
+                Por favor, selecciona al menos una opción.
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        'use strict'
+
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+{% endblock %}

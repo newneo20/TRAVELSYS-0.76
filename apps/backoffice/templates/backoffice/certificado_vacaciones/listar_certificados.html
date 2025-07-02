@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Listar Certificados de Vacaciones{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <h1>Lista de Certificados de Vacaciones</h1>
+            <div class="col-md-2">
+                <a href="{% url 'backoffice:crear_certificado' %}" class="btn btn-outline-primary mb-3">
+                    Crear Certificado
+                </a>
+            </div>
+            <div class="col-md-10">
+                <form method="GET" action="">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Buscar por: (Nombre del Certificado)" name="q" value="{{ query }}">
+                        <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+                    </div>
+                </form>
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center align-middle">ID</th>
+                        <th class="text-center align-middle">Nombre</th>
+                        <th class="text-center align-middle">Es Solo para Adultos</th>
+                        <th class="text-center align-middle">Pasajero</th>
+                        <th class="text-center align-middle">Opciones</th>
+                        <th class="text-center align-middle">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for certificado in certificados %}
+                    <tr>
+                        <td class="text-center align-middle">{{ certificado.id }}</td>
+                        <td class="text-center align-middle">{{ certificado.nombre }}</td>
+                        <td class="text-center align-middle">{{ certificado.es_solo_adultos|yesno:"Sí,No" }}</td>
+                        <td class="text-center align-middle">{{ certificado.pasajero.nombre }}</td>
+                        <td class="text-center align-middle">
+                            {% for opcion in certificado.opciones.all %}
+                                {{ opcion.nombre }} ({{ opcion.categoria }} estrellas){% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td class="text-center align-middle">
+                            <a href="{% url 'backoffice:editar_certificado' certificado_id=certificado.id %}" class="btn btn-outline-warning">                            
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'backoffice:eliminar_certificado' certificado.id %}" class="btn btn-outline-danger">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Paginador (si es necesario) -->
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <!-- Implementación del paginador aquí -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}

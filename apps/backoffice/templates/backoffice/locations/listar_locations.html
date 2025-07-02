@@ -1,0 +1,157 @@
+{# backoffice/templates/locations/listar_locations.html #}
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Locations" %}{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+
+  <!-- Encabezado + Botón Crear -->
+  <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold mb-4 md:mb-0">{% trans "Locations" %}</h1>
+    <a href="{% url 'backoffice:crear_location' %}"
+       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <i class="fas fa-plus mr-2"></i> {% trans "Crear Location" %}
+    </a>
+  </section>
+
+  <!-- Formulario de búsqueda -->
+  <section class="mb-6">
+    <form method="GET" action="">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div class="md:col-span-10">
+          <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="{% trans 'Buscar por: Nombre, País o Nomenclatura' %}"
+            class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+        </div>
+        <div class="md:col-span-2">
+          <button
+            type="submit"
+            class="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            {% trans "Buscar" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Tabla de Locations -->
+  <section class="overflow-x-auto bg-white shadow rounded">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "ID" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Nombre" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "País" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Nomenclatura" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Es Aeropuerto" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Disponibilidad de Carros" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Categoría" %}
+          </th>
+          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {% trans "Acciones" %}
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for location in page_obj %}
+        <tr class="hover:bg-gray-100">
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.id }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.nombre }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.pais }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.nomenclatura }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {{ location.es_aeropuerto|yesno:"Sí,No" }}
+          </td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.disponibilidad_carros }}</td>
+          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ location.categoria.nombre }}</td>
+          <td class="px-4 py-2 text-center text-sm">
+            <div class="flex justify-center space-x-2">
+              <a href="{% url 'backoffice:editar_location' location.id %}"
+                 class="px-2 py-1 text-yellow-600 bg-yellow-100 rounded hover:bg-yellow-200"
+                 title="{% trans 'Editar location' %}">
+                <i class="fas fa-pencil-alt"></i>
+              </a>
+              <a href="{% url 'backoffice:eliminar_location' location.id %}"
+                 class="px-2 py-1 text-red-600 bg-red-100 rounded hover:bg-red-200"
+                 title="{% trans 'Eliminar location' %}"
+                 onclick="return confirm('{% trans "¿Estás seguro de que deseas eliminar esta location?" %}');">
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+            {% trans "No hay locations registradas." %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Paginación -->
+  <section class="mt-6">
+    <nav aria-label="{% trans 'Paginación' %}">
+      <ul class="inline-flex items-center -space-x-px">
+        {% if page_obj.has_previous %}
+        <li>
+          <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-l hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Primera página' %}">&laquo;&laquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Página anterior' %}">&laquo;</a>
+        </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li><span class="px-3 py-2 text-white bg-indigo-600 border border-gray-300">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-5' and num < page_obj.number|add:'5' %}
+            <li>
+              <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
+                 class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li>
+          <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Página siguiente' %}">&raquo;</a>
+        </li>
+        <li>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
+             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-r hover:bg-gray-100 hover:text-gray-700"
+             aria-label="{% trans 'Última página' %}">&raquo;&raquo;</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </section>
+
+</main>
+{% endblock %}

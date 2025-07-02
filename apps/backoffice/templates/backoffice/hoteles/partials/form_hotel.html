@@ -1,0 +1,295 @@
+{% load static %}
+
+<!-- templates/partials/form_hotel.html -->
+<div 
+  x-show="tab === 'hotel'" 
+  x-cloak 
+  x-data="hotelComponent()" 
+  class="mt-4 space-y-6 bg-white rounded-lg shadow p-6"
+>
+  <form 
+    x-ref="hotelForm"
+    action="{% if hotel %}{% url 'backoffice:editar_hotel' hotel.id %}{% else %}{% url 'backoffice:crear_hotel' %}{% endif %}"
+    method="POST"
+    enctype="multipart/form-data"
+    @submit.prevent="submitHotel()"
+    novalidate
+    class="space-y-6"
+  >
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="hotel">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Nombre del Hotel -->
+      <div>
+        <label for="hotel_nombre" class="block text-sm font-medium text-gray-700">Nombre del Hotel</label>
+        <input 
+          type="text" 
+          id="hotel_nombre" 
+          name="hotel_nombre" 
+          x-model="form.hotel_nombre" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Polo Turístico -->
+      <div>
+        <label for="polo_turistico" class="block text-sm font-medium text-gray-700">Polo Turístico</label>
+        <select 
+          id="polo_turistico" 
+          name="polo_turistico" 
+          x-model="form.polo_turistico" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+          <option value="">Seleccione un polo turístico</option>
+          {% for polo in polos_turisticos %}
+            <option value="{{ polo.id }}">{{ polo.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Cadena Hotelera -->
+      <div>
+        <label for="cadena_hotelera" class="block text-sm font-medium text-gray-700">Cadena Hotelera</label>
+        <select 
+          id="cadena_hotelera" 
+          name="cadena_hotelera" 
+          x-model="form.cadena_hotelera" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+          <option value="">Seleccione una cadena hotelera</option>
+          {% for cadena in cadenas_hoteleras %}
+            <option value="{{ cadena.id }}">{{ cadena.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Proveedor -->
+      <div>
+        <label for="proveedor" class="block text-sm font-medium text-gray-700">Proveedor</label>
+        <select 
+          id="proveedor" 
+          name="proveedor" 
+          x-model="form.proveedor" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+          <option value="">Seleccione un proveedor</option>
+          {% for proveedor in proveedores %}
+            <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Fee -->
+      <div>
+        <label for="fee" class="block text-sm font-medium text-gray-700">Fee</label>
+        <input 
+          type="text" 
+          id="fee" 
+          name="fee" 
+          x-model="form.fee" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Tipo de Fee -->
+      <div>
+        <label for="tipo_fee" class="block text-sm font-medium text-gray-700">Tipo de Fee</label>
+        <select 
+          id="tipo_fee" 
+          name="tipo_fee" 
+          x-model="form.tipo_fee" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+          <option value="">Seleccione un tipo</option>
+          <option value="porcentaje">Porcentaje</option>
+          <option value="fijo">Fijo</option>
+        </select>
+      </div>
+      <!-- Plan Alimenticio -->
+      <div>
+        <label for="plan_alimenticio" class="block text-sm font-medium text-gray-700">Plan Alimenticio</label>
+        <input 
+          type="text" 
+          id="plan_alimenticio" 
+          name="plan_alimenticio" 
+          x-model="form.plan_alimenticio" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Descripción -->
+      <div class="md:col-span-2 lg:col-span-4">
+        <label for="descripcion_hotel" class="block text-sm font-medium text-gray-700">Descripción</label>
+        <textarea 
+          id="descripcion_hotel" 
+          name="descripcion_hotel" 
+          x-model="form.descripcion_hotel" 
+          rows="3" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        ></textarea>
+      </div>
+      <!-- Dirección -->
+      <div class="md:col-span-2 lg:col-span-4">
+        <label for="direccion" class="block text-sm font-medium text-gray-700">Dirección</label>
+        <input 
+          type="text" 
+          id="direccion" 
+          name="direccion" 
+          x-model="form.direccion" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Check-in -->
+      <div>
+        <label for="checkin" class="block text-sm font-medium text-gray-700">Check-in (Hora)</label>
+        <input 
+          type="time" 
+          id="checkin" 
+          name="checkin" 
+          x-model="form.checkin" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Check-out -->
+      <div>
+        <label for="checkout" class="block text-sm font-medium text-gray-700">Check-out (Hora)</label>
+        <input 
+          type="time" 
+          id="checkout" 
+          name="checkout" 
+          x-model="form.checkout" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Orden -->
+      <div>
+        <label for="orden" class="block text-sm font-medium text-gray-700">Orden</label>
+        <input 
+          type="number" 
+          id="orden" 
+          name="orden" 
+          x-model="form.orden" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Categoría -->
+      <div>
+        <label for="categoria" class="block text-sm font-medium text-gray-700">Categoría</label>
+        <input 
+          type="number" 
+          id="categoria" 
+          name="categoria" 
+          x-model="form.categoria" 
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+      <!-- Solo Adultos -->
+      <div class="flex items-center mt-4">
+        <input 
+          type="checkbox" 
+          id="solo_adultos" 
+          name="solo_adultos" 
+          x-model="form.solo_adultos" 
+          class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+        >
+        <label for="solo_adultos" class="ml-2 text-sm text-gray-700">Solo Adultos</label>
+      </div>
+      <!-- Foto del Hotel -->
+      <div class="md:col-span-2 lg:col-span-4">
+        <label for="foto_hotel" class="block text-sm font-medium text-gray-700">Foto del Hotel</label>
+        <template x-if="form.existingImage">
+          <img 
+            :src="form.existingImage" 
+            alt="Foto del hotel" 
+            class="mt-2 w-48 h-auto rounded-lg border border-gray-300 shadow-lg"
+          >
+        </template>
+        <input 
+          type="file" 
+          id="foto_hotel" 
+          name="foto_hotel" 
+          accept="image/*" 
+          @change="previewImage" 
+          class="mt-1 block w-full text-gray-900 text-sm border border-gray-300 rounded-md focus:outline-none"
+        >
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button 
+        type="submit" 
+        class="inline-flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <i class="fas fa-save mr-2"></i>Guardar Hotel
+      </button>
+    </div>
+  </form>
+
+  <!-- Toast Notification -->
+  <div 
+    x-show="toast.show" 
+    x-text="toast.message" 
+    x-transition 
+    class="fixed top-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg"
+  ></div>
+</div>
+
+<script>
+  function hotelComponent() {
+    return {
+      form: {
+        hotel_nombre: '{{ hotel.hotel_nombre|default_if_none:"" }}',
+        polo_turistico: '{{ hotel.polo_turistico_id|default_if_none:"" }}',
+        cadena_hotelera: '{{ hotel.cadena_hotelera_id|default_if_none:"" }}',
+        proveedor: '{{ hotel.proveedor_id|default_if_none:"" }}',
+        fee: '{{ hotel.fee|default_if_none:"" }}',
+        tipo_fee: '{{ hotel.tipo_fee|default_if_none:"" }}',
+        plan_alimenticio: '{{ hotel.plan_alimenticio|default_if_none:"" }}',
+        descripcion_hotel: `{{ hotel.descripcion_hotel|escapejs }}`,
+        direccion: '{{ hotel.direccion|default_if_none:"" }}',
+        checkin: '{{ hotel.checkin|default_if_none:"" }}',
+        checkout: '{{ hotel.checkout|default_if_none:"" }}',
+        orden: '{{ hotel.orden|default_if_none:"" }}',
+        categoria: '{{ hotel.categoria|default_if_none:"" }}',
+        solo_adultos: {{ hotel.solo_adultos|yesno:"true,false" }},
+        existingImage: `{% if hotel.foto_hotel %}{% static 'backoffice/fotos_hoteles/' %}{{ hotel.foto_hotel }}{% endif %}`
+      },
+      toast: { show: false, message: '' },
+      previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        this.form.existingImage = URL.createObjectURL(file);
+      },
+      submitHotel() {
+        const formEl = this.$refs.hotelForm;
+        const data = new FormData(formEl);
+        fetch(formEl.action, {
+          method: formEl.method,
+          body: data
+        })
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) {
+            this.showToast('Hotel guardado con éxito');
+          } else {
+            this.showToast('Error al guardar el hotel');
+          }
+        })
+        .catch(() => this.showToast('Error de red'));
+      },
+      showToast(msg) {
+        this.toast.message = msg;
+        this.toast.show = true;
+        setTimeout(()=> this.toast.show = false, 3000);
+      }
+    }
+  }
+</script>

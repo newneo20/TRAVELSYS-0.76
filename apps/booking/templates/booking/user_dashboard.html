@@ -1,0 +1,583 @@
+{% extends 'booking/base_tabs.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Dashboard - {{ user.agencia|default:"Usuario" }}{% endblock %}
+
+{% block content %}
+
+<!-- NUEVO LAYOUT SIN SIDEBAR -->
+<div x-data="{ isDark: false, profileDropdown: false }" :class="{ 'dark': isDark }" class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+
+    <!-- TOPBAR -->
+    <header class="flex items-center justify-between bg-white dark:bg-gray-800 shadow px-6 py-4">
+      <div class="flex items-center space-x-4">
+        {% if user.logo %}
+          <img src="{{ user.logo.url }}" class="h-12 w-12 rounded-full border-2 border-indigo-200 dark:border-indigo-600" alt="Profile">
+        {% else %}
+          <img src="/media/logos/user_default_logo.png" class="h-12 w-12 rounded-full border-2 border-indigo-200 dark:border-indigo-600" alt="Profile">
+        {% endif %}
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ user.agencia|default:"Usuario" }}</h1>
+          {% if user.is_manager %}
+            <small class="text-gray-500 dark:text-gray-400">{% trans "Administrador" %}</small>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- MENÚ PRINCIPAL -->
+      <nav class="hidden md:flex items-center space-x-6">
+        <a href="{% url 'booking:user_dashboard' %}" class="font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-500">{% trans "Dashboard" %}</a>
+        <a href="{% url 'booking:listar_reservas' %}" class="font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-500">{% trans "Reservas" %}</a>
+        <a href="#" class="font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-500">{% trans "Ofertas" %}</a>
+        <a href="#" class="font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-500">{% trans "Historial" %}</a>
+        <a href="#" class="font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-500">{% trans "Contacto" %}</a>
+      </nav>
+
+      <!-- PERFIL -->
+      <div class="relative" x-data="{ open: false }">
+        <button @click="open = !open" class="flex items-center bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+
+          {% if user.logo %}
+            <img src="{{ user.logo.url }}" class="w-8 h-8 rounded-full" alt="Avatar del usuario">
+          {% else %}
+            <img src="{% static 'images/user_default_logo.png' %}" class="w-8 h-8 rounded-full" alt="Avatar por defecto">
+          {% endif %}
+
+          <i :class="open ? 'fas fa-chevron-up ml-2' : 'fas fa-chevron-down ml-2'" class="text-gray-600 dark:text-gray-300"></i>
+        </button>
+        <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 border rounded shadow z-50">
+          <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-200 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-user mr-2"></i>{% trans "Perfil" %}</a>
+          <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-200 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-cog mr-2"></i>{% trans "Configuración" %}</a>
+          <a href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-200 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"><i class="fas fa-sign-out-alt mr-2"></i>{% trans "Cerrar Sesión" %}</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido Scrollable -->
+    
+    
+    <main class="mx-auto w-full max-w-[2000px] px-8 py-10 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:text-gray-100 overflow-y-auto animate-fade-in-up">
+      
+      <!-- Tarjetas de Resumen (Pro-Max Full Visual) -->
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8 mb-10">
+
+        <!-- Por Pagar -->
+        <a 
+          href="{% url 'booking:listar_reservas' %}?estado=por_cobrar"
+          class="animated-card flex items-center space-x-3 p-6 rounded-3xl drop-shadow-xl bg-gradient-to-r from-red-600 to-red-400 hover:scale-105 transition"
+        >
+          <i class="fas fa-exclamation-circle text-white text-4xl"></i>
+          <div class="text-white">
+            <h3 class="font-bold">{% trans "Por Pagar" %}</h3>
+            <p class="text-lg">{{ reservas_por_cobrar }} {% trans "Reservas" %}</p>
+          </div>
+        </a>
+
+        <!-- Solicitada -->
+        <a 
+          href="{% url 'booking:listar_reservas' %}?estado=solicitada"
+          class="animated-card flex items-center space-x-3 p-6 rounded-3xl drop-shadow-xl bg-gradient-to-r from-blue-600 to-blue-400 hover:scale-105 transition"
+        >
+          <i class="fas fa-file-alt text-white text-4xl"></i>
+          <div class="text-white">
+            <h3 class="font-bold">{% trans "Solicitada" %}</h3>
+            <p class="text-lg">{{ estados_reservas.solicitada|default:"0" }} {% trans "Reservas" %}</p>
+          </div>
+        </a>
+
+        <!-- Pendiente -->
+        <a 
+          href="{% url 'booking:listar_reservas' %}?estado=pendiente"
+          class="animated-card flex items-center space-x-3 p-6 rounded-3xl drop-shadow-xl bg-gradient-to-r from-yellow-500 to-yellow-300 hover:scale-105 transition"
+        >
+          <i class="fas fa-clock text-white text-4xl"></i>
+          <div class="text-white">
+            <h3 class="font-bold">{% trans "Pendiente" %}</h3>
+            <p class="text-lg">{{ estados_reservas.pendiente|default:"0" }} {% trans "Reservas" %}</p>
+          </div>
+        </a>
+
+        <!-- Confirmada -->
+        <a 
+          href="{% url 'booking:listar_reservas' %}?estado=confirmada"
+          class="animated-card flex items-center space-x-3 p-6 rounded-3xl drop-shadow-xl bg-gradient-to-r from-green-600 to-green-400 hover:scale-105 transition"
+        >
+          <i class="fas fa-check-circle text-white text-4xl"></i>
+          <div class="text-white">
+            <h3 class="font-bold">{% trans "Confirmada" %}</h3>
+            <p class="text-lg">{{ estados_reservas.confirmada|default:"0" }} {% trans "Reservas" %}</p>
+          </div>
+        </a>
+
+        <!-- Modificada -->
+        <a 
+          href="{% url 'booking:listar_reservas' %}?estado=modificada"
+          class="animated-card flex items-center space-x-3 p-6 rounded-3xl drop-shadow-xl bg-gradient-to-r from-indigo-600 to-indigo-400 hover:scale-105 transition"
+        >
+          <i class="fas fa-edit text-white text-4xl"></i>
+          <div class="text-white">
+            <h3 class="font-bold">{% trans "Modificada" %}</h3>
+            <p class="text-lg">{{ estados_reservas.modificada|default:"0" }} {% trans "Reservas" %}</p>
+          </div>
+        </a>
+
+      </section>
+
+      <!-- Distribución de Reservas -->
+      <section class="mb-12">
+        <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-4">
+          {% trans "Distribución de Reservas" %}
+        </h2>
+      
+        <div class="flex justify-center">
+          <canvas id="reservasChart" class="w-full max-w-4xl"></canvas>
+        </div>
+
+      </section>
+
+      <!-- Carrusel Ofertas -->
+      <section class="mb-8">
+        <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-4">
+          {% trans "Ofertas Especiales" %}
+        </h2>
+      
+        <div id="contenedor_ofertas" class="flex justify-center items-center py-8">
+          <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+        </div>
+      </section>
+      
+      <!-- Actividad Reciente con Tabs Dinámicos -->
+      <section class="mb-12">
+        <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-4">
+          {% trans "Actividad Reciente" %}
+        </h2>
+      
+        <!-- Aquí van los Tabs dinámicos -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          <button data-tab="todos" class="px-4 py-2 rounded-full bg-blue-600 text-white transition">{% trans "Todos" %}</button>
+          <button data-tab="hoteles" class="px-4 py-2 rounded-full bg-indigo-600 text-white transition">{% trans "Hoteles" %}</button>
+          <button data-tab="traslados" class="px-4 py-2 rounded-full bg-purple-600 text-white transition">{% trans "Traslados" %}</button>
+          <button data-tab="remesas" class="px-4 py-2 rounded-full bg-green-600 text-white transition">{% trans "Remesas" %}</button>
+          <button data-tab="certificado" class="px-4 py-2 rounded-full bg-yellow-500 text-white transition">{% trans "Certificados" %}</button>
+          <button data-tab="envio" class="px-4 py-2 rounded-full bg-red-500 text-white transition">{% trans "Envíos" %}</button>
+        </div>
+      
+        <!-- Aquí sigue el loader mientras carga -->
+        <div id="contenedor_reservas" class="flex justify-center items-center py-8">
+          <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+        </div>
+      </section>
+
+
+
+    </main>
+  </div>
+</div>
+
+<style>
+/* Scrollbar Personalizado */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 9999px;
+}
+
+/* Animación de Tarjetas (Fade-In-Up) */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animated-card {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+.animated-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.animated-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.animated-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.animated-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.animated-card:nth-child(5) {
+  animation-delay: 0.5s;
+}
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+.loader {
+  border-top-color: #3498db;
+  animation: spinner 1s linear infinite;
+}
+@keyframes spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  
+      // Datos enviados desde la vista (asegúrate de pasarlos por contexto Django)
+      const dataChart = {
+          labels: ['Solicitada', 'Pendiente', 'Confirmada', 'Modificada', 'Ejecutada', 'Cancelada', 'Reembolsada'],
+          datasets: [{
+              label: 'Reservas',
+              data: [
+                {{ estados_reservas.solicitada|default:0 }},
+                {{ estados_reservas.pendiente|default:0 }},
+                {{ estados_reservas.confirmada|default:0 }},
+                {{ estados_reservas.modificada|default:0 }},
+                {{ estados_reservas.ejecutada|default:0 }},
+                {{ estados_reservas.cancelada|default:0 }},
+                {{ estados_reservas.reembolsada|default:0 }},
+              ],
+              backgroundColor: [
+                  '#2563EB',  // Azul (Solicitada)
+                  '#F59E0B',  // Amarillo (Pendiente)
+                  '#10B981',  // Verde (Confirmada)
+                  '#8B5CF6',  // Violeta (Modificada)
+                  '#6366F1',  // Indigo (Ejecutada)
+                  '#EF4444',  // Rojo (Cancelada)
+                  '#6B7280',  // Gris (Reembolsada)
+              ],
+              borderRadius: 8, 
+              barPercentage: 0.6,
+              categoryPercentage: 0.6
+          }]
+      };
+  
+      const ctx = document.getElementById('reservasChart').getContext('2d');
+  
+      new Chart(ctx, {
+          type: 'bar',
+          data: dataChart,
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              aspectRatio: 2.5,
+              plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                      backgroundColor: '#111827',
+                      titleColor: '#fff',
+                      bodyColor: '#fff',
+                      padding: 12,
+                      cornerRadius: 8
+                  }
+              },
+              scales: {
+                  x: {
+                      ticks: {
+                          color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151',
+                          font: { size: 14, weight: 'bold' }
+                      },
+                      grid: { display: false }
+                  },
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                          color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151',
+                          font: { size: 14 }
+                      },
+                      grid: { color: 'rgba(0,0,0,0.05)' }
+                  }
+              }
+          }
+      });
+  
+  });
+  </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('verDetallesModal');
+      const closeButtons = modal.querySelectorAll('#closeModal');
+      const detallesContent = document.getElementById('detallesReservaContent');
+      const spinner = document.getElementById('spinner');
+      const reservaIdSpan = document.getElementById('reservaId');
+  
+      function openModal() { modal.classList.remove('hidden'); }
+      function closeModal() { modal.classList.add('hidden'); }
+  
+      closeButtons.forEach(btn => btn.addEventListener('click', closeModal));
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  
+      // Ahora agregamos la lógica de carga
+      document.querySelectorAll('.ver-detalles').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              const id = btn.getAttribute('data-id');
+              reservaIdSpan.textContent = id;
+              spinner.classList.remove('hidden');
+              detallesContent.innerHTML = '';
+  
+              try {
+                  const res = await fetch(`/backoffice/reservas/detalles_reserva/${id}/`);
+                  if (!res.ok) throw new Error('Error en la respuesta del servidor');
+                  const data = await res.json();
+                  spinner.classList.add('hidden');
+  
+                  // Tabla inicial
+                  let html = `
+                    <table class="min-w-full text-sm text-gray-700 dark:text-gray-200">
+                      <thead class="bg-gray-100 dark:bg-gray-700">
+                        <tr>
+                          <th class="px-4 py-2 text-left">{% trans "Campo" %}</th>
+                          <th class="px-4 py-2 text-left">{% trans "Valor" %}</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                  `;
+  
+                  // Tipo de reserva
+                  const tipo = (data.tipo || '').toUpperCase();
+                  html += `
+                    <tr>
+                      <td class="px-4 py-2 font-medium">{% trans "Tipo" %}</td>
+                      <td class="px-4 py-2">${tipo}</td>
+                    </tr>
+                  `;
+  
+                  // Condiciones según tipo de reserva
+                  if (data.tipo === 'hoteles') {
+                    html += `
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Hotel" %}</td><td class="px-4 py-2">${data.hotel}</td></tr>
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Dirección" %}</td><td class="px-4 py-2">${data.direccion}</td></tr>
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Check-in" %}</td><td class="px-4 py-2">${data.checkin}</td></tr>
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Check-out" %}</td><td class="px-4 py-2">${data.checkout}</td></tr>
+                      <tr>
+                        <td class="px-4 py-2 font-medium">{% trans "Habitaciones" %}</td>
+                        <td class="px-4 py-2">
+                          <table class="w-full text-sm">
+                            <tbody>
+                              ${data.habitaciones.map(h => `
+                                <tr class="bg-gray-50 dark:bg-gray-800">
+                                  <td class="px-2 py-1"><strong>${h.nombre}</strong></td>
+                                  <td class="px-2 py-1">Adultos: ${h.adultos}</td>
+                                  <td class="px-2 py-1">Niños: ${h.ninos}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    `;
+                  }
+                  else if (data.tipo === 'envio') {
+                    html += `
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Remitente" %}</td><td class="px-4 py-2">${data.remitente}</td></tr>
+                      <tr><td class="px-4 py-2 font-medium">{% trans "Destinatario" %}</td><td class="px-4 py-2">${data.destinatario}</td></tr>
+                      <tr>
+                        <td class="px-4 py-2 font-medium">{% trans "Ítems del Envío" %}</td>
+                        <td class="px-4 py-2">
+                          <table class="w-full text-sm">
+                            <thead>
+                              <tr>
+                                <th class="px-2 py-1 text-left">{% trans "Descripción" %}</th>
+                                <th class="px-2 py-1 text-center">{% trans "Cant." %}</th>
+                                <th class="px-2 py-1 text-center">{% trans "Peso" %}</th>
+                                <th class="px-2 py-1 text-right">{% trans "Valor Aduanal" %}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${data.items.map(item => `
+                                <tr class="bg-gray-50 dark:bg-gray-800">
+                                  <td class="px-2 py-1">${item.descripcion}</td>
+                                  <td class="px-2 py-1 text-center">${item.cantidad}</td>
+                                  <td class="px-2 py-1 text-center">${item.peso} kg</td>
+                                  <td class="px-2 py-1 text-right">$${item.valor_aduanal}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    `;
+                  }
+                  else {
+                    html += `
+                      <tr>
+                        <td class="px-4 py-2 font-medium">{% trans "Detalles" %}</td>
+                        <td class="px-4 py-2 italic text-gray-500">{% trans "No hay detalles disponibles para este tipo de reserva." %}</td>
+                      </tr>
+                    `;
+                  }
+  
+                  html += `</tbody></table>`;
+                  detallesContent.innerHTML = html;
+                  openModal();
+              } catch (err) {
+                  spinner.classList.add('hidden');
+                  detallesContent.innerHTML = `<p class="text-red-500 text-center">${err.message}</p>`;
+                  openModal();
+              }
+          });
+      });
+  });
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const contenedor = document.getElementById('contenedor_ofertas');
+  
+    // Mostramos loader mientras se cargan los datos
+    contenedor.innerHTML = `
+      <div class="flex justify-center items-center py-8">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+      </div>
+    `;
+  
+    // Hacemos el fetch al endpoint AJAX
+    fetch("{% url 'booking:cargar_ofertas_especiales' %}")
+      .then(response => {
+        if (!response.ok) throw new Error('Error al cargar ofertas');
+        return response.json();
+      })
+      .then(data => {
+        if (data.html) {
+          contenedor.innerHTML = `
+            <div class="flex space-x-4 overflow-x-auto pb-2 scroll-smooth custom-scrollbar">
+              ${data.html}
+            </div>
+          `;
+        } else {
+          contenedor.innerHTML = `
+            <div class="bg-yellow-100 text-yellow-600 p-4 rounded text-center">
+              No se encontraron ofertas disponibles.
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        contenedor.innerHTML = `
+          <div class="bg-red-100 text-red-600 p-4 rounded text-center">
+            Ocurrió un error al cargar las ofertas: ${error.message}
+          </div>
+        `;
+        console.error("Error al cargar las ofertas:", error);
+      });
+  });  
+</script>
+
+<script>
+  // ====================== CARGA DE OFERTAS ESPECIALES ======================
+  document.addEventListener('DOMContentLoaded', function() {
+    const contenedor = document.getElementById('contenedor_ofertas');
+    contenedor.innerHTML = `
+      <div class="flex justify-center items-center py-8">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+      </div>
+    `;
+  
+    fetch("{% url 'booking:cargar_ofertas_especiales' %}")
+      .then(response => {
+        if (!response.ok) throw new Error('Error al cargar ofertas');
+        return response.json();
+      })
+      .then(data => {
+        if (data.html) {
+          contenedor.innerHTML = `
+            <div class="flex space-x-4 overflow-x-auto pb-2 scroll-smooth custom-scrollbar">
+              ${data.html}
+            </div>
+          `;
+        } else {
+          contenedor.innerHTML = `
+            <div class="bg-yellow-100 text-yellow-600 p-4 rounded text-center">
+              No se encontraron ofertas disponibles.
+            </div>
+          `;
+        }
+      })
+      .catch(error => {
+        contenedor.innerHTML = `
+          <div class="bg-red-100 text-red-600 p-4 rounded text-center">
+            Ocurrió un error al cargar las ofertas: ${error.message}
+          </div>
+        `;
+        console.error("Error al cargar las ofertas:", error);
+      });
+  });
+  </script>
+  
+  <script>
+  // ====================== CARGA DE ACTIVIDAD RECIENTE ======================
+  document.addEventListener('DOMContentLoaded', function() {
+    const contenedor = document.getElementById('contenedor_reservas');
+    const botones = document.querySelectorAll('[data-tab]');
+  
+    // Carga inicial
+    cargarReservas('todos');
+  
+    // Asignar eventos a los tabs
+    botones.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const tipo = this.getAttribute('data-tab');
+        cargarReservas(tipo);
+      });
+    });
+  
+    function cargarReservas(tipo) {
+      contenedor.innerHTML = `
+        <div class="flex justify-center items-center py-8">
+          <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+        </div>
+      `;
+  
+      fetch(`/booking/ajax/cargar_reservas_recientes/?tipo=${tipo}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Error al cargar reservas');
+          return res.json();
+        })
+        .then(data => {
+          contenedor.innerHTML = `
+            <table class="min-w-full text-sm text-gray-700 dark:text-gray-200">
+              <thead class="bg-gray-100 dark:bg-gray-700">
+                <tr>
+                  <th class="px-4 py-3 text-center uppercase tracking-wide text-xs">{% trans "ID" %}</th>
+                  <th class="px-4 py-3 text-center uppercase tracking-wide text-xs">{% trans "Tipo" %}</th>
+                  <th class="px-4 py-3 text-center uppercase tracking-wide text-xs">{% trans "Detalles" %}</th>
+                  <th class="px-4 py-3 text-center uppercase tracking-wide text-xs">{% trans "Fecha" %}</th>
+                </tr>
+              </thead>
+              ${data.html}
+            </table>
+          `;
+        })
+        .catch(err => {
+          contenedor.innerHTML = `
+            <div class="bg-red-100 text-red-600 p-4 rounded text-center">
+              Error al cargar reservas: ${err.message}
+            </div>
+          `;
+          console.error("Error al cargar reservas:", err);
+        });
+    }
+  });
+  </script>
+
+
+{% endblock %}

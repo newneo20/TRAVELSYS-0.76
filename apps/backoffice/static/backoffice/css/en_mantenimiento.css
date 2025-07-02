@@ -1,0 +1,73 @@
+body, html {
+    height: 100% !important;
+    margin: 0 !important;
+    font-family: Arial, sans-serif !important;
+    background: linear-gradient(to bottom, #fff9e6, #ffe680) !important;
+}
+
+.container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 90% !important;
+    max-width: 600px !important;
+    height: auto !important;
+    min-height: 80% !important;
+    margin: 5% auto !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    text-align: center !important;
+    padding: 40px 20px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.icon {
+    width: 100px !important;
+    height: 100px !important;
+    margin-bottom: 20px !important;
+}
+
+h1 {
+    font-size: 2.5em !important;
+    color: #333 !important;
+    margin-bottom: 20px !important;
+}
+
+p {
+    font-size: 1.2em !important;
+    color: #666 !important;
+    max-width: 100% !important;
+    margin-bottom: 30px !important;
+}
+
+.button {
+    background-color: #ffc107 !important;
+    color: #333 !important;
+    padding: 10px 20px !important;
+    text-decoration: none !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    transition: background-color 0.3s, transform 0.2s !important;
+}
+
+.button:hover {
+    background-color: #e0a800 !important;
+    transform: translateY(-2px) !important;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95% !important;
+        margin: 2.5% auto !important;
+        padding: 30px 15px !important;
+    }
+
+    h1 {
+        font-size: 2em !important;
+    }
+
+    p {
+        font-size: 1em !important;
+    }
+}

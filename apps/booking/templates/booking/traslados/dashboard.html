@@ -1,0 +1,169 @@
+{% extends 'booking/traslados/base_traslados.html' %}
+{% load static %}
+
+{% block title %}Dashboard de TRASLADOS Destacados{% endblock %}
+
+{% block hotel_content %}
+<!-- ========== -->
+<!-- Custom CSS -->
+<!-- ========== -->
+<link rel="stylesheet" type="text/css" href="{% static 'css/dashboard_hotel.css' %}"> 
+
+<div class="mx-auto px-4 py-5 max-w-6xl">
+    <!-- Título de la sección -->
+    <h1 class="text-center mb-5 text-3xl font-bold">Descubre Nuestros Traslados Destacados</h1>
+    
+    <!-- Contenedor principal del carrusel Tailwind -->
+    <div class="relative w-full overflow-hidden mx-auto" id="tailwindCarousel" style="max-width: 900px;">
+        
+        <!-- Slides (imagenes) -->
+        <div class="slide hidden">
+            <img 
+                src="{% static 'backoffice/fotos_traslados/Transtur.jpeg' %}"
+                alt="Por los destinos de Cuba"
+                class="w-full h-auto object-cover"
+            />
+            <!-- Caption -->
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 rounded p-3 text-white text-center w-11/12 sm:w-2/3">
+                <h2 class="text-lg font-bold">Transtur</h2>
+                <p class="text-sm">Por los destinos de Cuba.</p>
+            </div>
+        </div>
+
+        <div class="slide hidden">
+            <img 
+                src="{% static 'backoffice/fotos_traslados/Transgaviota.jpeg' %}"
+                alt="Liderazgo e innovación, exclusividad y visión de futuro"
+                class="w-full h-auto object-cover"
+            />
+            <!-- Caption -->
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 rounded p-3 text-white text-center w-11/12 sm:w-2/3">
+                <h2 class="text-lg font-bold">Transgaviota</h2>
+                <p class="text-sm">Liderazgo e innovación, exclusividad y visión de futuro.</p>
+            </div>
+        </div>
+
+        <div class="slide hidden">
+            <img
+                src="{% static 'backoffice/fotos_traslados/Taxis_Cuba.jpeg' %}"
+                alt="Unidos: Hacemos Cuba"
+                class="w-full h-auto object-cover"
+            />
+            <!-- Caption -->
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 rounded p-3 text-white text-center w-11/12 sm:w-2/3">
+                <h2 class="text-lg font-bold">Taxis Cuba</h2>
+                <p class="text-sm">Unidos: Hacemos Cuba</p>
+            </div>
+        </div>
+
+        <!-- Botones anterior/siguiente -->
+        <button 
+            id="prevSlideBtn"
+            class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white text-xl p-2 rounded hover:bg-opacity-50 focus:outline-none"
+        >
+            <span class="fas fa-chevron-left"></span>
+        </button>
+        <button 
+            id="nextSlideBtn"
+            class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-30 text-white text-xl p-2 rounded hover:bg-opacity-50 focus:outline-none"
+        >
+            <span class="fas fa-chevron-right"></span>
+        </button>
+
+        <!-- Indicadores -->
+        <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            <!-- Se generarán bullets en el script, o puedes hacerlo manual -->
+            <span class="indicator w-3 h-3 bg-gray-300 rounded-full cursor-pointer"></span>
+            <span class="indicator w-3 h-3 bg-gray-300 rounded-full cursor-pointer"></span>
+            <span class="indicator w-3 h-3 bg-gray-300 rounded-full cursor-pointer"></span>
+        </div>
+    </div>
+
+    <!-- Cartas con animación hover (opcional) -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="hover-card border rounded p-4 shadow transition-transform">
+            <h2 class="font-bold text-lg mb-2">Transporte de lujo</h2>
+            <p class="text-sm text-gray-600">
+                Disfruta de viajes privados con clase y comodidad. 
+            </p>
+        </div>
+        <div class="hover-card border rounded p-4 shadow transition-transform">
+            <h2 class="font-bold text-lg mb-2">Escapadas rápidas</h2>
+            <p class="text-sm text-gray-600">
+                Ideal para traslados inmediatos en toda la isla. 
+            </p>
+        </div>
+        <div class="hover-card border rounded p-4 shadow transition-transform">
+            <h2 class="font-bold text-lg mb-2">Conexión asegurada</h2>
+            <p class="text-sm text-gray-600">
+                Viaja con la tranquilidad de tener tu transporte garantizado. 
+            </p>
+        </div>
+    </div>
+
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // === TAILWIND CAROUSEL (JS) ===
+    const slides = document.querySelectorAll('#tailwindCarousel .slide');
+    const indicators = document.querySelectorAll('#tailwindCarousel .indicator');
+    const nextBtn = document.getElementById('nextSlideBtn');
+    const prevBtn = document.getElementById('prevSlideBtn');
+
+    let currentSlide = 0;
+    showSlide(currentSlide);
+
+    function showSlide(index) {
+        // Ocultar todos los slides
+        slides.forEach(slide => slide.classList.add('hidden'));
+        indicators.forEach(ind => ind.classList.remove('bg-blue-600'));
+
+        // Mostrar el slide actual
+        slides[index].classList.remove('hidden');
+        // Resaltar el indicador
+        indicators[index].classList.add('bg-blue-600');
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+    }
+    function prevSlide() {
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(currentSlide);
+    }
+
+    nextBtn.addEventListener('click', nextSlide);
+    prevBtn.addEventListener('click', prevSlide);
+
+    // Indicadores (bullets)
+    indicators.forEach((ind, i) => {
+        ind.addEventListener('click', () => {
+            currentSlide = i;
+            showSlide(i);
+        });
+    });
+
+    // OPCIONAL: auto-play cada 6s
+    // setInterval(nextSlide, 6000);
+
+    // === Animación hover para cartas ===
+    const cards = document.querySelectorAll('.hover-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'scale(1.05)';
+            card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'scale(1)';
+            card.style.boxShadow = '';
+        });
+    });
+
+});
+</script>
+{% endblock extra_js %}
+{% endblock hotel_content %}

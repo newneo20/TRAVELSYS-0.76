@@ -1,0 +1,411 @@
+{% extends 'booking/hotel/base_hotel.html' %}
+
+{% load static %}
+{% load dictionary_extras %}
+
+{% block title %}Resultados de la búsqueda{% endblock %}
+
+{% block hotel_content %}
+<!-- Formulario oculto para mantener los valores de la búsqueda -->
+<form id="hiddenSearchForm" method="get" action="{% url 'booking:hotel_results' %}" class="hidden">
+    <input name="destino" value="{{ destino }}">
+    <input name="fechas_viaje" value="{{ fechas_viaje }}">
+    <input name="habitaciones" value="{{ cant_habitaciones }}">
+    <input name="adultos" value="{{ cant_adultos }}">
+    <input name="ninos" value="{{ cant_ninos }}">
+    <input name="info_habitaciones" value="{{ info_habitaciones|escape }}">
+</form>
+
+<!-- Campo de búsqueda y lista de hoteles -->
+<div class="mx-auto max-w-6xl mt-5 px-4">
+    
+    <!-- Encabezado de búsqueda -->
+    <div class="mb-4">
+        <input 
+            type="text" 
+            id="hotelSearchInput" 
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            placeholder="Buscar hotel por nombre..."
+        />
+        <h2 class="text-2xl font-bold mt-4 mb-3">Resultados de la búsqueda:</h2>
+        <p class="text-lg" id="hotelCountText">
+            Encontramos {{ hoteles|length }} hoteles para tu estancia en {{ destino }}
+        </p>
+    </div>
+
+    <!-- Contenedor de hoteles -->
+    <div class="flex justify-center">
+        <div id="hotelsContainer" class="w-full md:w-11/12">
+            {% for hotel in hoteles %}
+                {% with oferta_mas_barata=ofertas_mas_baratas|dictkey:hotel.id %}
+                    {% if oferta_mas_barata %}
+                        <!-- Tarjeta de hotel -->
+                        <div 
+                            class="hotel-card mb-4 shadow border rounded overflow-hidden"
+                            data-hotel-name="{{ hotel.hotel_nombre|lower }}"
+                        >
+                            <div class="grid grid-cols-1 md:grid-cols-2">
+                                <!-- Imagen del hotel -->
+                                <div class="relative h-48 md:h-auto">
+                                    <img 
+                                        src="{% static 'backoffice/fotos_hoteles/' %}{{ hotel.foto_hotel }}"
+                                        class="w-full h-full object-cover"
+                                        alt="{{ hotel.hotel_nombre }}"
+                                    />
+                                </div>
+
+                                <!-- Contenido del hotel -->
+                                <div class="p-4 flex flex-col">
+                                    <!-- Título y estrellas -->
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h5 class="font-bold text-xl mb-0">
+                                            {{ hotel.hotel_nombre }}
+                                        </h5>
+                                        <span class="text-white bg-blue-600 px-2 py-1 rounded text-sm">
+                                            {% for i in "12345" %}
+                                                <i class="fas fa-star{% if i > hotel.categoria|stringformat:"d" %} text-gray-300{% endif %}"></i>
+                                            {% endfor %}
+                                        </span>
+                                    </div>
+                                    <!-- Ubicación -->
+                                    <p class="text-gray-600 mb-2 text-sm">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        {{ hotel.polo_turistico.nombre }} - {{ hotel.direccion }}
+                                    </p>
+                                    <!-- Descripción corta -->
+                                    <p class="mb-3 text-sm">
+                                        {{ hotel.descripcion_hotel|truncatewords:30 }}
+                                    </p>
+
+                                    <!-- Etiquetas y precios -->
+                                    <div class="mt-auto">
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            {% if hotel.hotelsetting.cantidad_noches > 0 %}
+                                                <span class="bg-yellow-300 text-gray-700 px-2 py-1 text-sm rounded">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    Estancia mínima {{ hotel.hotelsetting.cantidad_noches }} noches
+                                                </span>
+                                            {% endif %}
+                                            <span class="bg-blue-100 text-gray-700 px-2 py-1 text-sm rounded">
+                                                <i class="fas fa-utensils mr-1"></i>
+                                                {{ hotel.plan_alimenticio }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex justify-between items-center">
+                                            <!-- Botón Detalles -->
+                                            <a href="{% url 'booking:hotel_detalle' hotel.id %}?{{ request.GET.urlencode }}"
+                                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm"
+                                            >
+                                                Ver Detalles
+                                            </a>
+                                            <!-- Precio -->
+                                            <div class="text-right">
+                                                <span class="block text-sm text-gray-500">
+                                                    Desde
+                                                </span>
+                                                <span class="text-blue-600 text-xl font-bold">
+                                                    ${{ oferta_mas_barata|floatformat:2 }}
+                                                </span>
+                                                <span class="block text-sm text-gray-500">
+                                                    por persona por noche.
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% empty %}
+                <!-- Mensaje cuando no hay hoteles -->
+                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded">
+                    No se encontraron hoteles que coincidan con tu búsqueda. 
+                    Por favor, intenta con diferentes criterios.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de habitaciones (Tailwind) -->
+<!-- Para replicar un modal: fixed + hidden + transform. Quita la clase hidden para mostrarlo -->
+<div 
+    id="habitacionesModal" 
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center"
+>
+    <div class="bg-white rounded shadow-lg max-w-3xl w-full mx-auto my-8">
+        <!-- Encabezado del modal -->
+        <div class="flex justify-between items-center p-4 border-b">
+            <h5 class="text-xl font-bold" id="habitacionesModalLabel">
+                Seleccionar habitaciones y pasajeros
+            </h5>
+            <button 
+                type="button" 
+                class="text-2xl text-gray-600 hover:text-gray-800 focus:outline-none"
+                id="closeModalBtn"
+            >
+                &times;
+            </button>
+        </div>
+        <!-- Cuerpo del modal -->
+        <div class="p-4">
+            <!-- Contenido dinámico del modal -->
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-12 md:col-span-2">
+                    <label for="habitaciones" class="block mb-1 font-medium">
+                        Habitaciones
+                    </label>
+                    <select 
+                        id="habitaciones" 
+                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <!-- Agrega más opciones si es necesario -->
+                    </select>
+                </div>
+                <!-- Campos para adultos y niños de la habitación 1 -->
+                <div class="col-span-6 sm:col-span-2">
+                    <label for="adultos1" class="block mb-1 font-medium">Adultos</label>
+                    <select 
+                        id="adultos1"
+                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <!-- Más opciones -->
+                    </select>
+                </div>
+                <div class="col-span-6 sm:col-span-2">
+                    <label for="ninos1" class="block mb-1 font-medium">Niños</label>
+                    <select 
+                        id="ninos1"
+                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ninos-select"
+                        data-habitacion="1"
+                    >
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <!-- Más opciones -->
+                    </select>
+                </div>
+            </div>
+            <!-- Contenedor dinámico para habitaciones adicionales y edades de niños -->
+            <div id="habitacionesContainer" class="mt-4"></div>
+        </div>
+        <!-- Footer del modal -->
+        <div class="flex justify-end space-x-3 p-4 border-t">
+            <button 
+                type="button" 
+                class="border border-gray-300 text-gray-700 rounded px-4 py-2 hover:bg-gray-100 transition-colors"
+                id="cancelarModalBtn"
+            >
+                Cancelar
+            </button>
+            <button 
+                type="button" 
+                class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition-colors"
+                id="guardarHabitaciones"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Campo oculto para info_habitaciones -->
+<input 
+    type="hidden" 
+    id="infoHabitacionesInput" 
+    value='{{ info_habitaciones|escapejs }}'
+/>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        /* ================ FILTRO EN TIEMPO REAL ================ */
+        $('#hotelSearchInput').on('input', function() {
+            var searchText = $(this).val().toLowerCase();
+            var visibleHotels = 0;
+
+            $('.hotel-card').each(function() {
+                var hotelName = $(this).data('hotel-name');
+                if (hotelName.includes(searchText)) {
+                    $(this).removeClass('hidden');
+                    visibleHotels++;
+                } else {
+                    $(this).addClass('hidden');
+                }
+            });
+            $('#hotelCountText').text(
+                `Encontramos ${visibleHotels} hoteles para tu estancia en {{ destino }}`
+            );
+        });
+
+        /* ================ DATE RANGE PICKER ================ */
+        $('#fechas_viaje').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'YYYY-MM-DD',
+                separator: ' - ',
+                applyLabel: 'Aplicar',
+                cancelLabel: 'Cancelar'
+            }
+        });
+        
+        setTimeout(function() {
+            var fechasViaje = "{{ fechas_viaje }}";
+            if (fechasViaje) {
+                var fechas = fechasViaje.split(' - ');
+                $('#fechas_viaje').data('daterangepicker').setStartDate(fechas[0]);
+                $('#fechas_viaje').data('daterangepicker').setEndDate(fechas[1]);
+                $('#fechas_viaje').val(fechasViaje);
+            }
+        }, 1);
+
+        $('#fechas_viaje').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(
+                picker.startDate.format('YYYY-MM-DD') + ' - ' +
+                picker.endDate.format('YYYY-MM-DD')
+            );
+        });
+        $('#fechas_viaje').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+        });
+
+        /* ================ MODAL (Tailwind) ================ */
+
+        // Abrir modal: quita la clase hidden
+        function abrirModal() {
+            $('#habitacionesModal').removeClass('hidden');
+            // Podrías usar .fadeIn(), si quieres un efecto jQuery
+        }
+        // Cerrar modal: agrega la clase hidden
+        function cerrarModal() {
+            $('#habitacionesModal').addClass('hidden');
+            // Podrías usar .fadeOut(), si quieres un efecto
+        }
+
+        // Para simular un botón de "abrir modal" (puedes adaptarlo a tu gusto)
+        // EJEMPLO: con un ID #abrirModalBtn (si tuvieras uno)
+        // $('#abrirModalBtn').click(abrirModal);
+
+        // Cerrar modal con el botón "X" o "Cancelar"
+        $('#closeModalBtn, #cancelarModalBtn').on('click', function(){
+            cerrarModal();
+        });
+
+        // Info de habitaciones (parseamos JSON)
+        var infoHabitaciones = JSON.parse($('#infoHabitacionesInput').val() || 'null') || {};
+        console.log("Información de habitaciones inicial:", infoHabitaciones);
+
+        // Cargar valores en el modal al "abrirse" 
+        // (Si tuvieras un show event, podrías engancharlo. Ej: #habitacionesModal
+        //  .on('openSomething', function() {...})
+        //  Por ahora, lo puedes cargar manualmente si lo abres con un click.
+
+        // Manejo del botón "OK" (guardarHabitaciones)
+        $('#guardarHabitaciones').on('click', function() {
+            // Ejemplo de armar infoHabitaciones con tu propia lógica
+            var numHab = $('#habitaciones').val();
+            var datosHabitaciones = [];
+            var totalAdultos = 0;
+            var totalNinos = 0;
+
+            for (var i = 1; i <= numHab; i++) {
+                var adu = $('#adultos' + i).val() || 2;
+                var nin = $('#ninos' + i).val() || 0;
+                var edades = [];
+
+                for (var j = 1; j <= nin; j++) {
+                    edades.push($('#edadNino' + i + '_' + j).val() || '');
+                }
+
+                totalAdultos += parseInt(adu);
+                totalNinos += parseInt(nin);
+
+                datosHabitaciones.push({
+                    habitacion: i,
+                    adultos: adu,
+                    ninos: nin,
+                    edadesNinos: edades
+                });
+            }
+
+            infoHabitaciones = {
+                numHabitaciones: numHab,
+                totalAdultos: totalAdultos,
+                totalNinos: totalNinos,
+                datosHabitaciones: datosHabitaciones
+            };
+            console.log("Información de habitaciones actualizada:", infoHabitaciones);
+
+            // Actualizamos input oculto
+            $('#infoHabitacionesInput').val(JSON.stringify(infoHabitaciones));
+
+            // Ejemplo: cerrar el modal
+            cerrarModal();
+        });
+
+        // Manejo para generar habitaciones adicionales
+        $('#habitaciones').on('change', function() {
+            var num = parseInt($(this).val());
+            var container = $('#habitacionesContainer');
+            container.empty();
+
+            for (var i = 2; i <= num; i++) {
+                var html = `
+                <div class="grid grid-cols-12 gap-4 mb-4 mt-2">
+                    <div class="col-span-12 sm:col-span-2">
+                        <label class="block mb-1 font-medium" for="adultos${i}">Adultos</label>
+                        <select id="adultos${i}" class="border border-gray-300 rounded px-2 py-1 w-full">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    <div class="col-span-12 sm:col-span-2">
+                        <label class="block mb-1 font-medium" for="ninos${i}">Niños</label>
+                        <select id="ninos${i}" data-habitacion="${i}"
+                            class="ninos-select border border-gray-300 rounded px-2 py-1 w-full">
+                            <option value="0" selected>0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div class="col-span-12 sm:col-span-8" id="edadesNinos${i}">
+                        <!-- Campos de edad se generan dinámicamente -->
+                    </div>
+                </div>`;
+                container.append(html);
+            }
+        });
+
+        // Manejo del select de niños (para generar campos de edad)
+        $(document).on('change', '.ninos-select', function() {
+            var habIndex = $(this).data('habitacion');
+            var numNinos = parseInt($(this).val());
+            var edadesDiv = $('#edadesNinos' + habIndex);
+            edadesDiv.empty();
+
+            for (var j = 1; j <= numNinos; j++) {
+                var ageHtml = `
+                <div class="inline-block mr-2 mb-2">
+                    <label for="edadNino${habIndex}_${j}" class="block mb-1 text-sm font-medium">Edad</label>
+                    <select id="edadNino${habIndex}_${j}" class="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="" selected>-</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <!-- ... hasta 13, si quieres... -->
+                    </select>
+                </div>`;
+                edadesDiv.append(ageHtml);
+            }
+        });
+    });
+</script>
+{% endblock extra_js %}

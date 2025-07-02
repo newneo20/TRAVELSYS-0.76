@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Proveedor{% endblock %}
+
+{% block header %}Editar Proveedor{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1>Editar Proveedor</h1>
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label for="nombre" class="form-label"><strong>Nombre</strong></label>
+                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ proveedor.nombre }}">
+            </div>
+            <div class="col-md-6">
+                <label for="correo1" class="form-label"><strong>Correo 1</strong></label>
+                <input type="email" class="form-control" id="correo1" name="correo1" value="{{ proveedor.correo1 }}">
+            </div>
+            <div class="col-md-6">
+                <label for="correo2" class="form-label"><strong>Correo 2</strong></label>
+                <input type="email" class="form-control" id="correo2" name="correo2" value="{{ proveedor.correo2 }}">
+            </div>
+            <div class="col-md-6">
+                <label for="correo3" class="form-label"><strong>Correo 3</strong></label>
+                <input type="email" class="form-control" id="correo3" name="correo3" value="{{ proveedor.correo3 }}">
+            </div>
+            <div class="col-md-6">
+                <label for="telefono" class="form-label"><strong>Teléfono</strong></label>
+                <input type="text" class="form-control" id="telefono" name="telefono" value="{{ proveedor.telefono }}">
+            </div>
+            <div class="col-md-6">
+                <label for="direccion" class="form-label"><strong>Dirección</strong></label>
+                <input type="text" class="form-control" id="direccion" name="direccion" value="{{ proveedor.direccion }}">
+            </div>
+            <div class="col-md-12">
+                <label for="detalles_cuenta_bancaria" class="form-label"><strong>Detalles de cuenta bancaria</strong></label>
+                <textarea class="form-control" id="detalles_cuenta_bancaria" name="detalles_cuenta_bancaria" rows="3">{{ proveedor.detalles_cuenta_bancaria }}</textarea>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

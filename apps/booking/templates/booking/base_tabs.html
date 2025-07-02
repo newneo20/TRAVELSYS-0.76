@@ -1,0 +1,221 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TravelSYS Booking{% endblock %}</title>
+  
+  <!-- jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <!-- Select2 CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
+  
+  <!-- Date Range Picker CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <!-- CSS personalizado -->
+  <link rel="stylesheet" href="{% static 'css/output_booking.css' %}">
+
+  <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-100 h-full flex flex-col">
+  {% block navbar %}
+  <!-- HEADER TOP -->
+  <header class="fixed top-0 w-full bg-white shadow z-50">
+    <div class="container mx-auto flex justify-between items-center py-3 px-5">
+      <div class="flex items-center space-x-3">
+        <a href="{% url 'dashboard' %}">
+          <img src="{% static 'images/TRAVELSYS_logo_W.png' %}" class="h-10">
+        </a>
+        <h1 class="font-bold text-xl text-indigo-600">Travel<span class="text-blue-500">SYS</span></h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        {% if user.is_authenticated %}
+          <div x-data="{ open: false }" class="relative">
+            <button @click="open = !open" class="flex items-center">
+
+              {% if user.logo %}
+                <img src="{{ user.logo.url }}" class="h-10 w-10 rounded-full border-2 border-indigo-400" alt="Avatar del usuario">
+              {% else %}
+                <img src="{% static 'images/user_default_logo.png' %}" class="h-10 w-10 rounded-full border-2 border-indigo-400" alt="Avatar por defecto">
+              {% endif %}
+
+              <span class="ml-2">{{ user.agencia|default:"Usuario" }}</span>
+              <i class="fas fa-chevron-down ml-1"></i>
+            </button>
+            <div x-show="open" @click.away="open=false" class="absolute right-0 mt-2 w-48 bg-white border rounded shadow">
+              <a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-user mr-2"></i>Perfil</a>
+              <div class="border-t"></div>
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                  <i class="fas fa-sign-out-alt mr-2"></i>Cerrar sesión
+                </button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'login' %}" class="px-4 py-2 border rounded text-blue-600 hover:bg-blue-100">Iniciar sesión</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- MENÚ PRINCIPAL -->
+  <nav class="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 shadow-xl mt-16 py-6">
+    <div class="container mx-auto flex flex-wrap justify-center gap-4 px-4">
+
+      <!-- Home -->
+      <a href="{% url 'booking:user_dashboard' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-home text-lg"></i> Home
+      </a>
+
+      <!-- Hoteles -->
+      <a href="{% url 'booking:hotel_dashboard' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-hotel text-lg"></i> Hoteles
+      </a>
+
+      <!-- Hoteles Distal -->
+      <a href="{% url 'booking:hotel_dashboard_distal' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-hotel text-lg"></i> Hoteles Distal
+      </a>
+
+      <!-- Remesas -->
+      <a href="{% url 'booking:remesas' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-hand-holding-usd text-lg"></i> Remesas
+      </a>
+
+      <!-- Traslados -->
+      <a href="{% url 'booking:traslado_dashboard' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-bus text-lg"></i> Traslados
+      </a>
+
+      <!-- Crear Envío -->
+      <a href="{% url 'booking:crear_reserva_envio' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-shipping-fast text-lg"></i> Crear Envío
+      </a>
+
+      <!-- Settings -->
+      <a href="{% url 'booking:perfil_cliente' %}" 
+        class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 text-white font-semibold shadow-lg 
+                hover:from-blue-500 hover:to-blue-400 hover:shadow-2xl transition duration-300 transform hover:-translate-y-1">
+        <i class="fas fa-cog text-lg"></i> Settings
+      </a>
+
+    </div>
+  </nav>
+  
+  
+  
+  
+  {% endblock navbar %}
+
+  <main class="container mx-auto mt-0 pt-2 flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER NIVEL DIOS -->
+  <footer class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 text-white py-10 mt-12 shadow-inner">
+    <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
+
+      <!-- Sección: Sobre Nosotros -->
+      <div class="space-y-4">
+        <h5 class="text-xl font-bold flex items-center">
+          <i class="fas fa-globe-americas mr-3 text-blue-300"></i> Sobre Nosotros
+        </h5>
+        <p class="text-sm text-blue-100 leading-relaxed">
+          Plataforma integral de reservas: hoteles, traslados, remesas y envíos. Tecnología de vanguardia desde Miami.
+          TravelSYS simplifica y automatiza tu operación turística.
+        </p>
+      </div>
+
+      <!-- Sección: Contacto -->
+      <div class="space-y-4">
+        <h5 class="text-xl font-bold flex items-center">
+          <i class="fas fa-envelope-open-text mr-3 text-blue-300"></i> Contacto
+        </h5>
+        <ul class="text-sm text-blue-100 space-y-2">
+          <li><i class="fas fa-envelope mr-2"></i> info@rutamultiservice.com</li>
+          <li><i class="fas fa-phone-alt mr-2"></i> +1 786 499 0612</li>
+          <li><i class="fas fa-map-marker-alt mr-2"></i> 9666 Coral Way, Miami, FL 33165</li>
+        </ul>
+      </div>
+
+      <!-- Sección: Redes Sociales (opcional) -->
+      <div class="space-y-4">
+        <h5 class="text-xl font-bold flex items-center">
+          <i class="fas fa-share-alt mr-3 text-blue-300"></i> Síguenos
+        </h5>
+        <div class="flex space-x-4">
+          <a href="#" class="hover:text-blue-300 transition"><i class="fab fa-facebook fa-lg"></i></a>
+          <a href="#" class="hover:text-blue-300 transition"><i class="fab fa-instagram fa-lg"></i></a>
+          <a href="#" class="hover:text-blue-300 transition"><i class="fab fa-linkedin fa-lg"></i></a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="border-t border-blue-500 mt-10 pt-6 text-center text-sm text-blue-200">
+      &copy; 2025 TravelSYS Miami. Todos los derechos reservados.
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+  {% block extra_js %}
+  <script>
+    $(document).ready(function() {
+      $('.select2').select2({
+        placeholder: "Selecciona una opción...",
+        allowClear: true
+      });
+    });
+  </script>
+  {% endblock extra_js %}
+
+  <script>
+    setInterval(function() {
+      fetch("{% url 'check_session' %}")
+        .then(response => {
+          if (!response.ok) {
+            window.location.href = "{% url 'login' %}";
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.status !== 'active') {
+            window.location.href = "{% url 'login' %}";
+          }
+        })
+        .catch(error => {
+          console.error("Error verificando la sesión:", error);
+          window.location.href = "{% url 'login' %}";
+        });
+    }, 300000);
+  </script>
+</body>
+</html>

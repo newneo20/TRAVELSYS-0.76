@@ -1,0 +1,164 @@
+{% block title %}Ofertas{% endblock %}
+
+{% block content %}
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+    <div class="container mt-4">
+        <div class="progress-container mb-4">
+            <h1>Ofertas</h1>
+        </div>
+        <div class="card">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="card-body">                
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="info_oferta" class="form-label"><strong>Informacion de la Oferta</strong></label>
+                        </div>   
+                        <div class="col-md-10 form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="Disponible">
+                            <label class="form-check-label" for="flexCheckDefault">
+                                Disponible
+                            </label>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="codigo_oferta" class="form-label"><strong>Codigo</strong></label>
+                            <input type="text" class="form-control" id="codigo_oferta" name="codigo_oferta">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="tipoHabitacion_oferta" class="form-label"><strong>Tipo Habitacion</strong></label>
+                            <select class="form-select" id="tipoHabitacion_oferta" name="tipoHabitacion_oferta">
+                                <option value="">Tipo Manual</option>
+                                {% for tipoHabitacion_oferta in tipoHabitacion_oferta %}
+                                    <option value="{{ tipoHabitacion_oferta.id }}">{{ tipoHabitacion_oferta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="disponibilidad" class="form-label"><strong>Disponibilidad</strong></label>
+                            <input type="text" class="form-control" id="disponibilidad" name="disponibilidad">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="fecha_viajeOferta" class="form-label"><strong>fecha Viaje</strong></label>
+                        </div>  
+
+                        <div class="col-md-3">
+                            <label for="origenViaje_oferta" class="form-label"><strong>Viaja desde</strong></label>
+                            <select class="form-select" id="origenViaje_oferta" name="origenViaje_oferta">
+                                <option value="">Travel from</option>
+                                {% for origenViaje_oferta in origenViaje_oferta %}
+                                    <option value="{{ origenViaje_oferta.id }}">{{ origenViaje_oferta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+
+
+                        <div class="col-md-3">
+                            <div class="container mt-4">
+                                <h1>Ejemplo de Datepicker</h1>
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="datepicker" class="form-label">Selecciona una fecha:</label>
+                                        <input type="text" class="form-control" id="datepicker" name="date">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Enviar</button>
+                                </form>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-3">
+                            <label for="destinoViaje_oferta" class="form-label"><strong>Viaja A</strong></label>
+                            <select class="form-select" id="destinoViaje_oferta" name="destinoViaje_oferta">
+                                <option value="">Travel to</option>
+                                {% for destinoViaje_oferta in destinoViaje_oferta %}
+                                    <option value="{{ destinoViaje_oferta.id }}">{{ destinoViaje_oferta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="reservadesde_oferta" class="form-label"><strong>Reserva desde</strong></label>
+                            <select class="form-select" id="reservadesde_oferta" name="reservadesde_oferta">
+                                <option value="">Booking from</option>
+                                {% for reservadesde_oferta in reservadesde_oferta %}
+                                    <option value="{{ reservadesde_oferta.id }}">{{ reservadesde_oferta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="reservaA_oferta" class="form-label"><strong>Reserva a</strong></label>
+                            <select class="form-select" id="reservaA_oferta" name="reservaA_oferta">
+                                <option value="">Booking to</option>
+                                {% for reservaA_oferta in reservaA_oferta %}
+                                    <option value="{{ reservaA_oferta.id }}">{{ reservaA_oferta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label for="info_oferta" class="form-label"><strong>Tarifa</strong></label>
+                        </div>   
+                        
+                        <div class="col-md-4">
+                            <label for="sencilla_oferta" class="form-label"><strong>Sencilla</strong></label>
+                            <input type="text" class="form-control" id="sencilla_oferta" name="sencilla_oferta">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="doble_oferta" class="form-label"><strong>Doble</strong></label>
+                            <input type="text" class="form-control" id="doble_oferta" name="doble_oferta">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="triple_oferta" class="form-label"><strong>Triple</strong></label>
+                            <input type="text" class="form-control" id="triple_oferta" name="triple_oferta">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="primerNino_oferta" class="form-label"><strong>Primer Nino</strong></label>
+                            <input type="text" class="form-control" id="primerNino_oferta" name="primerNino_oferta">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="edadLimitePrimerNino_oferta" class="form-label"><strong>Edad limite primer nino</strong></label>
+                            <input type="text" class="form-control" id="edadLimitePrimerNino_oferta" name="edadLimitePrimerNino_oferta">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="segundoNino_oferta" class="form-label"><strong>Segundo Nino</strong></label>
+                            <input type="text" class="form-control" id="segundoNino_oferta" name="segundoNino_oferta">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="edadLimiteSegundoNino_oferta" class="form-label"><strong>Edad limite segundo nino</strong></label>
+                            <input type="text" class="form-control" id="edadLimiteSegundoNino_oferta" name="edadLimiteSegundoNino_oferta">
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+    <!-- Incluye jQuery primero (solo una vez) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Luego incluye el JS de Select2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <!-- Incluye el CSS de Select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Para integrar Select2 con Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.4.6/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
+    <script>
+        $(document).ready(function() {
+            $('.form-select').select2({
+                theme: 'default'
+            });                  
+
+    </script>
+{% endblock %}

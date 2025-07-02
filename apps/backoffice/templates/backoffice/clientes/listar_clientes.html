@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6">
+
+    <!-- Sección Encabezado y Botón Crear -->
+    <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold mb-4 md:mb-0">
+            Lista de Clientes
+        </h1>
+        <a href="{% url 'backoffice:crear_cliente' %}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+                  text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 
+                  focus:ring-offset-2 focus:ring-indigo-500">
+            <i class="fas fa-user-plus mr-2"></i> Crear Cliente
+        </a>
+    </section>
+
+    <!-- Formulario de Búsqueda -->
+    <section class="mb-6">
+        <form method="GET" action="">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-10">
+                    <input 
+                        type="text"
+                        class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 
+                               focus:ring-indigo-500"
+                        placeholder="Buscar por: Nombre, Apellidos, Email, Teléfono..."
+                        name="q"
+                        value="{{ query }}"
+                    >
+                </div>
+                <div class="md:col-span-2 flex">
+                    <button 
+                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent 
+                               text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        type="submit">
+                        Buscar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabla de Clientes -->
+    <section class="overflow-x-auto bg-white shadow rounded">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nombre
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Apellidos
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teléfono
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Identificación
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        VIP
+                    </th>
+                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for cliente in clientes %}
+                <tr class="hover:bg-gray-100">
+                    <!-- ID -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ cliente.id }}
+                    </td>
+                    <!-- Nombre -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ cliente.nombre }}
+                    </td>
+                    <!-- Apellidos -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ cliente.apellidos }}
+                    </td>
+                    <!-- Email -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ cliente.email }}
+                    </td>
+                    <!-- Teléfono principal -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {{ cliente.telefono_principal }}
+                    </td>
+                    <!-- Identificación (Carnet, Pasaporte, Licencia, etc.) -->
+                    <td class="px-4 py-2 text-center text-sm text-gray-700">
+                        {% if cliente.carnet_identidad %}
+                            CI: {{ cliente.carnet_identidad }}<br>
+                        {% endif %}
+                        {% if cliente.pasaporte %}
+                            Pas: {{ cliente.pasaporte }}<br>
+                        {% endif %}
+                        {% if cliente.licencia %}
+                            Lic: {{ cliente.licencia }}<br>
+                        {% endif %}
+                        {% if cliente.pasaporte_licencia %}
+                            Extra: {{ cliente.pasaporte_licencia }}
+                        {% endif %}
+                    </td>
+                    <!-- VIP -->
+                    <td class="px-4 py-2 text-center text-sm">
+                        {% if cliente.es_vip %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold 
+                                         text-green-800 bg-green-100">
+                                Sí
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold 
+                                         text-gray-800 bg-gray-100">
+                                No
+                            </span>
+                        {% endif %}
+                    </td>
+                    <!-- Acciones -->
+                    <td class="px-4 py-2 text-center text-sm">
+                        <div class="flex justify-center space-x-2">
+                            <a href="{% url 'backoffice:editar_cliente' cliente.id %}"
+                               class="inline-flex items-center px-2 py-1 border border-transparent text-sm 
+                                      font-medium rounded text-yellow-600 bg-yellow-100 hover:bg-yellow-200"
+                               title="Editar Cliente">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'backoffice:eliminar_cliente' cliente.id %}"
+                               class="inline-flex items-center px-2 py-1 border border-transparent text-sm 
+                                      font-medium rounded text-red-600 bg-red-100 hover:bg-red-200"
+                               title="Eliminar Cliente">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+                        No hay clientes registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Paginación -->
+    <section class="mt-6">
+        <nav aria-label="Page navigation">
+            <ul class="inline-flex items-center -space-x-px">
+                {% if clientes.has_previous %}
+                <li>
+                    <a class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 
+                               rounded-l-lg hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page=1{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="First">
+                        &laquo;&laquo;
+                    </a>
+                </li>
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page={{ clientes.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="Previous">
+                        &laquo;
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in clientes.paginator.page_range %}
+                    {% if clientes.number == num %}
+                        <li>
+                            <span class="py-2 px-3 leading-tight text-white bg-indigo-600 border border-gray-300">
+                                {{ num }}
+                            </span>
+                        </li>
+                    {% elif num > clientes.number|add:'-5' and num < clientes.number|add:'5' %}
+                        <li>
+                            <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                                       hover:bg-gray-100 hover:text-gray-700" 
+                               href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if clientes.has_next %}
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               hover:bg-gray-100 hover:text-gray-700" 
+                       href="?page={{ clientes.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="Next">
+                        &raquo;
+                    </a>
+                </li>
+                <li>
+                    <a class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 
+                               rounded-r-lg hover:bg-gray-100 hover:text-gray-700"
+                       href="?page={{ clientes.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" 
+                       aria-label="Last">
+                        &raquo;&raquo;
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </section>
+</main>
+{% endblock %}

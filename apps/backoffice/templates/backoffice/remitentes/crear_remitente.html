@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Remitente{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 mt-8 bg-white shadow-md rounded-lg">
+  <h1 class="text-2xl font-bold mb-6 text-gray-800">Crear Remitente</h1>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="nombre_apellido" class="block text-sm font-medium text-gray-700 mb-1">Nombre y Apellido</label>
+        <input type="text" id="nombre_apellido" name="nombre_apellido" required
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="id_documento" class="block text-sm font-medium text-gray-700 mb-1">ID Documento</label>
+        <input type="text" id="id_documento" name="id_documento"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+        <input type="text" id="telefono" name="telefono"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+        <textarea id="direccion" name="direccion" rows="3"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none"></textarea>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button type="submit"
+              class="inline-flex items-center px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        Guardar Remitente
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

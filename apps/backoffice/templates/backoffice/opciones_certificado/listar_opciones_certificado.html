@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Listar Opciones de Certificado{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h1>Lista de Opciones de Certificado</h1>
+        <a href="{% url 'backoffice:crear_opcion_certificado' %}" class="btn btn-outline-primary mb-3">Crear Opción</a>
+        
+        <form method="GET" action="">
+            <input type="text" class="form-control" placeholder="Buscar por nombre" name="q" value="{{ query }}">
+            <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </form>
+        
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th>Foto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for opcion in opciones %}
+                <tr>
+                    <td>{{ opcion.id }}</td>
+                    <td>{{ opcion.nombre }}</td>
+                    <td>{{ opcion.descripcion }}</td>
+                    <td>{{ opcion.categoria }} estrellas</td>
+                    <td>
+                        {% if opcion.foto %}
+                            <img src="{{ opcion.foto.url }}" alt="Foto" style="width: 50px;">
+                        {% else %}
+                            No disponible
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'backoffice:editar_opcion_certificado' opcion_id=opcion.id %}" class="btn btn-outline-warning">Editar</a>
+                        <a href="{% url 'backoffice:eliminar_opcion_certificado' opcion_id=opcion.id %}" class="btn btn-outline-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

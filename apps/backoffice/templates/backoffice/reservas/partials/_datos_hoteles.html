@@ -1,0 +1,146 @@
+{% load i18n %}
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4 border-b pb-2">{% trans "Datos del Hotel" %}</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Nombre del Hotel -->
+    <div>
+      <label for="hotel_nombre" class="block text-gray-700 font-medium mb-1">
+        {% trans "Nombre del Hotel" %}
+      </label>
+      <input type="text" name="hotel_nombre" id="hotel_nombre" value="{{ reserva.hotel.hotel_nombre }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Proveedor -->
+    <div>
+      <label for="proveedor" class="block text-gray-700 font-medium mb-1">
+        {% trans "Proveedor" %}
+      </label>
+      <input type="text" name="proveedor" id="proveedor" value="{{ reserva.hotel.proveedor }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Fee -->
+    <div>
+      <label for="fee" class="block text-gray-700 font-medium mb-1">
+        {% trans "Fee" %}
+      </label>
+      <input type="text" name="fee" id="fee" value="{{ reserva.hotel.fee }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Teléfono -->
+    <div>
+      <label for="telefono" class="block text-gray-700 font-medium mb-1">
+        {% trans "Teléfono" %}
+      </label>
+      <input type="text" name="telefono" id="telefono" value="{{ reserva.hotel.telefono }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Tipo Fee -->
+    <div>
+      <label for="tipo_fee" class="block text-gray-700 font-medium mb-1">
+        {% trans "Tipo Fee" %}
+      </label>
+      <input type="text" name="tipo_fee" id="tipo_fee" value="{{ reserva.hotel.tipo_fee }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Polo Turístico -->
+    <div>
+      <label for="polo_turistico" class="block text-gray-700 font-medium mb-1">
+        {% trans "Polo Turístico" %}
+      </label>
+      <input type="text" name="polo_turistico" id="polo_turistico" value="{{ reserva.hotel.polo_turistico }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Plan Alimenticio -->
+    <div>
+      <label for="plan_alimenticio" class="block text-gray-700 font-medium mb-1">
+        {% trans "Plan Alimenticio" %}
+      </label>
+      <input type="text" name="plan_alimenticio" id="plan_alimenticio" value="{{ reserva.hotel.plan_alimenticio }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Descripción del Hotel -->
+    <div class="md:col-span-2">
+      <label for="descripcion_hotel" class="block text-gray-700 font-medium mb-1">
+        {% trans "Descripción del Hotel" %}
+      </label>
+      <textarea name="descripcion_hotel" id="descripcion_hotel" rows="3"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">{{ reserva.hotel.descripcion_hotel }}</textarea>
+    </div>
+
+    <!-- Dirección -->
+    <div class="md:col-span-2">
+      <label for="direccion" class="block text-gray-700 font-medium mb-1">
+        {% trans "Dirección" %}
+      </label>
+      <input type="text" name="direccion" id="direccion" value="{{ reserva.hotel.direccion }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Checkin -->
+    <div>
+      <label for="checkin" class="block text-gray-700 font-medium mb-1">
+        {% trans "Checkin" %}
+      </label>
+      <input type="text" name="checkin" id="checkin" value="{{ reserva.hotel.checkin }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Checkout -->
+    <div>
+      <label for="checkout" class="block text-gray-700 font-medium mb-1">
+        {% trans "Checkout" %}
+      </label>
+      <input type="text" name="checkout" id="checkout" value="{{ reserva.hotel.checkout }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Orden -->
+    <div>
+      <label for="orden" class="block text-gray-700 font-medium mb-1">
+        {% trans "Orden" %}
+      </label>
+      <input type="number" name="orden" id="orden" value="{{ reserva.hotel.orden }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Foto del Hotel -->
+    <div>
+      <label for="foto_hotel" class="block text-gray-700 font-medium mb-1">
+        {% trans "Foto del Hotel" %}
+      </label>
+      <input type="text" name="foto_hotel" id="foto_hotel" value="{{ reserva.hotel.foto_hotel }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Categoría -->
+    <div>
+      <label for="categoria" class="block text-gray-700 font-medium mb-1">
+        {% trans "Categoría" %}
+      </label>
+      <input type="number" name="categoria" id="categoria" value="{{ reserva.hotel.categoria }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Cadena Hotelera -->
+    <div>
+      <label for="cadena_hotelera" class="block text-gray-700 font-medium mb-1">
+        {% trans "Cadena Hotelera" %}
+      </label>
+      <input type="text" name="cadena_hotelera" id="cadena_hotelera" value="{{ reserva.hotel.cadena_hotelera }}"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+    </div>
+
+    <!-- Solo Adultos -->
+    <div class="flex items-center">
+      <input type="checkbox" name="solo_adultos" id="solo_adultos" class="form-checkbox text-blue-600" {% if reserva.hotel.solo_adultos %}checked{% endif %}>
+      <label for="solo_adultos" class="ml-2 text-gray-700 font-medium">{% trans "Solo Adultos" %}</label>
+    </div>
+  </div>
+</section>

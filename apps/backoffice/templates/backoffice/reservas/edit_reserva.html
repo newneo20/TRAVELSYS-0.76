@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% trans "Editar Reserva" %} ({{ reserva.id }})
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <form action="{% url 'backoffice:guardar_edicion_reserva' reserva.id %}" method="post">
+    {% csrf_token %}
+
+    <!-- Campo oculto para el conteo de habitaciones -->
+    <input type="hidden" id="habitacion_count" name="habitacion_count" value="{{ habitaciones|length }}">
+
+    <!-- INCLUIMOS DATOS COMUNES -->
+    {% include "backoffice/reservas/partials/_datos_comunes.html" %}
+
+    {% if reserva.tipo == 'hoteles' %}
+      <!-- SECCIÓN PARA RESERVAS DE HOTELES -->
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          {% trans "Hotel:" %} {{ reserva.hotel.hotel_nombre }}
+        </h2>
+
+        <!-- INCLUIMOS HABITACIONES EXISTENTES Y SU SECCIÓN DE PASAJEROS -->
+        {% include "backoffice/reservas/partials/_habitaciones.html" %}
+
+        <!-- INCLUIMOS EL TEMPLATE PARA NUEVA HABITACIÓN (oculto) -->
+        {% include "backoffice/reservas/partials/_nuevo_habitacion.html" %}
+      </div>
+
+    {% elif reserva.tipo == 'traslados' %}
+      <!-- SECCIÓN PARA RESERVAS DE TRASLADOS (ejemplo) -->
+      <div class="mt-8">
+        <!-- Podrías tener un partial para traslados -->
+        {% include "backoffice/reservas/partials/_datos_traslado.html" %}
+      </div>
+
+    {% else %}
+      <div class="mt-8">
+        <p class="text-gray-600 text-center">
+          {% trans "No se ha definido un formulario para este tipo de reserva." %}
+        </p>
+      </div>
+    {% endif %}
+
+    <!-- Botón de Guardar -->
+    <div class="mt-8">
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition">
+        {% trans "Guardar Cambios" %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Librerías necesarias -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<!-- Script principal para datepickers, habitaciones y pasajeros -->
+<script>
+  $(document).ready(function(){
+
+    function actualizarContadorHabitaciones() {
+      var total = $('#habitaciones-container .habitacion-card').length;
+      $('#habitacion_count').val(total);
+      console.log(">>> habitacion_count actualizado a:", total);
+    }
+
+    // Al cargar
+    actualizarContadorHabitaciones();
+
+    // Inicializamos datepickers
+    $('.daterange-picker').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      locale: { format: 'YYYY-MM-DD' }
+    });
+    $('.datepicker').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      locale: { format: 'MM/DD/YYYY' }
+    });
+
+    var nuevaHabitacionIndex = {{ habitaciones|length }} + 1;
+
+    // Botón "Agregar Habitación"
+    $('#agregar-habitacion').click(function(e){
+      e.preventDefault();
+
+      var template = $('#nuevo-habitacion-template').html();
+      var nuevoHtml = template.replace(/__index__/g, nuevaHabitacionIndex);
+
+      $('#habitaciones-container').append(nuevoHtml);
+
+      // Inicializar datepicker
+      $('#nueva_fechas_viaje_' + nuevaHabitacionIndex).daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        locale: { format: 'YYYY-MM-DD' }
+      });
+
+      nuevaHabitacionIndex++;
+      actualizarContadorHabitaciones();
+    });
+
+    // Eliminar habitación
+    $(document).on('click', '.eliminar-habitacion', function(e){
+      e.preventDefault();
+      $(this).closest('.habitacion-card').remove();
+      actualizarContadorHabitaciones();
+    });
+
+    // Agregar pasajeros a habitaciones existentes
+    $(document).on('click', '.agregar-pasajero', function(e){
+      e.preventDefault();
+      var habitacionIndex = $(this).data('habitacion-index');
+
+      var $countInput = $('#pasajero_count_' + habitacionIndex);
+      var currCount = parseInt($countInput.val()) || 0;
+      var newCount = currCount + 1;
+      $countInput.val(newCount);
+
+      console.log(">>> Pasajero count para hab", habitacionIndex, "=", newCount);
+
+      var nuevoPasajeroHtml = `
+        <div class="grid grid-cols-1 sm:grid-cols-7 gap-4 items-end nuevo-pasajero mt-3">
+          <input type="hidden" name="pasajero_id_${habitacionIndex}_${newCount}" value="">
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Nombre</strong></label>
+            <input type="text" name="pasajero_nombre_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Fecha de Nacimiento</strong></label>
+            <input type="text" name="pasajero_fecha_nacimiento_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm datepicker">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Pasaporte</strong></label>
+            <input type="text" name="pasajero_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Caducidad Pasaporte</strong></label>
+            <input type="text" name="pasajero_caducidad_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm datepicker">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>País de Emisión</strong></label>
+            <input type="text" name="pasajero_pais_emision_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Adulto/Niño</strong></label>
+            <select name="pasajero_tipo_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+              <option value="adulto">Adulto</option>
+              <option value="nino">Niño</option>
+            </select>
+          </div>
+          <div>
+            <button type="button" class="text-red-600 hover:text-red-800 eliminar-pasajero">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      var container = $(this).closest('.mt-6').find('.space-y-4');
+      container.append(nuevoPasajeroHtml);
+
+      // Inicializa datepicker
+      container.find('.datepicker').last().daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        locale: { format: 'MM/DD/YYYY' }
+      });
+    });
+
+    // Agregar pasajeros en habitaciones NUEVAS
+    $(document).on('click', '.agregar-pasajero-nueva', function(e){
+      e.preventDefault();
+      var habitacionIndex = $(this).data('habitacion-index');
+
+      var $countInput = $('#pasajero_count_' + habitacionIndex);
+      var currCount = parseInt($countInput.val()) || 0;
+      var newCount = currCount + 1;
+      $countInput.val(newCount);
+
+      console.log(">>> Pasajero count para hab nueva", habitacionIndex, "=", newCount);
+
+      var nuevoPasajeroHtml = `
+        <div class="grid grid-cols-1 sm:grid-cols-7 gap-4 items-end nuevo-pasajero mt-3">
+          <input type="hidden" name="pasajero_id_${habitacionIndex}_${newCount}" value="">
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Nombre</strong></label>
+            <input type="text" name="pasajero_nombre_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Fecha de Nacimiento</strong></label>
+            <input type="text" name="pasajero_fecha_nacimiento_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm datepicker">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Pasaporte</strong></label>
+            <input type="text" name="pasajero_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Caducidad Pasaporte</strong></label>
+            <input type="text" name="pasajero_caducidad_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm datepicker">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>País de Emisión</strong></label>
+            <input type="text" name="pasajero_pais_emision_pasaporte_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700"><strong>Adulto/Niño</strong></label>
+            <select name="pasajero_tipo_${habitacionIndex}_${newCount}" class="mt-1 block w-full h-10 rounded-md border-2 border-gray-300 text-center text-sm">
+              <option value="adulto">Adulto</option>
+              <option value="nino">Niño</option>
+            </select>
+          </div>
+          <div>
+            <button type="button" class="text-red-600 hover:text-red-800 eliminar-pasajero">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      `;
+
+      var $container = $('#pasajeros_habitacion_' + habitacionIndex);
+      $container.append(nuevoPasajeroHtml);
+
+      // Inicializa datepicker
+      $container.find('.datepicker').last().daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        locale: { format: 'YYYY-MM-DD' }
+      });
+    });
+
+    // Eliminar pasajero
+    $(document).on('click', '.eliminar-pasajero', function(e){
+      e.preventDefault();
+      $(this).closest('.nuevo-pasajero, .grid').remove();
+    });
+
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,624 @@
+{# templates/booking/hotel_distal/hotel_pago_reserva_distal.html #}
+{% extends 'booking/hotel_distal/base_hotel.html' %}
+{% load static i18n %}
+
+{% block title %}Pago y Reserva – {{ hotel.hotel_name }}{% endblock %}
+
+{% block hotel_content %}
+<div class="mx-auto mt-6 px-4 mb-12" style="max-width: 1200px;"
+     x-data="wizardData()" x-init="init(); loadCountries()">
+
+
+  <!-- Navegación del wizard -->
+  <div class="flex justify-center mb-6">
+    <nav class="flex items-center justify-between space-x-4 w-full max-w-2xl">
+      <template x-for="n in [1,2,3]" :key="n">
+        <div class="flex items-center w-full">
+          <!-- Paso -->
+          <div class="flex items-center space-x-2"
+              :class="{
+                'text-blue-600': paso >= n,
+                'text-gray-400': paso < n
+              }">
+            <div class="rounded-full p-2"
+                :class="paso >= n ? 'bg-blue-100' : 'bg-gray-100'">
+              <i :class="{1:'fas fa-user-friends',2:'fas fa-user-tie',3:'fas fa-credit-card'}[n]"></i>
+            </div>
+            <span class="whitespace-nowrap text-sm font-medium"
+                  x-text="{1:'1. Pasajeros',2:'2. Agente',3:'3. Pago'}[n]"></span>
+          </div>
+
+          <!-- Línea de conexión -->
+          <template x-if="n < 3">
+            <div class="flex-1 h-0.5 mx-2"
+                :class="paso > n ? 'bg-blue-500' : 'bg-gray-300'"></div>
+          </template>
+        </div>
+      </template>
+    </nav>
+  </div>
+
+  <form method="post"
+        action="{% url 'booking:confirmar_reserva_distal' hotel.hotel_code %}"
+        id="pagoReservaForm">
+    {% csrf_token %}    
+    <input type="hidden" name="destino"       value="{{ destino }}">
+    <input type="hidden" name="fechas_viaje"  value="{{ fechas }}">
+    <input type="hidden" name="info_habitaciones" value='{{ raw_json|safe }}'>
+
+
+
+    <!-- ✅ Campo seguro y universal para Alpine.js -->
+    <script id="datos-iniciales" type="application/json">
+      {{ raw_json|safe }}
+    </script>
+    
+
+    {# 🔽 CAMPO NECESARIO PARA ENVIAR LAS OPCIONES SELECCIONADAS POR HABITACIÓN #}
+    {% for hab in habitaciones %}
+      <input type="hidden" name="opcion_{{ forloop.counter0 }}"             
+            value="{{ hab.opcion.id }}|{{ hab.opcion.nombre }}|{{ hab.opcion.precio_cliente }}|{{ hab.opcion.costo_total }}|{{ hab.opcion.precio_base }}|{{ hab.opcion.moneda }}|{{ hab.opcion.booking_code }}">
+    {% endfor %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Columna principal: Wizard -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- Paso 1: Pasajeros -->
+        <div x-show="paso===1" x-cloak>
+          {% for hab in habitaciones %}
+            <section class="border rounded-lg shadow-sm">
+              <header class="bg-blue-100 px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                  <div class="rounded-full bg-blue-600 p-2 text-white">
+                    <i class="fas fa-door-open"></i>
+                  </div>
+                  <h3 class="text-lg font-bold text-blue-800 uppercase">
+                    {{ _("Habitación") }} {{ hab.roomNumber }}
+                  </h3>
+                </div>
+                <div class="flex items-center space-x-4 text-sm text-blue-700 opacity-75">
+                  <div class="flex items-center space-x-1">
+                    <i class="fas fa-user"></i><span>{{ hab.adultos }}</span>
+                    {% if hab.ninos %}
+                      <i class="fas fa-child ml-3"></i><span>{{ hab.ninos }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ fechas }}</span>
+                  </div>
+                </div>
+              </header>
+              <div class="p-6 bg-white space-y-4">
+                <p class="text-gray-700">
+                  <strong>{% trans "Opción:" %}</strong> {{ hab.opcion.nombre }}<br>
+                </p>
+                <p class="text-gray-700 hidden">                  
+                  <strong>{% trans "Precio cliente:" %}</strong> {{ hab.opcion.precio_cliente }} {{ hab.opcion.moneda }}<br>
+                  <strong>{% trans "Costo base:" %}</strong> {{ hab.opcion.costo_base }} {{ hab.opcion.moneda }}<br>
+                  <strong>{% trans "Ganancia:" %}</strong> {{ hab.opcion.ganancia }} {{ hab.opcion.moneda }}
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+                  {# Adultos #}
+                  {% for a in hab.adultos_numeros %}
+                      <div class="md:col-span-12 space-y-2">
+                        <h4 class="text-blue-600 font-medium flex items-center">
+                          <i class="fas fa-user mr-2"></i>{% trans "Adulto" %} {{ a }}
+                        </h4>
+
+                        <!-- Nombre -->
+                        <label class="block text-sm text-gray-700">
+                          {% trans "Nombre(s) y Apellido(s):" %}
+                        </label>
+                        <input type="text"
+                              name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_nombre"
+                              class="required-field block w-full border rounded px-2 py-1"
+                              placeholder="{% trans 'Como aparece en el pasaporte' %}"
+                              required>
+
+                        <!-- Pasaporte + Caducidad -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label class="block text-sm text-gray-700">
+                              {% trans "Número de pasaporte:" %}
+                            </label>
+                            <input type="text"
+                                  name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_pasaporte"
+                                  class="required-field block w-full border rounded px-2 py-1"
+                                  required>
+                          </div>
+                          <div>
+                            <label class="block text-sm text-gray-700">
+                              {% trans "Caducidad pasaporte:" %}
+                            </label>
+                            <input type="text"
+                                  name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_caducidad"
+                                  class="datepicker required-field block w-full border rounded px-2 py-1"
+                                  placeholder="YYYY-MM-DD"
+                                  required>
+                          </div>
+                        </div>
+
+                        <!-- Fecha nacimiento + País emisión -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label class="block text-sm text-gray-700">
+                              {% trans "Fecha de nacimiento:" %}
+                            </label>
+                            <input type="text"
+                                  name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_nac"
+                                  class="datepicker required-field block w-full border rounded px-2 py-1"
+                                  placeholder="YYYY-MM-DD"
+                                  required>
+                          </div>
+                          <div>
+                            <label class="block text-sm text-gray-700">
+                              {% trans "País de emisión del pasaporte:" %}
+                            </label>
+                            <input type="text"
+                                  name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_pais"
+                                  class="required-field block w-full border rounded px-2 py-1"
+                                  placeholder="{% trans 'Ej: Cuba' %}"
+                                  required>
+                          </div>
+                        </div>
+
+                        {% if forloop.parentloop.first and forloop.first %}
+                          <!-- Email + Teléfono (solo para primer adulto del primer cuarto) -->
+                          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="sm:col-span-2">
+                              <label class="block text-sm text-gray-700">{% trans "E-mail:" %}</label>
+                              <input type="email"
+                                    name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_email"
+                                    class="block w-full border rounded px-2 py-1"
+                                    placeholder="you@example.com"
+                                    required>
+                            </div>
+                            <div>
+                              <label class="block text-sm text-gray-700">{% trans "Teléfono:" %}</label>
+                              <input type="tel"
+                                    name="hab_{{ hab.roomNumber }}_adulto_{{ a }}_telefono"
+                                    class="block w-full border rounded px-2 py-1"
+                                    required>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                  {% endfor %}
+
+
+                  {# Niños #}
+                  {% for n in hab.ninos_numeros %}
+                    <div class="md:col-span-6 space-y-2">
+                      <h4 class="text-blue-600 font-medium flex items-center">
+                        <i class="fas fa-child mr-2"></i>{% trans "Niño" %} {{ n }}
+                      </h4>
+                      <label class="block text-sm text-gray-700">
+                        {% trans "Nombre(s) y Apellido(s):" %}
+                      </label>
+                      <input type="text"
+                             name="hab_{{ hab.roomNumber }}_nino_{{ n }}_nombre"
+                             class="required-field block w-full border rounded px-2 py-1"
+                             required>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label class="block text-sm text-gray-700">
+                            {% trans "Fecha de nacimiento:" %}
+                          </label>
+                          <input type="text"
+                                 name="hab_{{ hab.roomNumber }}_nino_{{ n }}_nac"
+                                 class="datepicker required-field block w-full border rounded px-2 py-1"
+                                 placeholder="YYYY-MM-DD"
+                                 required>
+                        </div>
+                        <div>
+                          <label class="block text-sm text-gray-700">
+                            {% trans "Número de pasaporte:" %}
+                          </label>
+                          <input type="text"
+                                 name="hab_{{ hab.roomNumber }}_nino_{{ n }}_pasaporte"
+                                 class="required-field block w-full border rounded px-2 py-1"
+                                 required>
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label class="block text-sm text-gray-700">
+                            {% trans "Caducidad pasaporte:" %}
+                          </label>
+                          <input type="text"
+                                 name="hab_{{ hab.roomNumber }}_nino_{{ n }}_caducidad"
+                                 class="datepicker required-field block w-full border rounded px-2 py-1"
+                                 placeholder="YYYY-MM-DD"
+                                 required>
+                        </div>
+                        <div>
+                          <label class="block text-sm text-gray-700">
+                            {% trans "País de emisión:" %}
+                          </label>
+                          <div class="relative" x-data="{ open: false, selected: '', countries: [] }" x-init="
+                            fetch('https://restcountries.com/v3.1/all?fields=name')
+                              .then(res => res.json())
+                              .then(data => countries = data.map(c => c.name.common).sort())">
+                            <button type="button"
+                                    @click="open = !open"
+                                    class="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring focus:ring-blue-500">
+                              <span x-text="selected || '{% trans 'Seleccione país' %}'"></span>
+                              <span class="text-gray-500"><i class="fas fa-chevron-down"></i></span>
+                            </button>
+
+                            <ul x-show="open" @click.away="open = false"
+                                class="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-lg border border-gray-300 bg-white shadow-lg">
+                              <template x-for="country in countries" :key="country">
+                                <li>
+                                  <button type="button"
+                                          @click="selected = country; open = false"
+                                          class="w-full text-left px-4 py-2 hover:bg-blue-50">
+                                    🌍 <span x-text="country"></span>
+                                  </button>
+                                </li>
+                              </template>
+                            </ul>
+
+                            <!-- Campo oculto que guarda el valor real -->
+                            <input type="hidden" name="hab_{{ hab.roomNumber }}_nino_{{ n }}_pais" :value="selected" required>
+                          </div>
+
+
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+
+                </div>
+              </div>
+            </section>
+          {% endfor %}
+
+          <div class="flex justify-end mt-10">
+            <button type="button"
+                    @click="
+                    if ($data.validarPaso1()) { paso = 2; } 
+                    else { 
+                      alert('Por favor complete todos los campos requeridos antes de continuar.');
+                    }"    
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl focus:outline-none">
+              <span class="mr-3">{% trans "Siguiente" %}</span>
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <i class="fas fa-arrow-right text-white group-hover:translate-x-1 transition-transform duration-300"></i>
+              </span>
+            </button>
+          </div>
+          
+        </div>
+
+        <!-- Paso 2: Agente -->
+        <div x-show="paso===2" x-cloak>
+          <div class="bg-white p-6 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-bold text-blue-800">{% trans "Datos del Agente" %}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm text-gray-700">{% trans "Nombre del Agente" %}</label>
+                <input type="text" name="agente_nombre"
+                       class="required-field block w-full border rounded px-2 py-1"
+                       required>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-700">
+                  {% trans "Código o Email (opcional)" %}
+                </label>
+                <input type="text" name="agente_codigo"
+                       class="block w-full border rounded px-2 py-1">
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between mt-10 gap-6">
+            <button type="button"
+                    @click="paso = 1"
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition-all duration-300 hover:border-gray-400 hover:bg-gray-100 hover:shadow-lg focus:outline-none">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i class="fas fa-arrow-left text-gray-500 group-hover:text-gray-700 transition"></i>
+              </span>
+              <span class="ml-5">{% trans "Atrás" %}</span>
+            </button>
+          
+            <button type="button"
+                    @click="
+                    if ($data.validarPaso2()) { paso = 3; } 
+                    else { 
+                      alert('Por favor complete los datos del agente.');
+                    }"
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl focus:outline-none">
+              <span class="mr-3">{% trans "Siguiente" %}</span>
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <i class="fas fa-arrow-right text-white group-hover:translate-x-1 transition-transform duration-300"></i>
+              </span>
+            </button>
+          </div>
+          
+          
+          
+        </div>
+
+        <!-- Paso 3: Pago -->
+        <div x-show="paso===3" x-cloak>
+          <div class="bg-white p-6 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-bold text-blue-800">{% trans "Método de Pago" %}</h2>
+            <div class="bg-gray-50 border rounded-lg p-4 text-sm text-gray-700 space-y-2">
+              <p>{% trans "La reserva se confirma al completar el pago." %}</p>
+              <p><strong>{% trans "Importante:" %}</strong>
+                 {% trans "El importe abonado no es reembolsable bajo ninguna circunstancia." %}</p>
+              <p>{% trans "Modificaciones o cancelaciones deben solicitarse al menos 48 h antes de la llegada..." %}</p>
+              <p>{% trans "En caso de no-show se cobra el total sin opción de reembolso." %}</p>
+              <p>{% trans "Tus datos se usarán únicamente para gestionar esta reserva..." %}</p>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-gray-700">
+                  {% trans "Selecciona método" %}
+                </label>
+                <select name="metodo_pago"
+                        class="required-field block w-full border rounded px-2 py-1"
+                        required>
+                  <option value="">{% trans "Seleccione un método" %}</option>
+                  <option value="tarjeta">{% trans "Tarjeta de Crédito/Débito" %}</option>
+                  <option value="efectivo">{% trans "Efectivo" %}</option>
+                  <option value="transferencia">{% trans "Transferencia Bancaria" %}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-700">
+                  {% trans "Comentarios / Referencia (opcional)" %}
+                </label>
+                <textarea name="comentarios_pago" rows="3"
+                          class="block w-full border rounded px-2 py-1"></textarea>
+              </div>
+              <div class="flex items-start space-x-2">
+                <input type="checkbox" id="acepto_terminos" name="terminos" required>
+                <label for="acepto_terminos" class="text-sm text-gray-700">
+                  {% trans "He leído y acepto los Términos y Condiciones." %}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between mt-10 gap-6">
+            <!-- Botón Atrás -->
+            <button type="button"
+                    @click="paso = 2"
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-gray-300 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition-all duration-300 hover:border-gray-400 hover:bg-gray-100 hover:shadow-lg focus:outline-none">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i class="fas fa-arrow-left text-gray-500 group-hover:text-gray-700 transition"></i>
+              </span>
+              <span class="ml-5">{% trans "Atrás" %}</span>
+            </button>
+          
+            <!-- Botón Confirmar Reserva -->
+            <button type="submit"
+                    class="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-green-600 to-green-700 px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-700 hover:to-green-800 hover:shadow-xl focus:outline-none">
+              <span class="mr-3">{% trans "Confirmar Reserva" %}</span>
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <i class="fas fa-check-circle text-white group-hover:scale-110 transition-transform duration-300"></i>
+              </span>
+            </button>
+          </div>
+          
+        </div>
+
+      </div>
+
+      <!-- Columna derecha: Resumen -->
+      <div class="lg:col-span-4">
+        <aside class="sticky top-6 bg-blue-50 rounded-lg overflow-hidden">
+          <div class="bg-blue-100 px-6 py-4 flex items-center space-x-2">
+            <i class="fas fa-dollar-sign text-white bg-blue-600 rounded-full p-2"></i>
+            <h2 class="text-lg font-bold text-blue-800">{% trans "Resumen de la Reserva" %}</h2>
+          </div>
+          <div class="bg-white px-6 py-4 space-y-4">
+            <p class="text-sm text-gray-600">
+              <strong>{% trans "Hotel:" %}</strong> {{ hotel.hotel_name }}
+            </p>
+            <p class="text-sm text-gray-600">
+              <strong>{% trans "Fechas:" %}</strong> {{ fechas }}
+            </p>
+            <h3 class="text-sm font-semibold text-gray-700">{% trans "Habitaciones" %}</h3>
+            <div class="space-y-3">
+              {% for hab in habitaciones %}
+                <div class="bg-gray-50 rounded-lg shadow p-4 flex justify-between items-start">
+                  <div>
+                    <p class="font-medium text-gray-800">
+                      {% trans "Habitación" %} {{ hab.roomNumber }}: {{ hab.opcion.nombre }}
+                    </p>
+                    <p class="text-xs text-green-600 flex items-center space-x-2">
+                      <i class="fas fa-user"></i><span>{{ hab.adultos }}</span>
+                      {% if hab.ninos %}
+                        <i class="fas fa-child"></i><span>{{ hab.ninos }}</span>
+                      {% endif %}                      
+                    </p>
+                  </div>
+                  <div class="text-right space-y-1">
+                    <p class="font-semibold text-blue-700">
+                      {{ hab.opcion.precio_cliente|floatformat:2 }} {{ hab.opcion.moneda }}
+                    </p>
+                    <p class="text-xs text-gray-600">
+                      {% trans "Costo base API:" %} {{ hab.opcion.precio_base|floatformat:2 }} {{ hab.opcion.moneda }}
+                    </p>
+                    <p class="text-xs text-gray-600">
+                      {% trans "Costo total interno:" %} {{ hab.opcion.costo_total|floatformat:2 }} {{ hab.opcion.moneda }}
+                    </p>
+                    <p class="text-xs text-green-600 font-semibold">
+                      {% trans "Precio cliente:" %} {{ hab.opcion.precio_cliente|floatformat:2 }} {{ hab.opcion.moneda }}
+                    </p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="border-t border-gray-200 pt-4 flex justify-between">
+              <span class="font-semibold text-gray-800">{% trans "Total:" %}</span>
+              <span class="text-xl font-bold text-blue-700">
+                {{ precio_total|floatformat:2 }}
+              </span>
+            </div>
+
+            <div class="mt-4 bg-blue-50 border rounded-lg p-3 text-sm text-gray-600 flex items-start space-x-2">
+              <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+              <p>{% trans "En caso de cancelación puede aplicar penalidad según las políticas del hotel." %}</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+  <!-- Librerías externas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+  <!-- Estilos propios -->
+  <style>
+    /* 1. Ocultar todo lo marcado con x-cloak */
+    [x-cloak] { display: none !important; }
+
+    /* 2. Inputs inválidos destacan en rojo */
+    .required-field:invalid { border-color: #dc2626 !important; }
+
+    /* 3. Navegación del wizard más clara */
+    .wizard-nav { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
+    .wizard-step { display: flex; align-items: center; gap: .5rem; color: #6b7280; cursor: pointer; }
+    .wizard-step.active { color: #2563eb; font-weight: 600; }
+    .wizard-step .icon { width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#e5e7eb;transition:background .2s;}
+    .wizard-step.active .icon { background:#bfdbfe; }
+
+    /* 4. Botones coherentes */
+    .btn { @apply inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition; }
+    .btn-primary { @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow hover:from-blue-700 hover:to-blue-800; }
+    .btn-secondary { @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-100; }
+  </style>
+{% endblock %}
+
+
+{% block extra_js %}
+  <!-- 1) DEFINICIÓN DE TU COMPONENTE ANTES DE CARGAR ALPINE -->
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('wizardData', () => ({
+        paso: 1,
+        habitaciones: [],
+    
+        init() {
+          const raw = document.getElementById('datos-iniciales')?.textContent
+          this.habitaciones = raw ? JSON.parse(raw).datosHabitaciones : []
+        },
+    
+        async loadCountries() {
+          const res  = await fetch('https://restcountries.com/v3.1/all?fields=name')
+          const data = await res.json()
+          this.countries = data.map(c => c.name.common).sort()
+        },
+    
+        validarCamposVisibles() {
+          let valido = true
+    
+          document.querySelectorAll('#pagoReservaForm .required-field')
+            .forEach(input => {
+              // Solo valida los campos visibles y editables
+              if (input.offsetParent !== null && !input.disabled && !input.readOnly) {
+                const valor = input.value.trim()
+    
+                // 1) Campo requerido vacío
+                if (!valor) {
+                  input.classList.add('border-red-500','ring-1','ring-red-400')
+                  valido = false
+                } else {
+                  input.classList.remove('border-red-500','ring-1','ring-red-400')
+                }
+    
+                // 2) Validación de email
+                if (input.type === 'email') {
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                  if (!emailRegex.test(valor)) {
+                    input.classList.add('border-red-500','ring-1','ring-red-400')
+                    valido = false
+                  }
+                }
+    
+                // 3) Validación de teléfono
+                if (input.type === 'tel') {
+                  const telRegex = /^[\d\+\-\s\(\)]{7,}$/
+                  if (!telRegex.test(valor)) {
+                    input.classList.add('border-red-500','ring-1','ring-red-400')
+                    valido = false
+                  }
+                }
+              }
+            })
+    
+          return valido
+        },
+    
+        validarPaso1() { return this.validarCamposVisibles() },
+        validarPaso2() { return this.validarCamposVisibles() },
+    
+        validarPaso3() {
+          let ok = this.validarCamposVisibles()
+          const metodo = document.querySelector("select[name='metodo_pago']")
+          if (!metodo.value) {
+            metodo.classList.add('border-red-500','ring-1','ring-red-400')
+            ok = false
+          }
+          if (!document.getElementById('acepto_terminos').checked) {
+            alert("Debes aceptar los Términos y Condiciones.")
+            ok = false
+          }
+          return ok
+        }
+      }))
+    })
+  </script>
+    
+
+  <!-- 2) Ahora sí carga Alpine -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- 3) Librerías auxiliares -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
+
+  <!-- 4) Inicialización de plugins -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      $('.datepicker').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        locale: { format:'YYYY-MM-DD' }
+      });
+      tippy('[data-tippy-content]', { placement: 'right', theme: 'light-border' });
+    });
+  </script>
+
+  <!-- 5) Mostrar spinner al enviar formulario -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('pagoReservaForm');
+      const spinner = document.getElementById('loading-spinner');
+      if (form && spinner) {
+        form.addEventListener('submit', function () {
+          spinner.classList.remove('hidden');
+        });
+      }
+    });
+  </script>
+
+  
+{% endblock %}
+
+

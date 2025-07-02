@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Eliminar Remesa" %}{% endblock %}
+
+{% block content %}
+<main class="w-full max-w-2xl mx-auto px-6 py-12">
+  <div class="bg-white border border-red-200 rounded-3xl shadow-lg p-8">
+    <h1 class="text-3xl font-bold text-red-700 mb-6 flex items-center gap-3">
+      <i class="fas fa-exclamation-triangle text-red-500"></i> {% trans "Confirmar Eliminación" %}
+    </h1>
+
+    <p class="text-gray-700 text-md mb-6">
+      {% blocktrans with id=remesa.id remitente=remesa.remitente.nombre_apellido destinatario=remesa.destinatario.primer_nombre %}
+        ¿Estás seguro de que deseas eliminar la remesa {{ id }} de {{ remitente }} a {{ destinatario }}?
+      {% endblocktrans %}
+    </p>
+
+    <form method="post" class="flex items-center gap-4">
+      {% csrf_token %}
+      <button
+        type="submit"
+        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
+        aria-label="{% trans 'Eliminar Remesa' %}"
+      >
+        <i class="fas fa-trash-alt mr-2"></i> {% trans "Eliminar" %}
+      </button>
+
+      <a
+        href="{% url 'backoffice:listar_reservas' %}"
+        class="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition"
+        role="button"
+        aria-label="{% trans 'Cancelar' %}"
+      >
+        {% trans "Cancelar" %}
+      </a>
+    </form>
+  </div>
+</main>
+{% endblock %}

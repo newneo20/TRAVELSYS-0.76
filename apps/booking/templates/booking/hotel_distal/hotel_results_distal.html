@@ -1,0 +1,117 @@
+{% extends 'booking/hotel_distal/base_hotel.html' %}
+{% load i18n %}
+
+{% block title %}Resultados - TravelSYS{% endblock %}
+
+{% block hotel_content %}
+<div class="max-w-6xl mx-auto mt-6 px-4 space-y-6">
+  <!-- Buscador -->
+  <div>
+    <form id="searchForm" method="get" action="" class="flex mb-6">
+      <input type="text" name="busqueda" placeholder="{% trans 'Buscar hotel por nombre...' %}"
+             value="{{ request.GET.busqueda }}"
+             class="w-full border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-r-lg">
+        {% trans "Buscar" %}
+      </button>
+    </form>
+  </div>
+
+  <!-- Resultados de la búsqueda -->
+  <h2 class="text-2xl font-bold">
+    {% trans "Resultados de la búsqueda:" %}
+  </h2>
+  <p class="text-gray-700">
+    {% with resultados|length as total %}
+      {% trans "Encontramos" %} <strong>{{ total }}</strong> {% trans "hoteles para tu estancia en" %} <strong>{{ destino|lower }}</strong>
+    {% endwith %}
+  </p>
+
+  <div class="flex justify-center">
+    <div id="hotelsContainer" class="w-full md:w-11/12 space-y-6">
+      {% for hotel in resultados %}
+        <div class="bg-white border rounded-xl overflow-hidden shadow grid grid-cols-1 md:grid-cols-2">
+
+          <!-- Carrusel de imágenes -->
+          <div class="h-60 md:h-80 bg-gray-200 overflow-x-auto flex snap-x snap-mandatory">
+            {% if hotel.HotelInfo.Images %}
+              {% for img in hotel.HotelInfo.Images|slice:":4" %}
+                <div class="flex-shrink-0 w-full h-full snap-start">
+                  <img src="{{ img }}"
+                       alt="{{ hotel.hotel_name }}"
+                       class="w-full h-full object-cover">
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-gray-500">
+                {% trans "Sin imagen" %}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Detalles -->
+          <div class="p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-gray-900">{{ hotel.hotel_name }}</h3>
+                <div class="flex space-x-1 text-yellow-500">
+                  {% for _ in "12345" %}
+                    <i class="fas fa-star{% if forloop.counter > hotel.rating %} text-gray-300{% endif %}"></i>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <p class="text-sm text-gray-600 mb-2">
+                <i class="fas fa-map-marker-alt mr-1"></i>
+                {{ hotel.HotelInfo.AddressLines|join:", " }}{% if hotel.HotelInfo.CityName %}, {{ hotel.HotelInfo.CityName }}{% endif %}
+              </p>
+
+              {% if hotel.HotelInfo.Notes %}
+                <p class="text-sm text-gray-700 mb-4">
+                  {{ hotel.HotelInfo.Notes.0.Text|truncatechars:150 }}
+                </p>
+              {% endif %}
+
+              {% if hotel.HotelInfo.Services %}
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {% for svc in hotel.HotelInfo.Services|slice:":5" %}
+                    <span class="bg-blue-100 text-gray-700 px-2 py-1 text-sm rounded">
+                      {{ svc.Description }}
+                    </span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+              <a href="{% url 'booking:hotel_detalle_distal' hotel.hotel_code %}?destino={{ destino|slugify }}&fechas_viaje={{ fechas|urlencode }}&habitaciones={{ request.GET.habitaciones }}&adultos={{ request.GET.adultos }}&ninos={{ request.GET.ninos }}&info_habitaciones={{ request.GET.info_habitaciones|urlencode }}"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm whitespace-nowrap">
+              {% trans "Ver detalles" %}
+            </a>
+
+
+              {# Precio mínimo #}
+              {% with hotel.habitaciones|dictsort:"Price" as ordenadas %}
+                {% with ordenadas.0 as barata %}
+                  <div class="text-right">
+                    <p class="text-sm text-gray-500 mb-0">{% trans "Desde" %}</p>
+                    <p class="text-xl font-bold text-blue-600">
+                      ${{ barata.Price }} {{ barata.Currency }}
+                    </p>
+                    <p class="text-sm text-gray-500">{% trans "por persona/noche" %}</p>
+                  </div>
+                {% endwith %}
+              {% endwith %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="bg-blue-100 text-blue-700 p-4 rounded">
+          {% trans "No se encontraron hoteles que coincidan con tu búsqueda." %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

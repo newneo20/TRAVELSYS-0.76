@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Categoría{% endblock %}
+
+{% block content %}
+  <!-- Incluir el archivo de estilos CSS -->
+  <link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+  <div class="form-container">
+    <h1 class="form-title">Editar Categoría</h1>
+    <form class="needs-validation" method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="nombre" class="form-label">Nombre de la Categoría</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ categoria.nombre }}" required>
+        <div class="invalid-feedback">
+          Por favor, proporciona el nombre de la categoría.
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="gasolina" class="form-label">Tipo de Gasolina</label>
+        <input type="text" class="form-control" id="gasolina" name="gasolina" value="{{ categoria.gasolina }}" required>
+        <div class="invalid-feedback">
+          Por favor, proporciona el tipo de gasolina.
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="rentadora" class="form-label">Rentadora</label>
+        <select class="form-control" id="rentadora" name="rentadora" required>
+          {% for rentadora in rentadoras %}
+          <option value="{{ rentadora.id }}" {% if categoria.rentadora.id == rentadora.id %}selected{% endif %}>
+            {{ rentadora.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="invalid-feedback">
+          Por favor, selecciona una rentadora.
+        </div>
+      </div>
+
+      <!-- Modelos de Carros asociados -->
+      <div class="form-group">
+        <label class="form-label"><strong>Modelos de Carros en esta Categoría:</strong></label>
+        <div class="row">
+          {% for modelo in categoria.modelos.all %}
+          <div class="col-md-4 text-center mb-4">
+            <div class="card h-100">
+              {% if modelo.foto %}
+              <img src="{{ modelo.foto.url }}" alt="{{ modelo.nombre }}" class="card-img-top" style="max-height: 150px; object-fit: contain;">
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ modelo.nombre }}</h5>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12">
+            <p>No hay modelos asociados a esta categoría.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Locations asociadas -->
+      <div class="form-group">
+        <label class="form-label"><strong>Locations en esta Categoría:</strong></label>
+        <ul class="list-group">
+          {% for location in categoria.locations.all %}
+          <li class="list-group-item">{{ location.nombre }} - {{ location.pais }}</li>
+          {% empty %}
+          <li class="list-group-item">No hay locations asociadas a esta categoría.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary btn-submit">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

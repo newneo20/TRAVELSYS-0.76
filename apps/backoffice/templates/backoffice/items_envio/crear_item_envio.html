@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Ítem de Envío{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 mt-8 bg-white shadow-md rounded-lg">
+  <h1 class="text-2xl font-bold mb-6 text-gray-800">Crear Ítem de Envío</h1>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="envio" class="block text-sm font-medium text-gray-700 mb-1">ID del Envío</label>
+        <input type="number" name="envio" id="envio" required
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        <input type="text" name="descripcion" id="descripcion" required
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="peso" class="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+        <input type="number" step="0.01" name="peso" id="peso"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="valor_aduana" class="block text-sm font-medium text-gray-700 mb-1">Valor Aduanal</label>
+        <input type="number" step="0.01" name="valor_aduana" id="valor_aduana"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button type="submit"
+              class="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500">
+        Guardar Ítem
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

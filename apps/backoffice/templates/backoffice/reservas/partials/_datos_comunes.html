@@ -1,0 +1,74 @@
+{% load i18n %}
+
+<div class="bg-white rounded-xl shadow p-6 mb-6 border border-gray-200">
+  <h3 class="text-xl font-bold text-gray-800 mb-6">{% trans "Datos de la Reserva" %}</h3>
+
+  <!-- Primera fila -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Nombre de Usuario" %}</label>
+      <input type="text" name="nombre_usuario" value="{{ reserva.nombre_usuario }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Correo electrónico" %}</label>
+      <input type="email" name="email_empleado" value="{{ reserva.email_empleado }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Costo Proveedor" %}</label>
+      <input type="text" name="costo_sin_fee" value="{{ reserva.costo_sin_fee }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Costo Agencia" %}</label>
+      <input type="text" name="costo_total" value="{{ reserva.costo_total }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Precio Agencia" %}</label>
+      <input type="text" name="precio_total" value="{{ reserva.precio_total }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+  </div>
+
+  <!-- Segunda fila -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Estatus" %}</label>
+      <select name="estatus" class="w-full rounded-md border px-3 py-2 text-sm">
+        <option value="solicitada" {% if reserva.estatus == 'solicitada' %}selected{% endif %}>{% trans "Solicitada" %}</option>
+        <option value="confirmada" {% if reserva.estatus == 'confirmada' %}selected{% endif %}>{% trans "Confirmada" %}</option>
+        <option value="cancelada" {% if reserva.estatus == 'cancelada' %}selected{% endif %}>{% trans "Cancelada" %}</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Tipo" %}</label>
+      <input type="text" name="tipo" value="{{ reserva.tipo }}" readonly class="w-full rounded-md bg-gray-100 border px-3 py-2 text-sm text-gray-700">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "No. de Confirmación" %}</label>
+      <input type="text" name="numero_confirmacion" value="{{ reserva.numero_confirmacion }}" class="w-full rounded-md border px-3 py-2 text-sm">
+    </div>
+
+    <div class="flex items-center mt-6">
+      <input type="checkbox" name="cobrada" value="True" {% if reserva.cobrada %}checked{% endif %} class="mr-2">
+      <label class="text-sm font-semibold text-gray-700">{% trans "Cobrada" %}</label>
+    </div>
+
+    <div class="flex items-center mt-6">
+      <input type="checkbox" name="pagada" value="True" {% if reserva.pagada %}checked{% endif %} class="mr-2">
+      <label class="text-sm font-semibold text-gray-700">{% trans "Pagada" %}</label>
+    </div>
+
+  </div>
+
+  <!-- Notas -->
+  <div>
+    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Notas" %}</label>
+    <textarea name="notas" rows="3" class="w-full rounded-md border px-3 py-2 text-sm">{{ reserva.notas }}</textarea>
+  </div>
+
+</div>

@@ -1,0 +1,54 @@
+<div class="pasajeros-container">
+    {% for pasajero in pasajeros %}
+    <div class="row pasajero" data-id="{{ pasajero.id }}">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="nombre_pasajero_{{ pasajero.id }}"><strong>Nombre</strong></label>
+          <input type="text" class="form-control" id="nombre_pasajero_{{ pasajero.id }}" name="habitaciones[{{ forloop.parentloop.counter }}][pasajeros][{{ pasajero.id }}][nombre]" value="{{ pasajero.nombre }}">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label for="fecha_nacimiento_pasajero_{{ pasajero.id }}"><strong>Fecha de Nacimiento</strong></label>
+          <input type="date" class="form-control fecha-nacimiento" id="fecha_nacimiento_pasajero_{{ pasajero.id }}" name="habitaciones[{{ forloop.parentloop.counter }}][pasajeros][{{ pasajero.id }}][fecha_nacimiento]" value="{{ pasajero.fecha_nacimiento|date:'Y-m-d' }}">
+        </div>
+      </div>
+      <div class="col-md-2 edad-col" style="display:none;">
+        <div class="form-group">
+          <label for="edad_pasajero_{{ pasajero.id }}"><strong>Edad</strong></label>
+          <select class="form-control edad" id="edad_pasajero_{{ pasajero.id }}" name="habitaciones[{{ forloop.parentloop.counter }}][pasajeros][{{ pasajero.id }}][edad]">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label for="pasaporte_pasajero_{{ pasajero.id }}"><strong>Pasaporte</strong></label>
+          <input type="text" class="form-control" id="pasaporte_pasajero_{{ pasajero.id }}" name="habitaciones[{{ forloop.parentloop.counter }}][pasajeros][{{ pasajero.id }}][pasaporte]" value="{{ pasajero.pasaporte }}">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="form-group">
+          <label for="caducidad_pasaporte_pasajero_{{ pasajero.id }}"><strong>Caducidad Pasaporte</strong></label>
+          <input type="date" class="form-control" id="caducidad_pasaporte_pasajero_{{ pasajero.id }}" name="habitaciones[{{ forloop.parentloop.counter }}][pasajeros][{{ pasajero.id }}][caducidad_pasaporte]" value="{{ pasajero.caducidad_pasaporte|date:'Y-m-d' }}">
+        </div>
+      </div>
+      <div class="col-md-1 d-flex align-items-end">
+        <a href="#" class="btn btn-outline-danger eliminar-pasajero"><i class="fas fa-trash-alt"></i></a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  

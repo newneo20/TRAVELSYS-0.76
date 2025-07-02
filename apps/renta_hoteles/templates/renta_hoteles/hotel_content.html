@@ -1,0 +1,115 @@
+{% block content %}
+
+    <div class="container mt-4">
+        <div class="progress-container mb-4">
+            <h1>Hotel</h1>
+        </div>
+        <div class="card">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="card-body">                
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="hotel_nombre" class="form-label"><strong>Hotel Nombre</strong></label>
+                            <input type="text" class="form-control" id="hotel_nombre" name="hotel_nombre">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="proveedor" class="form-label"><strong>Proveedor</strong></label>
+                            <select class="form-select" id="proveedor" name="proveedor">                                
+                                {% for proveedor in proveedores %}
+                                    <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>                   
+                        <div class="col-md-3">
+                            <label for="fee" class="form-label"><strong>Fee</strong></label>
+                            <input type="text" class="form-control" id="fee" name="fee">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="tipo_fee" class="form-label"><strong>Tipo Fee</strong></label>
+                            <select class="form-select" id="tipo_fee" name="tipo_fee">                                
+                                {% for tipo_fee in tipo_fee %}
+                                    <option value="{{ tipo_fee.id }}">{{ tipo_fee.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="polo_turistico" class="form-label"><strong>Polo Turistico</strong></label>
+                            <select class="form-select" id="polo_turistico" name="polo_turistico">
+                                {% for polo_turistico in polos_turisticos %}
+                                    <option value="{{ polo_turistico.id }}">{{ polo_turistico.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="plan_alimenticio" class="form-label"><strong>Plan Alimenticio</strong></label>
+                            <select class="form-select" id="plan_alimenticio" name="plan_alimenticio">                                
+                                {% for plan_alimenticio in plan_alimenticio %}
+                                    <option value="{{ plan_alimenticio.id }}">{{ plan_alimenticio.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div> 
+                        <div class="col-md-12">
+                            <label for="descripcion_hotel" class="form-label"><strong>Descripcion</strong></label>                            
+                            <textarea class="form-control" id="descripcion_hotel" rows="3" placeholder="Descripcion"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="direccion" class="form-label"><strong>Direccion</strong></label>
+                            <input type="text" class="form-control" id="direccion" name="direccion">                            
+                        </div>
+                        <div class="col-md-4">
+                            <label for="checkin" class="form-label"><strong>Checkin</strong></label>
+                            <input type="date" class="form-control" id="checkin" name="checkin">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="checkout" class="form-label"><strong>Checkout</strong></label>
+                            <input type="date" class="form-control" id="checkout" name="checkout">
+                        </div>
+                        <div class="col-md-4">
+                            
+                        </div>
+                        <div class="col-md-4">
+                            <label for="latitud" class="form-label"><strong>Latitud</strong></label>
+                            <input type="text" class="form-control" id="latitud" name="latitud">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="longitud" class="form-label"><strong>Longitud</strong></label>
+                            <input type="text" class="form-control" id="longitud" name="longitud">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="orden" class="form-label"><strong>Orden</strong></label>
+                            <input type="text" class="form-control" id="orden" name="orden">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="foto_hotel" class="form-label"><strong>Foto</strong></label>
+                            <input type="text" class="form-control" id="foto_hotel" name="foto_hotel">
+                        </div>
+                    </div>                    
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+    <!-- Incluye jQuery primero (solo una vez) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Luego incluye el JS de Select2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <!-- Incluye el CSS de Select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Para integrar Select2 con Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.4.6/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
+    <script>
+        $(document).ready(function() {
+            $('.form-select').select2({
+                theme: 'bootstrap5',
+                allowClear: true
+            });
+        });
+    </script>
+
+{% endblock %}

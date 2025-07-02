@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Tasas de Cambio{% endblock %}
+
+{% block content %}
+<main class="w-full max-w-7xl mx-auto px-6 py-10 space-y-10">
+
+  <!-- ENCABEZADO -->
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+      <i class="fas fa-coins text-yellow-500"></i> Tasas de Cambio
+    </h1>
+    <a href="{% url 'backoffice:crear_tasa_cambio' %}" class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">
+      <i class="fas fa-plus mr-2"></i> Crear Tasa
+    </a>
+  </div>
+
+  <!-- TABLA -->
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-2xl shadow">
+    <table class="min-w-full text-sm text-gray-800">
+      <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+        <tr>
+          <th class="px-6 py-4 text-center">USD a CUP</th>
+          <th class="px-6 py-4 text-center">USD a MLC</th>
+          <th class="px-6 py-4 text-center">Última Actualización</th>
+          <th class="px-6 py-4 text-center">Activa</th>
+          <th class="px-6 py-4 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for tasa in tasas_cambio %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 text-center font-medium">{{ tasa.tasa_cup }}</td>
+          <td class="px-6 py-4 text-center font-medium">{{ tasa.tasa_mlc }}</td>
+          <td class="px-6 py-4 text-center">{{ tasa.fecha_actualizacion|date:"Y-m-d H:i" }}</td>
+          <td class="px-6 py-4 text-center">
+            {% if tasa.activa %}
+              <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                <i class="fas fa-check-circle mr-1"></i> Sí
+              </span>
+            {% else %}
+              <span class="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-600 text-xs font-semibold rounded-full">
+                <i class="fas fa-times-circle mr-1"></i> No
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center space-x-2">
+            <a href="{% url 'backoffice:editar_tasa_cambio' tasa.pk %}" class="inline-flex items-center justify-center w-9 h-9 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition" title="Editar">
+              <i class="fas fa-pen"></i>
+            </a>
+            <a href="{% url 'backoffice:eliminar_tasa_cambio' tasa.pk %}" class="inline-flex items-center justify-center w-9 h-9 bg-red-100 text-red-600 rounded hover:bg-red-200 transition" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">No hay tasas registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</main>
+{% endblock %}

@@ -1,0 +1,175 @@
+<div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">Revisar y Confirmar</h3>
+    <p class="text-gray-600">Verifica todos los detalles antes de proceder al pago</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Contact Information -->
+    <div class="space-y-6">
+        <!-- Recipient -->
+        <div class="bg-white shadow-xl rounded-2xl border border-gray-200 p-6">
+            <!-- Título de la tarjeta -->
+            <div class="flex items-center justify-between border-b pb-4 mb-4">
+              <h3 class="text-xl font-bold text-indigo-700 flex items-center">
+                <i data-lucide="user-round" class="w-6 h-6 mr-2 text-indigo-700"></i>
+                Destinatario
+              </h3>
+              <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center transition">
+                <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
+                Editar
+              </button>
+            </div>
+          
+            <!-- Contenido del destinatario -->
+            <div class="bg-gray-50 p-5 rounded-xl shadow-inner" x-show="selectedRecipient">
+              <div class="mb-4">
+                <h4 class="text-lg font-semibold text-gray-900" x-text="selectedRecipient?.nombre_completo"></h4>
+                <p class="text-sm text-gray-600 mt-1" x-text="'CI: ' + selectedRecipient?.ci"></p>
+              </div>
+          
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div class="flex items-center">
+                  <i data-lucide="phone" class="w-4 h-4 mr-2 text-blue-500"></i>
+                  <span x-text="selectedRecipient?.telefono"></span>
+                </div>
+                <div class="flex items-center">
+                  <i data-lucide="mail" class="w-4 h-4 mr-2 text-blue-500"></i>
+                  <span x-text="selectedRecipient?.email"></span>
+                </div>
+                <div class="md:col-span-2 flex items-start">
+                  <i data-lucide="map-pin" class="w-4 h-4 mr-2 mt-0.5 text-blue-500"></i>
+                  <span x-text="selectedRecipient?.direccion_completa"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="bg-white shadow-xl rounded-2xl border border-gray-200 p-6">
+            <!-- Título de la tarjeta -->
+            <div class="flex items-center justify-between border-b pb-4 mb-4">
+              <h3 class="text-xl font-bold text-green-700 flex items-center">
+                <i data-lucide="user-round" class="w-6 h-6 mr-2 text-green-700"></i>
+                Remitente
+              </h3>
+              <button class="text-sm font-medium text-green-600 hover:text-green-800 flex items-center transition">
+                <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
+                Editar
+              </button>
+            </div>
+          
+            <!-- Contenido del remitente -->
+            <div class="bg-gray-50 p-5 rounded-xl shadow-inner" x-show="selectedSender">
+              <div class="mb-4">
+                <h4 class="text-lg font-semibold text-gray-900" x-text="selectedSender?.nombre_apellido"></h4>
+                <p class="text-sm text-gray-600 mt-1" x-text="'Documento: ' + selectedSender?.id_documento"></p>
+              </div>
+          
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div class="flex items-center">
+                  <i data-lucide="phone" class="w-4 h-4 mr-2 text-green-500"></i>
+                  <span x-text="selectedSender?.telefono"></span>
+                </div>
+                <div class="md:col-span-2 flex items-start">
+                  <i data-lucide="map-pin" class="w-4 h-4 mr-2 mt-0.5 text-green-500"></i>
+                  <span x-text="selectedSender?.direccion"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+    </div>
+
+    <!-- Shipping Items -->
+    <div class="space-y-6">
+        <div class="glassmorphism p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i data-lucide="package" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    <span x-text="'Artículos (' + items.length + ')'"></span>
+                </h4>
+                <button class="text-gray-600 hover:text-gray-900 text-sm flex items-center">
+                    <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
+                    Editar
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <template x-for="(item, index) in items" :key="item.id">
+                    <div class="border-l-4 pl-4 py-2" :class="item.tipo === 'air' ? 'border-blue-400' : 'border-orange-400'">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <h5 class="font-medium text-gray-900" x-text="item.descripcion || 'Artículo ' + (index + 1)"></h5>
+                                <span 
+                                    class="px-2 py-1 rounded text-xs font-medium"
+                                    :class="item.tipo === 'air' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'"
+                                    x-text="item.tipo === 'air' ? 'Aéreo' : 'Marítimo'"
+                                ></span>
+                            </div>
+                            <span class="font-semibold text-gray-900" x-text="'$' + item.total.toFixed(2)"></span>
+                        </div>
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <p x-text="'HBL: ' + item.hbl"></p>
+                            <p x-text="'Cantidad: ' + item.cantidad + ' | Peso: ' + item.peso + ' kg'"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="glassmorphism p-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200 rounded-lg">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">Resumen del Envío</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal artículos:</span>
+                    <span class="font-medium" x-text="'$' + totalValue.toFixed(2)"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Peso total:</span>
+                    <span class="font-medium" x-text="totalWeight.toFixed(1) + ' kg'"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Tarifa de procesamiento:</span>
+                    <span class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Seguro (opcional):</span>
+                    <span class="font-medium">$0.00</span>
+                </div>
+                <hr class="border-gray-300" />
+                <div class="flex justify-between text-lg font-bold">
+                    <span>Total a pagar:</span>
+                    <span class="text-green-600" x-text="'$' + (totalValue + 0.00 + 0.00).toFixed(2)"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation -->
+<div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl">
+    <div class="flex items-center space-x-3 mb-4">
+        <i data-lucide="check-circle" class="w-8 h-8"></i>
+        <div>
+            <h4 class="text-xl font-semibold">¿Todo se ve correcto?</h4>
+            <p class="opacity-90">Revisa cuidadosamente antes de proceder al pago</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div>
+            <p class="opacity-75">Tiempo estimado de entrega Aéreo:</p>
+            <p class="font-semibold">10-12 días hábiles</p>
+        </div>
+        <div>
+            <p class="opacity-75">Tiempo estimado de entrega Maritimo:</p>
+            <p class="font-semibold">30-60 días hábiles</p>
+        </div>
+        <div>
+            <p class="opacity-75">Método de pago:</p>
+            <p class="font-semibold">Cash / Zelle</p>
+        </div>
+    </div>
+</div>
+
+

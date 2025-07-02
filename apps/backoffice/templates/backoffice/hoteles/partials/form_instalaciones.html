@@ -1,0 +1,133 @@
+{% load static %}
+
+<!-- templates/partials/form_instalaciones.html -->
+<div 
+  x-show="tab === 'instalaciones'" 
+  x-cloak 
+  x-data="installationsComponent()" 
+  class="mt-4 space-y-6 bg-white rounded-lg shadow p-6"
+>
+  <form @submit.prevent="submitInstallations()" novalidate class="space-y-6">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="instalaciones">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Baño -->
+      <div class="col-span-3">
+        <h4 class="text-lg font-semibold text-indigo-600 mb-2 flex items-center">
+          <i class="fas fa-bath mr-2"></i>Baño
+        </h4>
+      </div>
+      <template x-for="field in ['articulos_aseo','inodoro','toallas','bano_privado','banera_ducha','secador_pelo']" :key="field">
+        <div class="flex items-center">
+          <input 
+            type="checkbox" 
+            :id="field" 
+            :name="field" 
+            x-model="form[field]" 
+            class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          >
+          <label :for="field" class="ml-2 text-sm text-gray-700 flex items-center">
+            <i :class="icons[field] + ' mr-2'"></i>
+            <span x-text="labels[field]"></span>
+          </label>
+        </div>
+      </template>
+
+      <!-- Seguridad -->
+      <div class="col-span-3 mt-4">
+        <h4 class="text-lg font-semibold text-indigo-600 mb-2 flex items-center">
+          <i class="fas fa-shield-alt mr-2"></i>Seguridad
+        </h4>
+      </div>
+      <template x-for="field in ['extintores','detectores_humo','cctv']" :key="field">
+        <div class="flex items-center">
+          <input 
+            type="checkbox" 
+            :id="field" 
+            :name="field" 
+            x-model="form[field]" 
+            class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          >
+          <label :for="field" class="ml-2 text-sm text-gray-700 flex items-center">
+            <i :class="icons[field] + ' mr-2'"></i>
+            <span x-text="labels[field]"></span>
+          </label>
+        </div>
+      </template>
+
+      <!-- siguiente secciones... -->
+      <!-- réplica de los anteriores para 'Dormitorio', 'Comida y bebida', 'General', etc -->
+      <!-- ... -->
+    </div>
+
+    <div class="flex justify-end">
+      <button 
+        type="submit" 
+        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <i class="fas fa-save mr-2"></i>Guardar Instalaciones
+      </button>
+    </div>
+  </form>
+
+  <!-- Toast Notification -->
+  <div 
+    x-show="toast.show" 
+    x-text="toast.message" 
+    x-transition 
+    class="fixed top-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg"
+  ></div>
+</div>
+
+<script>
+  function installationsComponent() {
+    return {
+      form: {
+        articulos_aseo: {% if instalaciones %}{{ instalaciones.articulos_aseo|yesno:"true,false" }}{% else %}false{% endif %},
+        inodoro: {% if instalaciones %}{{ instalaciones.inodoro|yesno:"true,false" }}{% else %}false{% endif %},
+        toallas: {% if instalaciones %}{{ instalaciones.toallas|yesno:"true,false" }}{% else %}false{% endif %},
+        bano_privado: {% if instalaciones %}{{ instalaciones.bano_privado|yesno:"true,false" }}{% else %}false{% endif %},
+        banera_ducha: {% if instalaciones %}{{ instalaciones.banera_ducha|yesno:"true,false" }}{% else %}false{% endif %},
+        secador_pelo: {% if instalaciones %}{{ instalaciones.secador_pelo|yesno:"true,false" }}{% else %}false{% endif %},
+        extintores: {% if instalaciones %}{{ instalaciones.extintores|yesno:"true,false" }}{% else %}false{% endif %},
+        detectores_humo: {% if instalaciones %}{{ instalaciones.detectores_humo|yesno:"true,false" }}{% else %}false{% endif %},
+        cctv: {% if instalaciones %}{{ instalaciones.cctv|yesno:"true,false" }}{% else %}false{% endif %},
+        /* continúa así para el resto de los campos booleanos... */
+      },
+      toast: { show: false, message: '' },
+      labels: {
+        articulos_aseo: 'Artículos de aseo gratuitos',
+        inodoro: 'Inodoro',
+        /* ... */
+      },
+      icons: {
+        articulos_aseo: 'fas fa-pump-soap',
+        inodoro: 'fas fa-toilet',
+        /* ... */
+      },
+      submitInstallations() {
+        const data = new FormData();
+        data.append('form_type','instalaciones');
+        for (let k in this.form) {
+          if (this.form[k]) data.append(k,'on');
+        }
+        data.append('csrfmiddlewaretoken','{{ csrf_token }}');
+        fetch("#", {
+          method: 'POST',
+          body: data
+        })
+        .then(r=>r.json())
+        .then(js=>{
+          this.showToast(js.success ? 'Instalaciones guardadas' : 'Error al guardar');
+        })
+        .catch(()=>this.showToast('Error de red'));
+      },
+      showToast(msg) {
+        this.toast.message = msg;
+        this.toast.show = true;
+        setTimeout(() => this.toast.show = false, 3000);
+      }
+    }
+  }
+</script>

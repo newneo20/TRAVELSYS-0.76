@@ -1,0 +1,164 @@
+{% extends 'booking/base_tabs.html' %}
+
+{% load static %}
+
+{% block title %}Detalles{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'booking:hotel_pago_reserva' hotel.id %}">
+    {% csrf_token %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>{{ hotel.hotel_nombre }}</h2>
+                <p><i class="fas fa-map-marker-alt"></i> {{ hotel.polo_turistico.nombre }} - {{ hotel.direccion }}</p>
+                <img src="{% static 'backoffice/fotos_hoteles/' %}{{ hotel.foto_hotel }}" class="img-fluid mb-4" alt="Imagen del hotel">
+
+                <!-- Información del hotel -->
+                <h3>Descripción</h3>
+                <p>{{ hotel.descripcion_hotel }}</p>
+
+                <!-- Detalles de las habitaciones -->
+                <h3>Alojamiento</h3>
+                <div class="row">
+                    {% for datosHabitacion in habitaciones_data %}
+                        <div class="col-12">
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="my-0">{{ datosHabitacion.habitacion }} ( {{ datosHabitacion.adultos }} + {{ datosHabitacion.ninos }} )</h4>
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_nombre" value="{{ datosHabitacion.habitacion }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_adultos" value="{{ datosHabitacion.adultos }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_ninos" value="{{ datosHabitacion.ninos }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_total_pax" value="{{ datosHabitacion.total_pax }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_cant_adultos" value="{{ datosHabitacion.cant_adultos }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_cant_ninos" value="{{ datosHabitacion.cant_ninos }}">
+                                    <input type="hidden" name="habitacion_{{ forloop.counter0 }}_fechas_viaje" value="{{ datosHabitacion.fechas_viaje }}">
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Opciones de Alojamiento</h5>
+                                    {% for opcion in datosHabitacion.opciones %}
+                                        <div class="form-check">
+                                            <div class="row mb-3">
+                                                <div class="col-md-8">
+                                                    <input class="form-check-input" type="radio" name="opciones_habitacion_{{ forloop.parentloop.counter0 }}" id="opcion_{{ datosHabitacion.habitacion }}_{{ opcion.id }}" value="{{ opcion.id }}" data-precio="{{ opcion.precio }}" required>
+                                                    <label class="form-check-label" for="opcion_{{ datosHabitacion.habitacion }}_{{ opcion.id }}">
+                                                        {{ opcion.nombre }} - {{plan_alimenticio}}
+                                                        <br>                                                        
+                                                    </label>
+                                                </div>
+                                                <div class="col-md-4 text-end">
+                                                    <p class="mb-0">{{ opcion.precio }} <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="top" title="En caso de cancelación la reserva no es reembolsable"></i></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    <input type="hidden" name="precio_opcion_{{ forloop.counter0 }}" id="precio_opcion_{{ forloop.counter0 }}" value="">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-lg">Reservar ahora <i class="fas fa-shopping-cart"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Añade los scripts de Bootstrap si no están ya incluidos -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    $(document).ready(function() {
+        $('input[type=radio]').change(function() {
+            var habitacionIndex = $(this).attr('name').split('_')[2];
+            var precio = $(this).data('precio');
+            $('#precio_opcion_' + habitacionIndex).val(precio);
+        });
+
+        var infoHabitaciones = {{ info_habitaciones|safe }};
+
+        // Función para cargar los valores en el modal
+        function cargarValoresModal(info) {
+            $('#habitaciones').val(info['numHabitaciones']).trigger('change');
+            for (var i = 0; i < info['datosHabitaciones'].length; i++) {
+                var habitacion = info['datosHabitaciones'][i];
+                $('#adultos' + (i + 1)).val(habitacion['adultos']);
+                $('#ninos' + (i + 1)).val(habitacion['ninos']).trigger('change');
+                for (var j = 0; j < habitacion['edadesNinos'].length; j++) {
+                    $('#edadNino' + (i + 1) + '_' + (j + 1)).val(habitacion['edadesNinos'][j]);
+                }
+            }
+        }
+
+        // Cargar valores en el modal al abrirlo
+        $('#habitacionesModal').on('show.bs.modal', function() {
+            if (infoHabitaciones) {
+                cargarValoresModal(infoHabitaciones);
+            }
+        });
+
+        $('#guardarHabitaciones').click(function() {
+            var numHabitaciones = $('#habitaciones').val();
+            var datosHabitaciones = [];
+            var totalAdultos = 0;
+            var totalNinos = 0;
+
+            for (var i = 1; i <= numHabitaciones; i++) {
+                var adultos = $(`#adultos${i}`).val();
+                var ninos = $(`#ninos${i}`).val();
+                var edadesNinos = [];
+
+                for (var j = 1; j <= ninos; j++) {
+                    edadesNinos.push($(`#edadNino${i}_${j}`).val());
+                }
+
+                totalAdultos += parseInt(adultos);
+                totalNinos += parseInt(ninos);
+
+                datosHabitaciones.push({
+                    habitacion: i,
+                    adultos: adultos,
+                    ninos: ninos,
+                    edadesNinos: edadesNinos
+                });
+            }
+
+            var infoHabitaciones = {
+                numHabitaciones: numHabitaciones,
+                totalAdultos: totalAdultos,
+                totalNinos: totalNinos,
+                datosHabitaciones: datosHabitaciones
+            };
+
+            // Puedes imprimir la variable en la consola para verificar
+            console.log(infoHabitaciones);
+
+            // También puedes guardar esta variable en un campo oculto o enviarla a un servidor si es necesario
+            // Por ejemplo, en un campo oculto:
+            $('#infoHabitacionesInput').val(JSON.stringify(infoHabitaciones));
+
+            $('#habitaciones_input').val(numHabitaciones);
+            $('#adultos_input').val(totalAdultos);
+            $('#ninos_input').val(totalNinos);
+
+            var habitacionesTexto = `<i class="fas fa-bed"></i> ${numHabitaciones}`;
+            var adultosTexto = `<i class="fas fa-user"></i> ${totalAdultos}`;
+            var ninosTexto = `<i class="fas fa-child"></i> ${totalNinos}`;
+            $('.btn-outline-primary').html(`${habitacionesTexto} ${adultosTexto} ${ninosTexto}`);
+
+            $('#habitacionesModal').modal('hide');
+        });
+
+        $('#habitaciones').val('1').trigger('change');
+        actualizarCamposEdadNinos(1);
+    });
+</script>
+{% endblock %}

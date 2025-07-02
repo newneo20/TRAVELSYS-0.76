@@ -1,0 +1,68 @@
+# Entorno virtual
+venv/
+.env
+.env.*
+
+# Archivos Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos temporales de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de base de datos local
+db.sqlite3
+*.sqlite3
+
+# Archivos de logs
+*.log
+
+# Archivos de backup
+*.bak
+*.swp
+*.swo
+
+# Archivos de configuración locales
+*.local
+*.secret
+
+# Archivos de migraciones
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/migrations/*.py
+
+# Archivos de media generados por usuarios
+/media/
+
+# Archivos de caché de Django
+staticfiles/
+static_root/
+collected_static/
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# Archivos de exportaciones y scripts
+z_mis_script/000/HotelImportado*.csv
+
+# Archivos XML/CSV temporales de pruebas
+*.xml
+*.csv
+*.xls
+*.xlsx
+
+# Archivos de credenciales o tokens
+*.pem
+*.key
+*.crt
+*.p12
+
+# Carpetas específicas del proyecto
+logs/
+backup/
+documentos/

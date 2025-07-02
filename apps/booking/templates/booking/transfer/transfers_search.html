@@ -1,0 +1,13 @@
+{% extends 'booking/base_tabs.html' %}
+
+{% block title %}Buscar Traslados{% endblock %}
+
+{% block content %}
+<form method="GET" action="{% url 'booking:transfers_search' %}">
+    <!-- Contenido del formulario aquí -->
+    <div class="container mt-4 search-bar">
+        <!-- Campos del formulario -->
+        <button type="submit" class="btn btn-primary">Búsqueda</button>
+    </div>
+</form>
+{% endblock %}

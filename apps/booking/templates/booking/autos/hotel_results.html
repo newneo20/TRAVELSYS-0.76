@@ -1,0 +1,153 @@
+{% extends 'booking/hotel/base_hotel.html' %}
+{% load static %}
+
+{% block title %}Resultados de la búsqueda{% endblock %}
+
+{% block content %}
+<!-- Llama al bloque de contenido de hotel_search.html para incluir el formulario -->
+<!-- Formulario para mantener los valores de la búsqueda -->
+<form id="hiddenSearchForm" method="get" action="{% url 'booking:hotel_results' %}">
+    <input type="hidden" name="destino" value="{{ destino }}">
+    <input type="hidden" name="fecha_checkin" value="{{ fecha_checkin }}">
+    <input type="hidden" name="fecha_checkout" value="{{ fecha_checkout }}">
+    <input type="hidden" name="habitaciones" value="{{ cant_habitaciones }}">
+    <input type="hidden" name="adultos" value="{{ cant_adultos }}">
+    <input type="hidden" name="ninos" value="{{ cant_ninos }}">
+    <input type="hidden" name="info_habitaciones" value="{{ info_habitaciones|escape }}">
+</form>
+{{ block.super }}
+
+<!-- Agrega los resultados de búsqueda debajo del formulario -->
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Resultados de la búsqueda ({{ hoteles|length }}) </h3>
+        </div>
+    </div>
+    <div class="row">
+        {% for hotel in hoteles %}
+            <div class="col-md-12">
+                <div class="card mb-4 shadow-sm">
+                    <div class="row no-gutters">
+                        <div class="col-md-4">
+                            <img src="{% static 'backoffice/fotos_hoteles/' %}{{ hotel.foto_hotel }}" class="card-img" alt="Imagen del hotel">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ hotel.hotel_nombre }}</h5>
+                                <p class="card-text">
+                                    {% for i in "12345" %}
+                                        <i class="fas fa-star{% if i > hotel.categoria|stringformat:"d" %}-o{% endif %}"></i>
+                                    {% endfor %}
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt"></i> {{ hotel.polo_turistico.nombre }} - {{ hotel.direccion }}
+                                </p>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        {% if hotel.hotelsetting.cantidad_noches > 0 %}
+                                            <span class="badge badge-danger">Estancia mínima {{ hotel.hotelsetting.cantidad_noches }} noches</span>
+                                        {% endif %}
+                                        <span class="badge badge-success">Plan Alimenticio: {{ hotel.plan_alimenticio }} </span>
+                                    </div>
+                                </div>
+                                <p class="card-text mt-2">{{ hotel.descripcion_hotel }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'booking:hotel_detalle' hotel.id %}?habitaciones={{ request.GET.habitaciones }}&adultos={{ request.GET.adultos }}&ninos={{ request.GET.ninos }}&fechas_viaje={{ request.GET.fechas_viaje }}&info_habitaciones={{ request.GET.info_habitaciones|urlencode }}" class="btn btn-primary">Ver detalles</a>
+
+                                    <div>
+                                        <span class="text-success">a partir de</span>
+                                        <span class="h4 text-primary">${{ hotel.precio }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Script para cargar valores en el modal -->
+<script>
+    $(document).ready(function() {
+        var infoHabitaciones = {{ info_habitaciones|safe }};
+
+        // Función para cargar los valores en el modal
+        function cargarValoresModal(info) {
+            $('#habitaciones').val(info.numHabitaciones).trigger('change');
+            for (var i = 0; i < info.datosHabitaciones.length; i++) {
+                var habitacion = info.datosHabitaciones[i];
+                $('#adultos' + (i + 1)).val(habitacion.adultos);
+                $('#ninos' + (i + 1)).val(habitacion.ninos).trigger('change');
+                for (var j = 0; j < habitacion.edadesNinos.length; j++) {
+                    $('#edadNino' + (i + 1) + '_' + (j + 1)).val(habitacion.edadesNinos[j]);
+                }
+            }
+        }
+
+        // Cargar valores en el modal al abrirlo
+        $('#habitacionesModal').on('show.bs.modal', function() {
+            if (infoHabitaciones) {
+                cargarValoresModal(infoHabitaciones);
+            }
+        });
+
+        $('#guardarHabitaciones').click(function() {
+            var numHabitaciones = $('#habitaciones').val();
+            var datosHabitaciones = [];
+            var totalAdultos = 0;
+            var totalNinos = 0;
+
+            for (var i = 1; i <= numHabitaciones; i++) {
+                var adultos = $(`#adultos${i}`).val();
+                var ninos = $(`#ninos${i}`).val();
+                var edadesNinos = [];
+
+                for (var j = 1; j <= ninos; j++) {
+                    edadesNinos.push($(`#edadNino${i}_${j}`).val());
+                }
+
+                totalAdultos += parseInt(adultos);
+                totalNinos += parseInt(ninos);
+
+                datosHabitaciones.push({
+                    habitacion: i,
+                    adultos: adultos,
+                    ninos: ninos,
+                    edadesNinos: edadesNinos
+                });
+            }
+
+            var infoHabitaciones = {
+                numHabitaciones: numHabitaciones,
+                totalAdultos: totalAdultos,
+                totalNinos: totalNinos,
+                datosHabitaciones: datosHabitaciones
+            };
+
+            // Puedes imprimir la variable en la consola para verificar
+            console.log(infoHabitaciones);
+
+            // También puedes guardar esta variable en un campo oculto o enviarla a un servidor si es necesario
+            // Por ejemplo, en un campo oculto:
+            $('#infoHabitacionesInput').val(JSON.stringify(infoHabitaciones));
+
+            $('#habitaciones_input').val(numHabitaciones);
+            $('#adultos_input').val(totalAdultos);
+            $('#ninos_input').val(totalNinos);
+
+            var habitacionesTexto = `<i class="fas fa-bed"></i> ${numHabitaciones}`;
+            var adultosTexto = `<i class="fas fa-user"></i> ${totalAdultos}`;
+            var ninosTexto = `<i class="fas fa-child"></i> ${totalNinos}`;
+            $('.btn-outline-primary').html(`${habitacionesTexto} ${adultosTexto} ${ninosTexto}`);
+
+            $('#habitacionesModal').modal('hide');
+        });
+
+        $('#habitaciones').val('1').trigger('change');
+        actualizarCamposEdadNinos(1);
+    });
+</script>
+{% endblock %}

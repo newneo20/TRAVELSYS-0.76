@@ -1,0 +1,110 @@
+<!-- templates/partials/form_config.html -->
+<div 
+  x-show="tab === 'config'" 
+  x-cloak 
+  x-data="configComponent()" 
+  class="mt-4 space-y-6 bg-white rounded-lg shadow p-6"
+>
+  <form @submit.prevent="saveConfig()" class="space-y-6">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="configuraciones">
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label for="edad_limite_nino" class="block text-sm font-medium text-gray-700">
+          Edad límite del niño
+        </label>
+        <input
+          type="number"
+          id="edad_limite_nino"
+          name="edad_limite_nino"
+          x-model="config.edad_limite_nino"
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+
+      <div>
+        <label for="edad_limite_infante" class="block text-sm font-medium text-gray-700">
+          Edad límite infante
+        </label>
+        <input
+          type="number"
+          id="edad_limite_infante"
+          name="edad_limite_infante"
+          x-model="config.edad_limite_infante"
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+
+      <div>
+        <label for="cantidad_noches" class="block text-sm font-medium text-gray-700">
+          Cantidad de noches
+        </label>
+        <input
+          type="number"
+          id="cantidad_noches"
+          name="cantidad_noches"
+          x-model="config.cantidad_noches"
+          class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+        >
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        type="submit"
+        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <i class="fas fa-save mr-2"></i>Guardar Configuración
+      </button>
+    </div>
+  </form>
+
+  <!-- Toast Notification -->
+  <div 
+    x-show="toast.show" 
+    x-text="toast.message" 
+    x-transition 
+    class="fixed top-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg"
+  ></div>
+</div>
+
+<script>
+  function configComponent() {
+    return {
+      config: {
+        edad_limite_nino: {{ configuraciones.edad_limite_nino|default:"null" }},
+        edad_limite_infante: {{ configuraciones.edad_limite_infante|default:"null" }},
+        cantidad_noches: {{ configuraciones.cantidad_noches|default:"null" }},
+      },
+      toast: { show: false, message: '' },
+
+      saveConfig() {
+        const formData = new FormData();
+        formData.append('form_type', 'configuraciones');
+        formData.append('edad_limite_nino', this.config.edad_limite_nino ?? '');
+        formData.append('edad_limite_infante', this.config.edad_limite_infante ?? '');
+        formData.append('cantidad_noches', this.config.cantidad_noches ?? '');
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token|escapejs }}');
+
+        fetch("#", {
+          method: 'POST',
+          body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+          this.toast.show = true;
+          this.toast.message = data.success
+            ? 'Configuración guardada con éxito'
+            : 'Error al guardar configuración';
+          setTimeout(() => this.toast.show = false, 3000);
+        })
+        .catch(() => {
+          this.toast.show = true;
+          this.toast.message = 'Error de red';
+          setTimeout(() => this.toast.show = false, 3000);
+        });
+      }
+    }
+  }
+</script>

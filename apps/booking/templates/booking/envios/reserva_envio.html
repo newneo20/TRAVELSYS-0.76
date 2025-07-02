@@ -1,0 +1,496 @@
+{% extends 'booking/base_tabs.html' %}
+{% load static i18n %}
+
+{% block title %}Crear Envío - TRAVEL-SYS{% endblock %}
+
+{% block content %}
+
+<!-- Agregamos esto para que x-cloak funcione correctamente -->
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+
+<script id="datos-iniciales" type="application/json">
+  {{ datos_iniciales|safe }}
+</script>
+
+
+<div class="min-h-screen gradient-bg">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <div 
+            x-data="shippingWizard()" 
+            x-init="init()"
+            class="space-y-8 animate-fade-in"
+        >
+
+            <!-- Header -->
+            <div class="text-center">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Crear Nueva Reserva de Envío</h2>
+                <p class="text-xl text-gray-600">Completa los pasos para crear tu envío de manera rápida y segura</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="glassmorphism p-6 rounded-2xl">
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Progreso</span>
+                        <span class="text-sm text-gray-500" x-text="Math.round(progress) + '% completado'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                            class="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                            :style="`width: ${progress}%`"
+                        ></div>
+                    </div>
+                </div>
+
+                <!-- Step Navigation -->
+                <div class="flex items-center justify-between">
+                    <template x-for="(step, index) in steps" :key="step.id">
+                        <div class="flex items-center">
+                            <button
+                                @click="goToStep(step.id)"
+                                :disabled="!isStepAccessible(step.id)"
+                                class="flex items-center space-x-3 p-3 rounded-lg transition-all"
+                                :class="{
+                                    'bg-blue-100 text-blue-700 shadow-sm': currentStep === step.id,
+                                    'bg-green-100 text-green-700 hover:bg-green-200': isStepCompleted(step.id),
+                                    'text-gray-600 hover:bg-gray-100': isStepAccessible(step.id) && currentStep !== step.id && !isStepCompleted(step.id),
+                                    'text-gray-400 cursor-not-allowed': !isStepAccessible(step.id)
+                                }"
+                            >
+                                <div
+                                    class="w-10 h-10 rounded-full flex items-center justify-center"
+                                    :class="{
+                                        'bg-blue-600 text-white': currentStep === step.id,
+                                        'bg-green-600 text-white': isStepCompleted(step.id),
+                                        'bg-gray-200 text-gray-600': isStepAccessible(step.id) && currentStep !== step.id && !isStepCompleted(step.id),
+                                        'bg-gray-100 text-gray-400': !isStepAccessible(step.id)
+                                    }"
+                                >
+                                    <template x-if="isStepCompleted(step.id)">
+                                        <i data-lucide="check" class="w-5 h-5"></i>
+                                    </template>
+                                    <template x-if="!isStepCompleted(step.id)">
+                                        <i :data-lucide="step.icon" class="w-5 h-5"></i>
+                                    </template>
+                                </div>
+                                <div class="text-left hidden md:block">
+                                    <div class="font-medium" x-text="step.name"></div>
+                                    <div class="text-xs opacity-75" x-text="step.description"></div>
+                                </div>
+                            </button>
+                            <div x-show="index < steps.length - 1" class="w-8 h-px bg-gray-300 mx-2 hidden md:block"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Step Content -->
+            <div class="glassmorphism p-8 rounded-2xl min-h-[600px]">
+
+                <!-- Paso 1 -->                
+                <template x-if="currentStep === 1">
+                  <div x-transition class="space-y-8">
+                      {% include 'booking/envios/steps/contact_step.html' %}
+                  </div>
+                </template>
+
+                <!-- Paso 2 -->
+                <template x-if="currentStep === 2">
+                  <div x-transition class="space-y-8">
+                      {% include 'booking/envios/steps/items_step.html' %}
+                  </div>
+                </template>
+
+                <!-- Paso 3 -->
+                <template x-if="currentStep === 3">
+                  <div x-transition class="space-y-8">
+                      {% include 'booking/envios/steps/review_step.html' %}
+                  </div>
+                </template>
+
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                    <button
+                        @click="previousStep()"
+                        :disabled="currentStep === 1"
+                        class="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Anterior</span>
+                    </button>
+
+                    <button
+                      @click="nextStep()"
+                      :disabled="isProcessing"
+                      class="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all"
+                    >
+                      <span x-text="currentStep === 3 ? 'Finalizar' : 'Siguiente'"></span>
+                      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Aquí van ahora los modales, dentro del scope Alpine -->
+            {% include 'booking/envios/modals/destinatario_modal.html' %}
+            {% include 'booking/envios/modals/remitente_modal.html' %}
+
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  const URL_CREAR_RESERVA_ENVIO = "{% url 'booking:crear_reserva_envio_final' %}";
+</script>
+
+<script>
+  lucide.createIcons();
+
+  function shippingWizard() {
+    return {
+      currentStep: 1,
+      completedSteps: [],
+      selectedRecipient: null,
+      selectedSender: null,
+      searchQuery: '',
+      destinatarios: [],
+      remitentes: [],
+      provincia: '',
+      municipio: '',
+      municipios: [],
+      provinciasDisponibles: {
+        'Pinar del Río': ['Consolación del Sur', 'Guane', 'La Palma', 'Los Palacios', 'Mantua', 'Minas de Matahambre', 'Pinar del Río', 'San Juan y Martínez', 'San Luis', 'Sandino', 'Viñales'],
+        'Artemisa': ['Alquízar', 'Artemisa', 'Bauta', 'Caimito', 'Guanajay', 'Güira de Melena', 'Mariel', 'San Antonio de los Baños', 'San Cristóbal', 'Bahía Honda', 'Candelaria'],
+        'La Habana': ['Arroyo Naranjo', 'Boyeros', 'Centro Habana', 'Cerro', 'Cotorro', 'Diez de Octubre', 'Guanabacoa', 'Habana del Este', 'Habana Vieja', 'La Lisa', 'Marianao', 'Playa', 'Plaza de la Revolución', 'Regla', 'San Miguel del Padrón'],
+        'Mayabeque': ['Batabanó', 'Bejucal', 'Güines', 'Jaruco', 'Madruga', 'Melena del Sur', 'Nueva Paz', 'Quivicán', 'San José de las Lajas', 'San Nicolás de Bari', 'Santa Cruz del Norte'],
+        'Matanzas': ['Calimete', 'Cárdenas', 'Ciénaga de Zapata', 'Colón', 'Jagüey Grande', 'Jovellanos', 'Limonar', 'Los Arabos', 'Martí', 'Matanzas', 'Pedro Betancourt', 'Perico', 'Unión de Reyes'],
+        'Villa Clara': ['Caibarién', 'Camajuaní', 'Cifuentes', 'Corralillo', 'Encrucijada', 'Manicaragua', 'Placetas', 'Quemado de Güines', 'Ranchuelo', 'Remedios', 'Sagua la Grande', 'Santa Clara', 'Santo Domingo'],
+        'Cienfuegos': ['Abreus', 'Aguada de Pasajeros', 'Cienfuegos', 'Cruces', 'Cumanayagua', 'Lajas', 'Palmira', 'Rodas'],
+        'Sancti Spíritus': ['Cabaiguán', 'Fomento', 'Jatibonico', 'La Sierpe', 'Sancti Spíritus', 'Taguasco', 'Trinidad', 'Yaguajay'],
+        'Ciego de Ávila': ['Baraguá', 'Bolivia', 'Chambas', 'Ciego de Ávila', 'Ciro Redondo', 'Florencia', 'Majagua', 'Morón', 'Primero de Enero', 'Venezuela'],
+        'Camagüey': ['Camagüey', 'Carlos Manuel de Céspedes', 'Esmeralda', 'Florida', 'Guáimaro', 'Jimaguayú', 'Minas', 'Najasa', 'Nuevitas', 'Santa Cruz del Sur', 'Sibanicú', 'Sierra de Cubitas', 'Vertientes'],
+        'Las Tunas': ['Amancio', 'Colombia', 'Jesús Menéndez', 'Jobabo', 'Las Tunas', 'Majibacoa', 'Manatí', 'Puerto Padre'],
+        'Holguín': ['Antilla', 'Báguanos', 'Banes', 'Cacocum', 'Calixto García', 'Cueto', 'Frank País', 'Gibara', 'Holguín', 'Mayarí', 'Moa', 'Rafael Freyre', 'Sagua de Tánamo', 'Urbano Noris'],
+        'Granma': ['Bartolomé Masó', 'Bayamo', 'Buey Arriba', 'Campechuela', 'Cauto Cristo', 'Guisa', 'Jiguaní', 'Manzanillo', 'Media Luna', 'Niquero', 'Pilón', 'Río Cauto', 'Yara'],
+        'Santiago de Cuba': ['Contramaestre', 'Guamá', 'Mella', 'Palma Soriano', 'San Luis', 'Santiago de Cuba', 'Segundo Frente', 'Songo–La Maya', 'Tercer Frente'],
+        'Guantánamo': ['Baracoa', 'Caimanera', 'El Salvador', 'Guantánamo', 'Imías', 'Maisí', 'Manuel Tames', 'Niceto Pérez', 'San Antonio del Sur', 'Yateras'],
+        'Isla de la Juventud': ['Nueva Gerona']
+      },
+      
+      destinatario: {
+        primer_nombre: '', segundo_nombre: '', primer_apellido: '', segundo_apellido: '',
+        ci: '', telefono: '', telefono_adicional: '', calle: '', numero: '',
+        entre_calle: '', y_calle: '', apto_reparto: '', piso: '',
+        email: '', observaciones: ''
+      },
+      remitente: {
+        nombre_apellido: '',
+        id_documento: '',
+        telefono: '',
+        direccion: ''
+      },
+
+      resetRemitente() {
+        this.remitente = {
+          nombre_apellido: '',
+          id_documento: '',
+          telefono: '',
+          direccion: ''
+        };
+      },
+
+      items: [{ id: 1, hbl: '', tipo: 'air', descripcion: '', cantidad: 1, peso: 0, valor_aduanal: 0, precio_por_kg: 0, total: 0 }],
+      showRecipientModal: false,
+      showSenderModal: false,
+      isProcessing: false,
+      paymentMethod: 'card',
+
+      steps: [
+        { id: 1, name: 'Contactos', icon: 'users', description: 'Destinatario y remitente' },
+        { id: 2, name: 'Artículos', icon: 'package', description: 'Items del envío' },
+        { id: 3, name: 'Revisión', icon: 'file-text', description: 'Confirmar detalles' }
+      ],
+
+      init() {
+        const raw = document.getElementById('datos-iniciales').textContent;
+        const datos = JSON.parse(raw);
+        this.destinatarios = datos.destinatarios;
+        this.remitentes = datos.remitentes;
+        lucide.createIcons();
+      },
+
+      get progress() {
+        return ((this.currentStep - 1) / (this.steps.length - 1)) * 100;
+      },
+
+      isStepCompleted(stepId) {
+        return this.completedSteps.includes(stepId);
+      },
+
+      isStepAccessible(stepId) {
+        return stepId <= this.currentStep || this.isStepCompleted(stepId);
+      },
+
+      goToStep(stepId) {
+        if (this.isStepAccessible(stepId)) {
+          this.currentStep = stepId;
+        }
+      },
+
+      updateMunicipios() {
+        this.municipios = this.provinciasDisponibles[this.provincia] || [];
+        this.municipio = '';
+      },
+
+      buildDestinatarioPayload() {
+        return { ...this.destinatario, provincia: this.provincia, municipio: this.municipio };
+      },
+
+      async guardarDestinatario() {
+        try {
+          const formData = this.buildDestinatarioPayload();
+          const response = await fetch("{% url 'booking:crear_destinatario' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(formData)
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            this.destinatarios.unshift(result.destinatario);
+            this.selectedRecipient = result.destinatario;
+            this.showRecipientModal = false;
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          alert('Error al guardar destinatario: ' + error.message);
+        }
+      },
+
+      async guardarRemitente() {
+        try {
+          const response = await fetch("{% url 'booking:crear_remitente' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(this.remitente)
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            this.remitentes.unshift(result.remitente);
+            this.selectedSender = result.remitente;
+            this.showSenderModal = false;
+            this.resetRemitente();
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          alert('Error al guardar remitente: ' + error.message);
+        }
+      },
+
+      addItem() {
+        const nuevoItem = {
+          id: Date.now(),
+          hbl: '',
+          tipo: 'air',
+          descripcion: '',
+          cantidad: 1,
+          peso: 0,
+          valor_aduanal: 0,
+          precio_por_kg: 0,
+          total: 0
+        };
+        this.items.push(nuevoItem);
+        this.$nextTick(() => lucide.createIcons());
+      },
+
+      get totalWeight() {
+        return this.items.reduce((acc, item) => acc + (parseFloat(item.peso) || 0), 0);
+      },
+
+      get airItems() {
+        return this.items.filter(item => item.tipo === 'air').length;
+      },
+
+      get maritimeItems() {
+        return this.items.filter(item => item.tipo === 'maritime').length;
+      },
+
+      get totalValue() {
+        return this.items.reduce((acc, item) => acc + (item.total || 0), 0);
+      },
+
+      updateItemTotal(item) {
+        const peso = parseFloat(item.peso) || 0;
+        const precioPorKg = parseFloat(item.precio_por_kg) || 0;
+        const valorAduanal = parseFloat(item.valor_aduanal) || 0;
+        let envioManejo = 0;
+
+        if (item.tipo === 'maritime') {
+          if (item.envio_manejo === undefined || item.envio_manejo === null) {
+            item.envio_manejo = 10;
+          }
+          envioManejo = parseFloat(item.envio_manejo) || 0;
+        }
+
+        item.total = (peso * precioPorKg) + valorAduanal + envioManejo;
+      },
+
+      removeItem(id) {
+        this.items = this.items.filter(item => item.id !== id);
+        this.$nextTick(() => lucide.createIcons());
+      },
+
+      async finalizarReserva() {
+        if (!this.selectedSender?.id || !this.selectedRecipient?.id || this.items.length === 0) {
+          alert("Debe completar todos los datos del envío.");
+          return;
+        }
+      
+        console.log("Enviando datos de reserva...");
+        console.log("Remitente ID:", this.selectedSender.id);
+        console.log("Destinatario ID:", this.selectedRecipient.id);
+        console.log("Items:", this.items);
+      
+        try {
+          const response = await fetch(URL_CREAR_RESERVA_ENVIO, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+              remitente_id: this.selectedSender.id,
+              destinatario_id: this.selectedRecipient.id,
+              items: this.items
+            })
+          });
+      
+          const contentType = response.headers.get("content-type") || "";
+      
+          if (contentType.includes("application/json")) {
+            const result = await response.json();
+            console.log("Respuesta del servidor:", result);
+      
+            if (result.success) {
+              window.location.href = "{% url 'booking:user_dashboard' %}";
+            } else {
+              alert("Error al guardar la reserva.");
+            }
+          } else {
+            const text = await response.text();
+            console.error("⚠️ Respuesta no-JSON:", text);
+            alert("Error inesperado. El servidor no devolvió JSON válido.");
+          }
+        } catch (error) {
+          console.error("❌ Error en fetch:", error);
+          alert("Error inesperado: " + error.message);
+        }
+      }
+      ,
+      
+      
+
+      resetDestinatario() {
+        this.destinatario = {
+          primer_nombre: '', segundo_nombre: '', primer_apellido: '', segundo_apellido: '',
+          ci: '', telefono: '', telefono_adicional: '', calle: '', numero: '',
+          entre_calle: '', y_calle: '', apto_reparto: '', piso: '',
+          email: '', observaciones: ''
+        };
+        this.provincia = '';
+        this.municipio = '';
+      },
+
+      nextStep() {
+        if (this.currentStep === 3) {
+          this.finalizarReserva(); // Ejecuta directamente
+          return;
+        }
+      
+        if (this.currentStep < this.steps.length) {
+          this.currentStep++;
+      
+          if (!this.completedSteps.includes(this.currentStep)) {
+            this.completedSteps.push(this.currentStep);
+          }
+      
+          this.$nextTick(() => lucide.createIcons());
+        }
+      },
+      
+
+      validarArticulos() {
+        for (const [index, item] of this.items.entries()) {
+          if (!item.descripcion.trim()) {
+            alert(`Falta la descripción del Artículo #${index + 1}`);
+            return false;
+          }
+          if (item.cantidad <= 0) {
+            alert(`Cantidad inválida en Artículo #${index + 1}`);
+            return false;
+          }
+          if (item.peso < 0) {
+            alert(`Peso inválido en Artículo #${index + 1}`);
+            return false;
+          }
+          if (item.precio_por_kg < 0) {
+            alert(`Precio por kg inválido en Artículo #${index + 1}`);
+            return false;
+          }
+          if (item.valor_aduanal < 0) {
+            alert(`Valor aduanal inválido en Artículo #${index + 1}`);
+            return false;
+          }
+        }
+        return true;
+      },
+
+      previousStep() {
+        if (this.currentStep > 1) {
+          this.currentStep--;
+          this.$nextTick(() => lucide.createIcons());
+        }
+      },
+
+      processPayment() {
+        alert('Simulación de pago.');
+      },
+
+      filteredDestinatarios() {
+        if (!this.searchQuery) return this.destinatarios;
+        return this.destinatarios.filter(d =>
+          d.nombre_completo.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          d.telefono.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          d.direccion_completa.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      },
+      filteredRemitentes() {
+        if (!this.searchQuery) return this.remitentes;
+        return this.remitentes.filter(r =>
+          r.nombre_apellido.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          r.telefono.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (r.direccion || '').toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      }
+      
+    };
+  }
+</script> 
+
+  
+{% endblock %}

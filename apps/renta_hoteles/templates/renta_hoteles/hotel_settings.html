@@ -1,0 +1,75 @@
+{% block title %}Configuracion{% endblock %}
+
+{% block content %}
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+    <div class="container mt-4">
+        <div class="progress-container mb-4">
+            <h1>Configuracion</h1>
+        </div>
+        <div class="card">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="card-body">                
+                    <div class="row">
+                        
+                        <div class="col-md-6">
+                            <label for="tipo_cambio" class="form-label"><strong>Tipo Cambio</strong></label>
+                            <select class="form-select" id="tipo_cambio" name="tipo_cambio">
+                                <option value="">Tipo Manual</option>
+                                {% for tipo_cambio in tipo_cambio %}
+                                    <option value="{{ tipo_cambio.id }}">{{ tipo_cambio.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">                            
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="edadLimite_primerNino" class="form-label"><strong>Edad limite primer nino</strong></label>
+                            <input type="text" class="form-control" id="edadLimite_primerNino" name="edadLimite_primerNino">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="edadLimite_segundoNino" class="form-label"><strong>Edad limite segundo nino</strong></label>
+                            <input type="text" class="form-control" id="edadLimite_segundoNino" name="edadLimite_segundoNino">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="edadLimite_infante" class="form-label"><strong>Edad limite infante</strong></label>
+                            <input type="text" class="form-control" id="edadLimite_infante" name="edadLimite_infante">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="cantidad_noches" class="form-label"><strong>Cantidad Noches</strong></label>
+                            <input type="text" class="form-control" id="cantidad_noches" name="cantidad_noches">
+                        </div>
+                        
+                    </div>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+    <!-- Incluye jQuery primero (solo una vez) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Luego incluye el JS de Select2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <!-- Incluye el CSS de Select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Para integrar Select2 con Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.4.6/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+
+    <script>
+        $(document).ready(function() {
+            $('.form-select').select2({
+                theme: 'default'
+            });                  
+
+    </script>
+{% endblock %}

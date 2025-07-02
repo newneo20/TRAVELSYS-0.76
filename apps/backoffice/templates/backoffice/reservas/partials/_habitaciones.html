@@ -1,0 +1,81 @@
+{% load i18n %}
+<div class="bg-white rounded-xl shadow p-6 mb-8 border border-gray-200">
+  <h3 class="text-xl font-bold text-gray-800 mb-6">{% trans "Habitaciones y Pasajeros" %}</h3>
+
+  <div id="habitaciones-container" class="space-y-10">
+
+    {% for habitacion in habitaciones %}
+    <div class="border border-gray-300 rounded-lg p-5 relative habitacion-card bg-gray-50">
+
+      <div class="absolute top-2 right-2 text-sm font-semibold text-gray-500">
+        {% trans "Habitación" %} {{ forloop.counter }}
+      </div>
+
+      <!-- Fechas viaje -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fechas de viaje" %}</label>
+        <input type="text" name="fechas_viaje_{{ habitacion.numero }}" value="{{ habitacion.fechas_viaje }}" class="w-full rounded-md border px-3 py-2 text-sm datepicker">
+      </div>
+
+      <!-- PASAJEROS -->
+      <div id="pasajeros_habitacion_{{ habitacion.numero }}" class="space-y-4">
+
+        {% for pasajero in habitacion.pasajeros.all %}
+        <div class="grid grid-cols-1 md:grid-cols-7 gap-4 bg-white p-3 rounded-md border border-gray-200 relative">
+          <input type="hidden" name="pasajero_id_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.id }}">
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "Nombre" %}</label>
+            <input type="text" name="pasajero_nombre_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.nombre }}" class="w-full border rounded px-3 py-1 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "Nacimiento" %}</label>
+            <input type="text" name="pasajero_fecha_nacimiento_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.fecha_nacimiento }}" class="w-full border rounded px-3 py-1 text-sm datepicker">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "Pasaporte" %}</label>
+            <input type="text" name="pasajero_pasaporte_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.pasaporte }}" class="w-full border rounded px-3 py-1 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "Caducidad" %}</label>
+            <input type="text" name="pasajero_caducidad_pasaporte_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.caducidad_pasaporte }}" class="w-full border rounded px-3 py-1 text-sm datepicker">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "País Emisión" %}</label>
+            <input type="text" name="pasajero_pais_emision_pasaporte_{{ habitacion.numero }}_{{ forloop.counter }}" value="{{ pasajero.pais_emision_pasaporte }}" class="w-full border rounded px-3 py-1 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-700">{% trans "Tipo" %}</label>
+            <select name="pasajero_tipo_{{ habitacion.numero }}_{{ forloop.counter }}" class="w-full border rounded px-3 py-1 text-sm">
+              <option value="adulto" {% if pasajero.tipo == 'adulto' %}selected{% endif %}>{% trans "Adulto" %}</option>
+              <option value="nino" {% if pasajero.tipo == 'nino' %}selected{% endif %}>{% trans "Niño" %}</option>
+            </select>
+          </div>
+
+          <button type="button" class="absolute top-1 right-1 eliminar-pasajero text-red-500 hover:text-red-700 text-lg">
+            <i class="fas fa-times-circle"></i>
+          </button>
+
+        </div>
+        {% endfor %}
+
+      </div>
+
+      <!-- Botón agregar pasajero -->
+      <div class="mt-4 flex justify-end">
+        <button type="button" class="agregar-pasajero bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm" data-habitacion-index="{{ habitacion.numero }}">
+          <i class="fas fa-plus mr-1"></i> {% trans "Agregar Pasajero" %}
+        </button>
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>

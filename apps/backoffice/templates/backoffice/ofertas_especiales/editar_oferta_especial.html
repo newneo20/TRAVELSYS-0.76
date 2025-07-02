@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6 max-w-screen-lg">
+    <h1 class="text-2xl font-bold mb-6">Editar Oferta</h1>
+    
+    <!-- FORMULARIO DE EDICIÓN DE OFERTA -->
+    <form method="POST" action="" class="bg-white p-4 shadow-md rounded" novalidate>
+        {% csrf_token %}
+
+        <!-- Campo Código -->
+        <div class="mb-4">
+            <label for="codigo" class="block text-sm font-medium text-gray-700">Código</label>
+            <input 
+                type="text"
+                id="codigo"
+                name="codigo"
+                placeholder="Ej: OF12345"
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                value="{{ oferta.codigo|default_if_none:'' }}"
+                required
+            >
+            <!-- Mensaje de error (opcional) -->
+            <!-- <p class="mt-1 text-sm text-red-500 hidden">Por favor, proporciona el código de la oferta.</p> -->
+        </div>
+
+        <!-- Campo Nombre -->
+        <div class="mb-4">
+            <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input 
+                type="text"
+                id="nombre"
+                name="nombre"
+                placeholder="Ej: Oferta Especial de Verano"
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                value="{{ oferta.nombre|default_if_none:'' }}"
+                required
+            >
+        </div>
+
+        <!-- Campo Descripción -->
+        <div class="mb-4">
+            <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+            <textarea 
+                id="descripcion"
+                name="descripcion"
+                placeholder="Ej: Descuento del 20% en reservaciones durante el verano..."
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                required
+            >{{ oferta.descripcion|default_if_none:'' }}</textarea>
+        </div>
+
+        <!-- Campo Tipo -->
+        <div class="mb-4">
+            <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo</label>
+            <select 
+                id="tipo"
+                name="tipo"
+                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
+                required
+            >
+                <option value="" {% if not oferta.tipo %}selected{% endif %}>Seleccione un tipo</option>
+                <option value="hoteles" {% if oferta.tipo == 'hoteles' %}selected{% endif %}>Hoteles</option>
+                <option value="carros" {% if oferta.tipo == 'carros' %}selected{% endif %}>Carros</option>
+                <option value="vuelos" {% if oferta.tipo == 'vuelos' %}selected{% endif %}>Vuelos</option>
+                <option value="traslados" {% if oferta.tipo == 'traslados' %}selected{% endif %}>Traslados</option>
+            </select>
+        </div>
+
+        <!-- Checkbox Disponible -->
+        <div class="mb-4 flex items-center">
+            <input 
+                type="checkbox"
+                id="disponible"
+                name="disponible"
+                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                {% if oferta.disponible %}checked{% endif %}
+            >
+            <label for="disponible" class="ml-2 text-sm text-gray-700">Disponible</label>
+        </div>
+
+        <!-- Botones -->
+        <div class="mt-6">
+            <button 
+                type="submit"
+                class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            >
+                Guardar Cambios
+            </button>
+            <a 
+                href="{% url 'backoffice:listar_ofertas_especiales' %}"
+                class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+</main>
+{% endblock %}

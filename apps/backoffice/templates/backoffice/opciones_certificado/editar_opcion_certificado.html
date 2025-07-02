@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Editar Opción de Certificado{% endblock %}
+
+{% block content %}
+
+<!-- Incluir el archivo de estilos CSS -->
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1>Editar Opción de Certificado</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Nombre:</label>
+        <input type="text" name="nombre" value="{{ opcion.nombre }}" class="form-control" required>
+        
+        <label>Descripción:</label>
+        <textarea name="descripcion" class="form-control" required>{{ opcion.descripcion }}</textarea>
+        
+        <label>Categoría (Estrellas):</label>
+        <select name="categoria" class="form-control" required>
+            {% for i in "12345" %}
+            <option value="{{ i }}" {% if opcion.categoria|stringformat:"d" == i %}selected{% endif %}>{{ i }} Estrellas</option>
+            {% endfor %}
+        </select>
+        
+        <label>Foto:</label>
+        <input type="file" name="foto" class="form-control">
+        
+        <button type="submit" class="btn btn-primary mt-3">Guardar Cambios</button>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,472 @@
+{% extends 'booking/base_tabs.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load i18n %}
+
+
+{% block content %}
+<div class="bg-white shadow rounded-md p-6">
+  <h1 class="text-2xl font-bold mb-6">Lista de Reservas</h1>
+
+  <!-- Formulario de filtros -->
+  <form method="GET" action="" class="mb-6 bg-gray-50 px-4 py-3 rounded-lg shadow-sm">
+    <div class="flex flex-wrap gap-3 items-center justify-start">
+
+      <!-- ID Reserva -->
+      <input
+        type="text"
+        name="id_reserva"
+        placeholder="{% trans 'ID Reserva' %}"
+        value="{{ id_reserva }}"
+        class="text-sm min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      />
+
+      <!-- Buscar -->
+      <input
+        type="text"
+        name="q"
+        placeholder="{% trans 'Buscar (Hotel, Usuario, Email)' %}"
+        value="{{ query }}"
+        class="text-sm min-w-[240px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      />
+
+      <!-- Nombre Pasajero -->
+      <input
+        type="text"
+        name="nombre_pasajero"
+        placeholder="{% trans 'Pasajero / Cliente' %}"
+        value="{{ nombre_pasajero }}"
+        class="text-sm min-w-[220px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      />
+
+      <!-- Fecha Inicio -->
+      <input
+        type="date"
+        name="fecha_inicio"
+        value="{{ fecha_inicio }}"
+        class="text-sm min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      />
+
+      <!-- Fecha Fin -->
+      <input
+        type="date"
+        name="fecha_fin"
+        value="{{ fecha_fin }}"
+        class="text-sm min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      />
+
+      <!-- Botones -->
+      <div class="flex gap-2">
+        <!-- Filtrar -->
+        <button
+          type="submit"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow transition"
+        >
+          <i class="fas fa-filter"></i>
+          <span>{% trans "Filtrar" %}</span>
+        </button>
+
+        <!-- Reset -->
+        <a href="{% url 'booking:listar_reservas' %}"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 shadow transition"
+        >
+          <i class="fas fa-times-circle"></i>
+          <span>{% trans "Reset" %}</span>
+        </a>
+      </div>
+    </div>
+  </form>
+
+
+  <!-- Tabla de reservas -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-300 text-sm bg-white">
+      <caption class="sr-only">Tabla de reservas</caption>
+      <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+        <tr>
+          <th scope="col" class="p-3 text-center border-b border-gray-300">ID</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300">Descripción</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300 hidden sm:table-cell">Usuario</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300 hidden sm:table-cell">Pasajero</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300">Fecha</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300">Estatus</th>
+          <th scope="col" class="p-3 text-center border-b border-gray-300">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for reserva in reservas %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <!-- ID -->
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {{ reserva.id }}
+          </td>
+      
+          <!-- DESCRIPCIÓN -->
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {% if reserva.tipo == 'hoteles' %}
+              {% if reserva.hotel %}
+                <span class="block font-medium text-blue-800">
+                  <i class="fas fa-hotel mr-1 text-blue-500"></i>
+                  Hotel: {{ reserva.hotel.hotel_nombre }}
+                </span>
+              {% elif reserva.hotel_importado %}
+                <span class="block font-medium text-blue-800">
+                  <i class="fas fa-hotel mr-1 text-yellow-500"></i>
+                  Hotel: {{ reserva.hotel_importado.hotel_name }}                  
+                </span>
+              {% else %}
+                <span class="italic text-gray-400">{% trans "Sin descripción" %}</span>
+              {% endif %}
+      
+            {% elif reserva.tipo == 'traslados' and reserva.traslado %}
+              <i class="fas fa-shuttle-van mr-2 text-purple-600"></i>
+              {{ reserva.traslado.origen.nombre }} {% trans "a" %} {{ reserva.traslado.destino.nombre }}
+      
+            {% elif reserva.tipo == 'remesas' and reserva.remesa %}
+              <i class="fas fa-money-bill mr-2 text-green-600"></i>
+              {% trans "Remesa para" %}: {{ reserva.remesa.destinatario }}
+      
+            {% elif reserva.tipo == 'certificado' and reserva.certificado_vacaciones %}
+              <i class="fas fa-gift mr-2 text-yellow-600"></i>
+              Certificado: {{ reserva.certificado_vacaciones.nombre }}
+      
+            {% elif reserva.tipo == 'envio' and reserva.envio %}
+              <i class="fas fa-box mr-2 text-purple-600"></i>
+              {% trans "Reserva de Envío" %}
+              {% if reserva.envio.descripcion %}
+                <span class="block text-xs text-gray-500 italic">{{ reserva.envio.descripcion }}</span>
+              {% endif %}
+      
+            {% else %}
+              <i class="fas fa-tag mr-2 text-gray-500"></i>
+              {% trans "EN PROCESO -" %} {{ reserva.tipo|upper }}
+            {% endif %}
+          </td>
+      
+          <!-- USUARIO -->
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {{ reserva.nombre_usuario }}
+          </td>
+      
+          <!-- PASAJERO / CLIENTE -->
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {% if reserva.tipo == 'hoteles' %}
+              {% with habitacion=reserva.habitaciones_reserva.first %}
+                {% if habitacion and habitacion.pasajeros.exists %}
+                  {{ habitacion.pasajeros.first.nombre }}
+                {% else %}
+                  {% trans "Sin Pasajeros" %}
+                {% endif %}
+              {% endwith %}
+      
+            {% elif reserva.tipo == 'traslados' and reserva.traslado %}
+              {% with pasajero=reserva.traslado.pasajeros.first %}
+                {% if pasajero %}
+                  {{ pasajero.nombre }}
+                {% else %}
+                  {% trans "Sin Pasajeros" %}
+                {% endif %}
+              {% endwith %}
+      
+            {% elif reserva.tipo == 'envio' and reserva.envio and reserva.envio.destinatario %}
+              {{ reserva.envio.destinatario.primer_nombre }} {{ reserva.envio.destinatario.apellidos }}
+      
+            {% elif reserva.tipo == 'remesas' and reserva.remesa and reserva.remesa.destinatario %}
+              {{ reserva.remesa.destinatario }}
+      
+            {% elif reserva.tipo == 'certificado' and reserva.certificado_vacaciones and reserva.certificado_vacaciones.consumidor %}
+              {{ reserva.certificado_vacaciones.consumidor.nombre }}
+      
+            {% else %}
+              <span class="italic text-gray-500">{% trans "Sin Pasajeros" %}</span>
+            {% endif %}
+          </td>
+      
+          <!-- FECHA -->
+          <td class="px-4 py-2 text-center text-sm text-gray-700">
+            {{ reserva.fecha_reserva|date:"d/m/Y, g:i a" }}
+          </td>
+      
+          <!-- ESTATUS -->
+          <td class="px-4 py-2 text-center text-sm">
+            {% if reserva.estatus == 'solicitada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-blue-800 bg-blue-100">
+                <i class="fas fa-question-circle mr-1"></i> {% trans "Solicitada" %}
+              </span>
+            {% elif reserva.estatus == 'pendiente' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-yellow-800 bg-yellow-100">
+                <i class="fas fa-clock mr-1"></i> {% trans "Pendiente" %}
+              </span>
+            {% elif reserva.estatus == 'confirmada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-green-800 bg-green-100">
+                <i class="fas fa-check-circle mr-1"></i> {% trans "Confirmada" %}
+              </span>
+            {% elif reserva.estatus == 'modificada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-indigo-800 bg-indigo-100">
+                <i class="fas fa-edit mr-1"></i> {% trans "Modificada" %}
+              </span>
+            {% elif reserva.estatus == 'ejecutada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-gray-800 bg-gray-100">
+                <i class="fas fa-calendar-check mr-1"></i> {% trans "Ejecutada" %}
+              </span>
+            {% elif reserva.estatus == 'cancelada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-red-800 bg-red-100">
+                <i class="fas fa-times-circle mr-1"></i> {% trans "Cancelada" %}
+              </span>
+            {% elif reserva.estatus == 'reembolsada' %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-white bg-black">
+                <i class="fas fa-undo mr-1"></i> {% trans "Reembolsada" %}
+              </span>
+            {% endif %}
+          </td>
+      
+          <!-- ACCIONES -->
+          <td class="p-3 text-center border-gray-300 whitespace-nowrap">
+            <a
+              href="#"
+              class="ver-detalles border border-blue-500 text-blue-500 px-2 py-1 text-xs rounded hover:bg-blue-500 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              data-id="{{ reserva.pk }}"
+              aria-label="Ver reserva {{ reserva.id }}"
+            >
+              <i class="fas fa-eye mr-1"></i>VER
+            </a>
+            <a
+              href="#"
+              class="border border-red-500 text-red-500 px-2 py-1 text-xs rounded hover:bg-red-500 hover:text-white ml-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+              aria-label="Cancelar reserva {{ reserva.id }}"
+            >
+              <i class="fas fa-trash-alt mr-1"></i>CANCELAR
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="p-3 text-center text-gray-500">
+            No hay reservas registradas.
+            <a href="{% url 'booking:crear_reserva' %}" class="text-blue-500 underline">Crear reserva</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  {% if reservas.has_other_pages %}
+  <nav class="mt-6">
+    <ul class="flex justify-center space-x-1">
+      {% with params|urlencode as querystr %}
+        {% if reservas.has_previous %}
+          <li>
+            <a href="?page=1&{{ querystr }}" class="px-3 py-1 border rounded hover:bg-gray-200 transition" aria-label="Primera página">&laquo;&laquo;</a>
+          </li>
+          <li>
+            <a href="?page={{ reservas.previous_page_number }}&{{ querystr }}" class="px-3 py-1 border rounded hover:bg-gray-200 transition" aria-label="Página anterior">&laquo;</a>
+          </li>
+        {% endif %}
+
+        {% for num in reservas.paginator.page_range %}
+          {% if num >= reservas.number|add:'-2' and num <= reservas.number|add:'2' %}
+            {% if num == reservas.number %}
+              <li>
+                <span class="px-3 py-1 border border-blue-500 bg-blue-500 text-white rounded">{{ num }}</span>
+              </li>
+            {% else %}
+              <li>
+                <a href="?page={{ num }}&{{ querystr }}" class="px-3 py-1 border rounded hover:bg-gray-200 transition">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% if reservas.has_next %}
+          <li>
+            <a href="?page={{ reservas.next_page_number }}&{{ querystr }}" class="px-3 py-1 border rounded hover:bg-gray-200 transition" aria-label="Página siguiente">&raquo;</a>
+          </li>
+          <li>
+            <a href="?page={{ reservas.paginator.num_pages }}&{{ querystr }}" class="px-3 py-1 border rounded hover:bg-gray-200 transition" aria-label="Última página">&raquo;&raquo;</a>
+          </li>
+        {% endif %}
+      {% endwith %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+
+<!-- Modal de detalles (ajustado) -->
+<div
+  id="verDetallesModal"
+  class="fixed inset-0 z-[9999] hidden"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="absolute inset-0 bg-gray-500 bg-opacity-75"></div>
+  <div class="relative w-full h-full flex items-center justify-center px-4">
+    <div class="bg-white w-full max-w-lg rounded shadow-lg relative">
+      <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <h3 class="text-lg font-bold text-gray-900">
+          Detalles de la Reserva (<span id="reservaId"></span>)
+        </h3>
+        <button type="button" id="closeModalX" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+          <span class="sr-only">Cerrar</span><i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-6">
+        <div id="spinner" class="flex items-center justify-center h-16 hidden">
+          <span class="sr-only">Cargando...</span>
+          <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8z"></path>
+          </svg>
+        </div>
+        <div id="detallesReservaContent" class="space-y-4"></div>
+      </div>
+      <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 flex justify-end">
+        <button type="button" id="closeModal" class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('verDetallesModal');
+  const closeModal = () => modal.classList.add('hidden');
+  document.getElementById('closeModal').onclick = closeModal;
+  document.getElementById('closeModalX').onclick = closeModal;
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.querySelectorAll('.ver-detalles').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const id = btn.dataset.id;
+      document.getElementById('reservaId').textContent = id;
+      const spinner = document.getElementById('spinner');
+      const content = document.getElementById('detallesReservaContent');
+      spinner.classList.remove('hidden');
+      content.innerHTML = '';
+
+      fetch(`/booking/reservas/detalles_reserva/${id}/`)
+        .then(res => res.ok ? res.json() : Promise.reject('Error en la respuesta'))
+        .then(data => {
+          spinner.classList.add('hidden');
+          if (data.error) throw data.error;
+
+          const est = (data.estatus || '').trim().toLowerCase();
+          const tipo = (data.tipo || '').trim().toLowerCase();
+          let badge = '';
+          let descripcionHTML = '';
+
+          switch(est) {
+            case 'solicitada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-blue-800 bg-blue-100"><i class="fas fa-question-circle mr-1"></i>Solicitada</span>`; break;
+            case 'pendiente':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-yellow-800 bg-yellow-100"><i class="fas fa-clock mr-1"></i>Pendiente</span>`; break;
+            case 'confirmada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-green-800 bg-green-100"><i class="fas fa-check-circle mr-1"></i>Confirmada</span>`; break;
+            case 'cancelada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-red-800 bg-red-100"><i class="fas fa-times-circle mr-1"></i>Cancelada</span>`; break;
+            case 'modificada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-blue-800 bg-blue-100"><i class="fas fa-edit mr-1"></i>Modificada</span>`; break;
+            case 'ejecutada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-gray-800 bg-gray-100"><i class="fas fa-calendar-check mr-1"></i>Ejecutada</span>`; break;
+            case 'reembolsada':
+              badge = `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold text-black bg-gray-200"><i class="fas fa-undo mr-1"></i>Reembolsada</span>`; break;
+            default:
+              badge = `<span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">Sin estatus</span>`;
+          }
+
+          // Construimos la descripción según el tipo
+          switch(tipo) {
+            case 'hoteles':
+              descripcionHTML = `
+                <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-hotel text-blue-500"></i>Hotel</h4>
+                <p class="ml-6">${data.hotel}</p>
+                <h4 class="font-bold text-gray-800 flex items-center gap-2 mt-4"><i class="fas fa-map-marker-alt text-red-500"></i>Dirección</h4>
+                <p class="ml-6">${data.direccion}</p>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                  <div><h4 class="font-bold text-gray-800"><i class="fas fa-door-open text-green-500"></i> Check-in</h4><p class="ml-6">${data.checkin}</p></div>
+                  <div><h4 class="font-bold text-gray-800"><i class="fas fa-door-closed text-orange-500"></i> Check-out</h4><p class="ml-6">${data.checkout}</p></div>
+                </div>
+                <div class="mt-4">
+                  <h4 class="font-bold text-gray-800 mb-2 flex items-center gap-2"><i class="fas fa-bed text-yellow-500"></i>Habitaciones</h4>
+                  ${data.habitaciones.map(h => `<div class="bg-gray-100 p-3 rounded mb-2"><h5 class="font-medium">${h.nombre}</h5><p>Adultos: ${h.adultos}, Niños: ${h.ninos}</p></div>`).join('')}
+                </div>
+              `;
+              break;
+
+            case 'carros':
+              descripcionHTML = `
+                <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-car text-green-500"></i>Carro</h4>
+                <p class="ml-6">${data.modelo} - ${data.categoria} (${data.rentadora})</p>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                  <div><h4 class="font-bold text-gray-800"><i class="fas fa-calendar-alt text-blue-500"></i> Inicio</h4><p class="ml-6">${data.fecha_inicio}</p></div>
+                  <div><h4 class="font-bold text-gray-800"><i class="fas fa-calendar-check text-blue-700"></i> Fin</h4><p class="ml-6">${data.fecha_fin}</p></div>
+                </div>
+              `;
+              break;
+
+            case 'traslados':
+              descripcionHTML = `
+                <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-bus text-purple-500"></i>Traslado</h4>
+                <p class="ml-6">De <strong>${data.origen}</strong> a <strong>${data.destino}</strong></p>
+                <p class="ml-6 mt-2">Fecha: ${data.fecha}</p>
+              `;
+              break;
+
+            case 'certificados':
+              descripcionHTML = `
+                <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-gift text-yellow-500"></i>Certificado</h4>
+                <p class="ml-6">${data.nombre_certificado}</p>
+                <p class="ml-6 mt-2">Categoría: ${data.categoria}</p>
+              `;
+              break;
+
+              case 'envio':
+              descripcionHTML = `
+                <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-box text-gray-500"></i>Envío</h4>
+                <p class="ml-6">Remitente: <strong>${data.remitente}</strong></p>
+                <p class="ml-6">Destinatario: <strong>${data.destinatario}</strong></p>
+                <div class="mt-4">
+                  <h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-boxes text-gray-600"></i>Ítems</h4>
+                  ${data.items.map(item => `
+                    <div class="bg-gray-100 p-2 rounded mb-1">
+                      <p>${item.descripcion} (x${item.cantidad})</p>
+                      <p class="text-xs text-gray-600">Peso: ${item.peso} kg · Valor: $${item.valor_aduanal}</p>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+              break;
+            
+
+            default:
+              descripcionHTML = `<p class="text-gray-500 italic">No hay detalles disponibles para este tipo de reserva.</p>`;
+          }
+
+          content.innerHTML = `
+            <div class="flex items-start justify-between mb-6">
+              <div><h4 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-info-circle text-indigo-500"></i>Tipo: ${data.tipo?.toUpperCase()}</h4></div>
+              <div>${badge}</div>
+            </div>
+            ${descripcionHTML}
+          `;
+          modal.classList.remove('hidden');
+        })
+        .catch(err => {
+          spinner.classList.add('hidden');
+          content.innerHTML = `<p class="text-red-500">${err}</p>`;
+          modal.classList.remove('hidden');
+        });
+    });
+  });
+});
+</script>
+
+  
+{% endblock %}

@@ -1,0 +1,711 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-6 max-w-screen-lg">
+
+    <h1 class="text-2xl font-bold mb-6">Editar Cliente</h1>
+    
+    <!-- ENCABEZADO DE PESTAÑAS -->
+    <div class="flex border-b border-gray-200 mb-4">
+        <!-- Botón para la pestaña de CLIENTE -->
+        <button 
+            id="tab-btn-cliente"
+            class="py-2 px-4 text-indigo-600 border-b-2 border-indigo-600 focus:outline-none 
+                   hover:bg-gray-100 transition-colors" 
+            onclick="openTab('cliente')"
+        >
+            Datos del Cliente
+        </button>
+        <!-- Botón para la pestaña de CONTACTOS -->
+        <button 
+            id="tab-btn-contactos"
+            class="py-2 px-4 text-gray-600 focus:outline-none hover:bg-gray-100 transition-colors"
+            onclick="openTab('contactos')"
+        >
+            Contactos
+        </button>
+    </div>
+
+    <!-- PESTAÑA 1: FORMULARIO CLIENTE -->
+    <section 
+        id="tab-content-cliente" 
+        class="bg-white p-4 shadow-md rounded"
+    >
+        <form method="POST" action="">
+            {% csrf_token %}
+            
+            <!-- DATOS PERSONALES -->
+            <h2 class="text-lg font-semibold mb-2">Datos Personales</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <!-- Nombre -->
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input 
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        placeholder="Ej: Juan"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.nombre }}"
+                    >
+                </div>
+                <!-- Apellidos -->
+                <div>
+                    <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                    <input 
+                        type="text"
+                        id="apellidos"
+                        name="apellidos"
+                        placeholder="Ej: Pérez Díaz"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.apellidos }}"
+                    >
+                </div>
+            </div>
+
+            <!-- IDENTIFICACIÓN -->
+            <h2 class="text-lg font-semibold mb-2">Identificación</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <!-- Pasaporte -->
+                <div>
+                    <label for="pasaporte" class="block text-sm font-medium text-gray-700">Pasaporte</label>
+                    <input 
+                        type="text"
+                        id="pasaporte"
+                        name="pasaporte"
+                        placeholder="Ej: H1234567"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.pasaporte }}"
+                    >
+                </div>
+                <!-- Carnet Identidad -->
+                <div>
+                    <label for="carnet_identidad" class="block text-sm font-medium text-gray-700">
+                        Carnet de Identidad
+                    </label>
+                    <input 
+                        type="text"
+                        id="carnet_identidad"
+                        name="carnet_identidad"
+                        placeholder="Ej: 90123456789"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.carnet_identidad }}"
+                    >
+                </div>
+                <!-- Licencia -->
+                <div>
+                    <label for="licencia" class="block text-sm font-medium text-gray-700">Licencia</label>
+                    <input 
+                        type="text"
+                        id="licencia"
+                        name="licencia"
+                        placeholder="Ej: B123456"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.licencia }}"
+                    >
+                </div>
+                <!-- Pasaporte_licencia extra -->
+                <div>
+                    <label for="pasaporte_licencia" class="block text-sm font-medium text-gray-700">
+                        Pasaporte/Licencia (extra)
+                    </label>
+                    <input 
+                        type="text"
+                        id="pasaporte_licencia"
+                        name="pasaporte_licencia"
+                        placeholder="Ej: Info adicional"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.pasaporte_licencia }}"
+                    >
+                </div>
+            </div>
+
+            <!-- DATOS DE CONTACTO -->
+            <h2 class="text-lg font-semibold mb-2">Datos de Contacto</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <!-- Teléfono principal -->
+                <div>
+                    <label for="telefono_principal" class="block text-sm font-medium text-gray-700">
+                        Teléfono Principal
+                    </label>
+                    <input 
+                        type="text"
+                        id="telefono_principal"
+                        name="telefono_principal"
+                        placeholder="Ej: +53 55555555"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.telefono_principal }}"
+                    >
+                </div>
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input 
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="cliente@ejemplo.com"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.email }}"
+                    >
+                </div>
+            </div>
+
+            <!-- DIRECCIÓN -->
+            <h2 class="text-lg font-semibold mb-2">Dirección</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-2 mb-4">
+                <div>
+                    <label for="direccio" class="block text-sm font-medium text-gray-700">
+                        Dirección
+                    </label>
+                    <input 
+                        type="text"
+                        id="direccio"
+                        name="direccio"
+                        placeholder="Ej: Calle 10 No. 50"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.direccio }}"
+                    >
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label for="ciudad" class="block text-sm font-medium text-gray-700">
+                            Ciudad
+                        </label>
+                        <input 
+                            type="text"
+                            id="ciudad"
+                            name="ciudad"
+                            placeholder="Ej: Miami"
+                            class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                                   focus:ring-1 focus:ring-indigo-500 text-sm"
+                            value="{{ cliente.ciudad }}"
+                        >
+                    </div>
+                    <div>
+                        <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                        <input 
+                            type="text"
+                            id="estado"
+                            name="estado"
+                            placeholder="Ej: Florida"
+                            class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                                   focus:ring-1 focus:ring-indigo-500 text-sm"
+                            value="{{ cliente.estado }}"
+                        >
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <div>
+                    <label for="pais" class="block text-sm font-medium text-gray-700">País</label>
+                    <input 
+                        type="text"
+                        id="pais"
+                        name="pais"
+                        placeholder="Ej: USA"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.pais }}"
+                    >
+                </div>
+                <div>
+                    <label for="zip" class="block text-sm font-medium text-gray-700">ZIP</label>
+                    <input 
+                        type="text"
+                        id="zip"
+                        name="zip"
+                        placeholder="Ej: 33174"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.zip }}"
+                    >
+                </div>
+            </div>
+
+            <!-- OTROS -->
+            <h2 class="text-lg font-semibold mb-2">Otros</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <div>
+                    <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">
+                        Fecha de Nacimiento
+                    </label>
+                    <input 
+                        type="date"
+                        id="fecha_nacimiento"
+                        name="fecha_nacimiento"
+                        class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-1 focus:ring-indigo-500 text-sm"
+                        value="{{ cliente.fecha_nacimiento|date:'Y-m-d' }}"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        ¿VIP?
+                    </label>
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox"
+                            id="es_vip"
+                            name="es_vip"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            {% if cliente.es_vip %}checked{% endif %}
+                        >
+                        <label for="es_vip" class="ml-2 text-sm text-gray-700">
+                            Marcar como VIP
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                    Observaciones
+                </label>
+                <textarea
+                    id="observaciones"
+                    name="observaciones"
+                    rows="3"
+                    placeholder="Notas importantes..."
+                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-1 focus:ring-indigo-500 text-sm"
+                >{{ cliente.observaciones }}</textarea>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="mt-2">
+                <button 
+                    type="submit"
+                    class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm"
+                >
+                    Actualizar Cliente
+                </button>
+                <a 
+                    href="{% url 'backoffice:listar_clientes' %}"
+                    class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm"
+                >
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </section>
+    <!-- Fin de tab-content-cliente -->
+
+    <!-- PESTAÑA 2: CONTACTOS -->
+    <section 
+        id="tab-content-contactos" 
+        class="bg-white p-4 shadow-md rounded hidden"
+    >
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">
+                Contactos de {{ cliente.nombre }} {{ cliente.apellidos }}
+            </h2>
+            <button 
+                class="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none 
+                       focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                onclick="openModal()"
+            >
+                Agregar Contacto
+            </button>
+        </div>
+
+        <!-- TABLA DE CONTACTOS EXISTENTES -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 font-medium text-gray-500 uppercase tracking-wider">
+                            Nombre
+                        </th>
+                        <th class="px-4 py-2 font-medium text-gray-500 uppercase tracking-wider">
+                            Teléfonos
+                        </th>
+                        <th class="px-4 py-2 font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                        </th>
+                        <th class="px-4 py-2 font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for c in cliente.contactos.all %}
+                    <tr class="hover:bg-gray-100">
+                        <td class="px-4 py-2 text-gray-700">
+                            {{ c.nombre }} {{ c.apellidos }}
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            {{ c.telefono_primario }}<br>
+                            {{ c.telefono_secundario }}
+                        </td>
+                        <td class="px-4 py-2 text-gray-700">
+                            {{ c.email }}
+                        </td>
+                        <td class="px-4 py-2 text-center">
+                            <a 
+                                href="{% url 'backoffice:editar_contacto' c.id %}" 
+                                class="inline-flex items-center px-2 py-1 text-yellow-600 bg-yellow-100 
+                                       hover:bg-yellow-200 rounded"
+                                title="Editar Contacto"
+                            >
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a 
+                                href="{% url 'backoffice:eliminar_contacto' c.id %}" 
+                                class="inline-flex items-center px-2 py-1 text-red-600 bg-red-100 
+                                       hover:bg-red-200 rounded ml-2"
+                                title="Eliminar Contacto"
+                            >
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">
+                            No hay contactos registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<!-- MODAL PARA CREAR CONTACTO COMPLETO -->
+<div 
+    id="modal-contacto" 
+    class="fixed inset-0 hidden items-center justify-center bg-gray-700 bg-opacity-50 z-50"
+    aria-hidden="true"
+>
+    <div class="bg-white p-6 rounded shadow-md w-full max-w-3xl relative">
+        <!-- Botón para cerrar la modal -->
+        <button 
+            class="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+            onclick="closeModal()"
+        >
+            <i class="fas fa-times"></i>
+        </button>
+
+        <h3 class="text-lg font-bold mb-4">Agregar Contacto</h3>
+        
+        <!-- FORM PARA CREAR CONTACTO (ASOCIADO AL CLIENTE) -->
+        <form method="POST" action="{% url 'backoffice:crear_contacto' cliente.id %}">
+            {% csrf_token %}
+
+            <!-- Grupo: Nombre, Apellidos, Carnet, Pasaporte -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input 
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        placeholder="Ej: Pedro"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none 
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                    <input 
+                        type="text"
+                        id="apellidos"
+                        name="apellidos"
+                        placeholder="Ej: Pérez López"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="carnet_identidad" class="block text-sm font-medium text-gray-700">
+                        Carné de Identidad
+                    </label>
+                    <input 
+                        type="text"
+                        id="carnet_identidad"
+                        name="carnet_identidad"
+                        placeholder="Ej: 90123456789"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="pasaporte_licencia" class="block text-sm font-medium text-gray-700">
+                        Pasaporte / Licencia
+                    </label>
+                    <input 
+                        type="text"
+                        id="pasaporte_licencia"
+                        name="pasaporte_licencia"
+                        placeholder="Ej: H1234567"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+            </div>
+
+            <!-- Grupo: Nacionalidad, Teléfonos, Email -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="nacionalidad" class="block text-sm font-medium text-gray-700">
+                        Nacionalidad
+                    </label>
+                    <input 
+                        type="text"
+                        id="nacionalidad"
+                        name="nacionalidad"
+                        placeholder="Ej: Cubana"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="telefono_primario" class="block text-sm font-medium text-gray-700">
+                        Teléfono Primario
+                    </label>
+                    <input 
+                        type="text"
+                        id="telefono_primario"
+                        name="telefono_primario"
+                        placeholder="Ej: +53 55555555"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="telefono_secundario" class="block text-sm font-medium text-gray-700">
+                        Teléfono Secundario
+                    </label>
+                    <input 
+                        type="text"
+                        id="telefono_secundario"
+                        name="telefono_secundario"
+                        placeholder="Ej: +1 305 1234567"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input 
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="contacto@ejemplo.com"
+                    class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                           focus:ring-2 focus:ring-indigo-500 text-sm"
+                >
+            </div>
+
+            <!-- Dirección -->
+            <h4 class="font-semibold text-sm mb-2">Dirección</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="calle" class="block text-sm font-medium text-gray-700">
+                        Calle
+                    </label>
+                    <input 
+                        type="text"
+                        id="calle"
+                        name="calle"
+                        placeholder="Ej: Calle 23"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="No" class="block text-sm font-medium text-gray-700">No.</label>
+                    <input 
+                        type="text"
+                        id="No"
+                        name="No"
+                        placeholder="Ej: #1001"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="entre_calle" class="block text-sm font-medium text-gray-700">
+                        Entre calle
+                    </label>
+                    <input 
+                        type="text"
+                        id="entre_calle"
+                        name="entre_calle"
+                        placeholder="Ej: 10 y 12"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="y_calle" class="block text-sm font-medium text-gray-700">Y calle</label>
+                    <input 
+                        type="text"
+                        id="y_calle"
+                        name="y_calle"
+                        placeholder="(opcional)"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="apto_reparto" class="block text-sm font-medium text-gray-700">
+                        Apto / Reparto
+                    </label>
+                    <input 
+                        type="text"
+                        id="apto_reparto"
+                        name="apto_reparto"
+                        placeholder="Ej: Apto 2 / Reparto"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="piso" class="block text-sm font-medium text-gray-700">Piso</label>
+                    <input 
+                        type="text"
+                        id="piso"
+                        name="piso"
+                        placeholder="Ej: 3"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="municipio" class="block text-sm font-medium text-gray-700">Municipio</label>
+                    <input 
+                        type="text"
+                        id="municipio"
+                        name="municipio"
+                        placeholder="Ej: Cerro"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="provincia" class="block text-sm font-medium text-gray-700">Provincia</label>
+                    <input 
+                        type="text"
+                        id="provincia"
+                        name="provincia"
+                        placeholder="Ej: La Habana"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+            </div>
+
+            <!-- Otros -->
+            <h4 class="font-semibold text-sm mb-2">Otros</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">
+                        Fecha de Nacimiento
+                    </label>
+                    <input 
+                        type="date"
+                        id="fecha_nacimiento"
+                        name="fecha_nacimiento"
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                        Observaciones
+                    </label>
+                    <textarea
+                        id="observaciones"
+                        name="observaciones"
+                        rows="2"
+                        placeholder="Notas extras..."
+                        class="mt-1 p-2 w-full border border-gray-300 rounded focus:outline-none
+                               focus:ring-2 focus:ring-indigo-500 text-sm"
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="mt-4">
+                <button 
+                    type="submit"
+                    class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Guardar Contacto
+                </button>
+                <button 
+                    type="button"
+                    class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
+                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    onclick="closeModal()"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SCRIPTS PARA TABS Y MODAL -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    openTab('cliente'); // Muestra la pestaña de Cliente al inicio
+});
+
+function openTab(tabName) {
+    // Ocultar secciones
+    document.getElementById('tab-content-cliente').classList.add('hidden');
+    document.getElementById('tab-content-contactos').classList.add('hidden');
+
+    // Quitar estilos de los botones
+    document.getElementById('tab-btn-cliente').classList.remove('text-indigo-600','border-indigo-600','border-b-2');
+    document.getElementById('tab-btn-contactos').classList.remove('text-indigo-600','border-indigo-600','border-b-2');
+    document.getElementById('tab-btn-cliente').classList.add('text-gray-600');
+    document.getElementById('tab-btn-contactos').classList.add('text-gray-600');
+
+    // Mostrar la sección deseada
+    if (tabName === 'cliente') {
+        document.getElementById('tab-content-cliente').classList.remove('hidden');
+        document.getElementById('tab-btn-cliente').classList.remove('text-gray-600');
+        document.getElementById('tab-btn-cliente').classList.add('text-indigo-600','border-indigo-600','border-b-2');
+    } else {
+        document.getElementById('tab-content-contactos').classList.remove('hidden');
+        document.getElementById('tab-btn-contactos').classList.remove('text-gray-600');
+        document.getElementById('tab-btn-contactos').classList.add('text-indigo-600','border-indigo-600','border-b-2');
+    }
+}
+
+function openModal() {
+    const modal = document.getElementById("modal-contacto");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function closeModal() {
+    const modal = document.getElementById("modal-contacto");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+<div class="card mt-3 mb-3 habitacion" data-id="{{ habitacion.id }}">
+  <div class="card-body">
+    <h4>Habitación {{ forloop.counter }}</h4>
+    <div class="row">
+      
+      <!-- Campo oculto para almacenar el ID de la habitación -->
+      <div class="col-md-1" >
+        <div class="form-group">
+          <label for="habitacion_id_{{ forloop.counter }}"><strong>ID</strong></label>
+          <input class="form-control" id="habitacion_id_{{ forloop.counter }}" name="habitaciones[{{ forloop.counter }}][id]" value="{{ habitacion.id }}">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="habitacion_nombre_{{ forloop.counter }}"><strong>Nombre de Habitación</strong></label>
+          <select class="form-control habitacion-select" id="habitacion_nombre_{{ forloop.counter }}" name="habitaciones[{{ forloop.counter }}][nombre]" data-forloop-counter="{{ forloop.counter }}">
+            {% for tipo in tipos_habitacion %}
+              <option value="{{ tipo.tipo }}" data-solo-adultos="{{ tipo.solo_adultos }}" {% if habitacion.habitacion_nombre == tipo.tipo %}selected{% endif %}>{{ tipo.tipo }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-1">
+        <div class="form-group">
+          <label for="adultos_{{ forloop.counter }}"><strong>Adultos</strong></label>
+          <input type="number" class="form-control adultos-input" id="adultos_{{ forloop.counter }}" name="habitaciones[{{ forloop.counter }}][adultos]" value="{{ habitacion.adultos }}">
+        </div>
+      </div>
+      <div class="col-md-1">
+        <div class="form-group">
+          <label for="ninos_{{ forloop.counter }}"><strong>Niños</strong></label>
+          <input type="number" class="form-control ninos-input" id="ninos_{{ forloop.counter }}" name="habitaciones[{{ forloop.counter }}][ninos]" value="{{ habitacion.ninos }}">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="fechas_viaje_{{ forloop.counter }}"><strong>Fechas de Viaje</strong></label>
+          <input type="text" class="form-control" id="fechas_viaje_{{ forloop.counter }}" name="habitaciones[{{ forloop.counter }}][fechas_viaje]" value="{{ habitacion.fechas_viaje }}">
+        </div>
+      </div>
+      
+      <div class="col-md-1 d-flex align-items-end">
+        <a href="#" class="btn btn-outline-danger eliminar-habitacion"><i class="fas fa-trash-alt"></i></a>
+      </div>
+    </div>
+
+    {% include 'backoffice/reservas/partials/pasajeros_form.html' with pasajeros=habitacion.pasajeros.all forloop=forloop %}
+
+    
+  </div>
+</div>

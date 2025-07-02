@@ -1,0 +1,8 @@
+y49uil4r@gandalf ~ » psql -h data.dev.travel-sys.loc -U rutams_us -d rutams_db -W
+Password: 
+psql (14.17 (Ubuntu 14.17-0ubuntu0.22.04.1), server 17.5 (Ubuntu 17.5-1.pgdg24.04+1))
+WARNING: psql major version 14, server major version 17.
+         Some psql features might not work.
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+

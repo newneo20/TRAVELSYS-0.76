@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Destinatario{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 mt-8 bg-white shadow-md rounded-lg">
+  <h1 class="text-2xl font-bold mb-6 text-gray-800">Editar Destinatario</h1>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div>
+        <label for="primer_nombre" class="block text-sm font-medium text-gray-700 mb-1">Primer Nombre</label>
+        <input type="text" id="primer_nombre" name="primer_nombre" required
+               value="{{ destinatario.primer_nombre }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="segundo_nombre" class="block text-sm font-medium text-gray-700 mb-1">Segundo Nombre</label>
+        <input type="text" id="segundo_nombre" name="segundo_nombre"
+               value="{{ destinatario.segundo_nombre }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="primer_apellido" class="block text-sm font-medium text-gray-700 mb-1">Primer Apellido</label>
+        <input type="text" id="primer_apellido" name="primer_apellido" required
+               value="{{ destinatario.primer_apellido }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="segundo_apellido" class="block text-sm font-medium text-gray-700 mb-1">Segundo Apellido</label>
+        <input type="text" id="segundo_apellido" name="segundo_apellido"
+               value="{{ destinatario.segundo_apellido }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="ci" class="block text-sm font-medium text-gray-700 mb-1">CI</label>
+        <input type="text" id="ci" name="ci"
+               value="{{ destinatario.ci }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+        <input type="text" id="telefono" name="telefono" required
+               value="{{ destinatario.telefono }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="telefono_adicional" class="block text-sm font-medium text-gray-700 mb-1">Teléfono Adicional</label>
+        <input type="text" id="telefono_adicional" name="telefono_adicional"
+               value="{{ destinatario.telefono_adicional }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="calle" class="block text-sm font-medium text-gray-700 mb-1">Calle</label>
+        <input type="text" id="calle" name="calle" required
+               value="{{ destinatario.calle }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+      <div>
+        <label for="numero" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+        <input type="text" id="numero" name="numero"
+               value="{{ destinatario.numero }}"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button type="submit"
+              class="inline-flex items-center px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        Guardar Cambios
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

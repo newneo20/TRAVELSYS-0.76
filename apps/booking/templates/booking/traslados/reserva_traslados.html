@@ -1,0 +1,331 @@
+{% extends 'booking/traslados/base_traslados.html' %}
+{% load static %}
+
+{% block title %}Reserva Traslados{% endblock %}
+
+{% block hotel_content %}
+<div class="mx-auto mt-5 px-4 max-w-6xl">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Contenedor Principal: Formulario de Pago y Reserva -->
+        <div class="md:col-span-9 space-y-4">
+            
+            <!-- Tarjeta contenedora (Datos de pasajeros) -->
+            <div class="border rounded shadow-sm p-4">
+                <h4 class="text-lg font-bold mb-2">1. Datos de los Pasajeros</h4>
+                <p class="text-sm text-gray-600 mb-4">
+                    Introduzca datos de pasajeros por producto.
+                </p>
+
+                <form 
+                    method="post" 
+                    action="{% url 'booking:complete_solicitud_traslado' traslado.id %}"
+                    id="reservaForm"
+                    class="space-y-6"
+                    novalidate
+                >
+                    {% csrf_token %}
+                    
+                    <!-- Campos ocultos -->
+                    <input type="hidden" name="traslado_id" value="{{ traslado.id }}">                
+                    <input type="hidden" name="precio" value="{{ traslado.costo }}">
+                    <input type="hidden" name="tipologia" value="{{ tipologia }}">
+                    <input type="hidden" name="origen" value="{{ traslado.origen.id }}">
+                    <input type="hidden" name="destino" value="{{ destino }}">
+                    <input type="hidden" name="fecha_traslado" value="{{ fecha_traslado }}">
+                    <input type="hidden" name="adultos" value="{{ adultos }}">
+                    <input type="hidden" name="ninos" value="{{ ninos }}">
+                    <input type="hidden" name="infantes" value="{{ infantes }}">
+
+                    <!-- Datos de un pasajero -->
+                    <div class="bg-gray-50 border rounded p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <!-- Nombres y Apellidos -->
+                            <div class="md:col-span-6">
+                                <label 
+                                    for="nombre_adulto"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    <i class="fas fa-user text-blue-600 mr-1"></i>
+                                    Nombre(s) y Apellido(s):
+                                </label>
+                                <input 
+                                    type="text"
+                                    id="nombre_adulto"
+                                    name="nombre_adulto"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    placeholder="Como aparece en el pasaporte"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Fecha de nacimiento -->
+                            <div class="md:col-span-2">
+                                <label 
+                                    for="fecha_nacimiento"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Fecha de nacimiento:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="fecha_nacimiento"
+                                    name="fecha_nacimiento"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                    placeholder="YYYY-MM-DD"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Número de pasaporte -->
+                            <div class="md:col-span-3">
+                                <label 
+                                    for="pasaporte"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Número de pasaporte:
+                                </label>
+                                <input 
+                                    type="text"
+                                    id="pasaporte"
+                                    name="pasaporte"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Caducidad del pasaporte -->
+                            <div class="md:col-span-2">
+                                <label 
+                                    for="caducidad"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Caducidad del pasaporte:
+                                </label>
+                                <input 
+                                    type="text"
+                                    id="caducidad"
+                                    name="caducidad"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full datepicker required-field"
+                                    placeholder="YYYY-MM-DD"
+                                    required
+                                />
+                            </div>
+
+                            <!-- País de emisión -->
+                            <div class="md:col-span-3">
+                                <label 
+                                    for="pais_emision"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    País de emisión del pasaporte:
+                                </label>
+                                <select 
+                                    id="pais_emision" 
+                                    name="pais_emision"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    required
+                                >
+                                    <option value="" disabled selected>Seleccione un país</option>
+                                    <option value="CUBA">CUBA</option>
+                                    <option value="ESPANA">ESPAÑA</option>
+                                    <option value="ESTADOS UNIDOS">ESTADOS UNIDOS</option>
+                                    <option value="MEXICO">MÉXICO</option>
+                                    <option value="OTRO">OTRO</option>
+                                </select>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="md:col-span-4">
+                                <label 
+                                    for="email_adulto"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    E-mail:
+                                </label>
+                                <input 
+                                    type="email"
+                                    id="email_adulto"
+                                    name="email_adulto"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Teléfono -->
+                            <div class="md:col-span-2">
+                                <label 
+                                    for="telefono_adulto"
+                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                >
+                                    Teléfono:
+                                </label>
+                                <input 
+                                    type="tel"
+                                    id="telefono_adulto"
+                                    name="telefono_adulto"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tarjeta contenedora (Datos del agente) -->
+            <div class="border rounded shadow-sm p-4">
+                <h4 class="text-base font-bold mb-2">2. Datos del agente que solicita.</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label 
+                            for="notas"
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                            Nombre del usuario:
+                        </label>
+                        <input 
+                            type="text"
+                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                            id="notas"
+                            name="notas"
+                            placeholder="Empleado que solicita"
+                            required
+                            form="reservaForm"
+                        />
+                    </div>
+                    <div>
+                        <label 
+                            for="email_empleado"
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                            E-mail:
+                        </label>
+                        <input 
+                            type="email"
+                            class="border border-gray-300 rounded px-2 py-1 w-full required-field"
+                            id="email_empleado"
+                            name="email_empleado"
+                            placeholder="Email del empleado que solicita"
+                            required
+                            form="reservaForm"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta contenedora (Completar la reserva) -->
+            <div class="border rounded shadow-sm p-4">
+                <h4 class="text-base font-bold mb-2">3. Completar la reserva.</h4>
+                <p class="text-sm text-gray-600 mb-3">
+                    Información importante de reserva: Al completar su solicitud la reserva se procesará de forma inmediata.
+                </p>
+                <button 
+                    type="submit"
+                    class="bg-green-600 text-white w-full py-2 rounded font-semibold hover:bg-green-700 transition-colors"
+                    name="action"
+                    value="reserva"
+                    form="reservaForm"
+                >
+                    COMPLETE LA SOLICITUD
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenedor Lateral: Resumen de la Reserva -->
+        <div class="md:col-span-3">
+            <div class="border shadow-sm rounded p-4 bg-blue-50 sticky top-4">
+                <h3 class="text-lg font-bold mb-3">Resumen de la reserva:</h3>
+                <p class="mb-2">
+                    <strong>Origen:</strong> {{ traslado.origen.nombre }}
+                </p>
+                <p class="mb-2">
+                    <strong>Destino:</strong> {{ traslado.destino.nombre }}
+                </p>
+                <p class="mb-2">
+                    <strong>Fecha de Traslado:</strong> {{ fecha_traslado }}
+                </p>
+                <div class="mt-3 flex flex-wrap gap-3">
+                    <span class="bg-blue-600 text-white px-2 py-1 text-sm rounded">
+                        <i class="fas fa-user mr-1"></i> Adultos: {{ adultos }}
+                    </span>
+                    <span class="bg-green-600 text-white px-2 py-1 text-sm rounded">
+                        <i class="fas fa-child mr-1"></i> Niños: {{ ninos }}
+                    </span>
+                    <span class="bg-yellow-500 text-white px-2 py-1 text-sm rounded">
+                        <i class="fas fa-baby mr-1"></i> Infantes: {{ infantes }}
+                    </span>
+                </div>
+                <p class="mt-3 mb-2">
+                    <strong>Vehículo:</strong> {{ traslado.vehiculo.tipo }}
+                </p>
+                <p class="mb-2">
+                    <strong>Capacidad:</strong> 
+                    {{ traslado.vehiculo.capacidad_min }} - {{ traslado.vehiculo.capacidad_max }} pasajeros
+                </p>
+                <h4 class="text-base font-semibold text-blue-600 mt-3">
+                    Total de la Reserva: ${{ traslado.costo }}
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .error-msg {
+        color: red;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<script 
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJ+0l1kUA8Zim7CtzAm7B2OJcOAQ52pmtzKwg="
+    crossorigin="anonymous">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js">
+</script>
+<link 
+    rel="stylesheet" 
+    type="text/css" 
+    href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
+
+<script>
+    $(function() {
+        // Configurar datepickers
+        $('#caducidad, #fecha_nacimiento').daterangepicker({
+            singleDatePicker: true,
+            autoUpdateInput: true,
+            locale: { format: 'YYYY-MM-DD' }
+        });
+
+        // Validación sencilla si quieres replicar la idea:
+        $('#reservaForm').on('submit', function(e) {
+            let formValid = true;
+            // Limpia errores
+            $('.required-field').removeClass('border-red-500 ring ring-red-500');
+            // Revisa cada campo required
+            $(this).find('.required-field').each(function() {
+                if (!$(this).val()) {
+                    formValid = false;
+                    $(this).addClass('border-red-500 ring ring-red-500');
+                }
+            });
+            if (!formValid) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert("Por favor, completa todos los campos requeridos.");
+            }
+        });
+    });
+</script>
+{% endblock extra_js %}
+{% endblock %}

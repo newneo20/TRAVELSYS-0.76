@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% load i18n %}
+
+{% block content %}
+<main class="w-full max-w-[1920px] mx-auto px-8 py-10">
+  <!-- TÍTULO -->
+  <section class="flex justify-between items-center mb-10">
+    <h1 class="text-3xl font-bold text-gray-900">{% trans "Lista de Reservas" %}</h1>
+  </section>
+
+  <!-- FILTROS -->
+  <section class="mb-8">
+    <form method="GET" action="">
+      <div class="flex flex-wrap gap-4">
+        <div class="flex-1 min-w-[120px]">
+          <input name="id_reserva" value="{{ id_reserva }}" placeholder="{% trans 'ID Reserva' %}" class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500">
+        </div>
+        <div class="flex-1 min-w-[220px]">
+          <input name="q" value="{{ query }}" placeholder="{% trans 'Buscar (Hotel, Usuario, Email)' %}" class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500">
+        </div>
+        <div class="flex-1 min-w-[220px]">
+          <input name="nombre_pasajero" value="{{ nombre_pasajero }}" placeholder="{% trans 'Pasajero / Cliente' %}" class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500">
+        </div>
+        <div class="flex-1 min-w-[160px]">
+          <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500">
+        </div>
+        <div class="flex-1 min-w-[160px]">
+          <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500">
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow transition">
+            <i class="fas fa-filter mr-1"></i> {% trans "Filtrar" %}
+          </button>
+          <a href="{% url 'backoffice:listar_reservas' %}" class="px-6 py-2 text-sm font-semibold text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full shadow transition">
+            <i class="fas fa-times-circle mr-1"></i> {% trans "Reset" %}
+          </a>
+        </div>
+      </div>
+    </form>
+  </section>
+  
+  <!-- TABLA -->
+  <section class="w-full">
+    <div class="overflow-x-auto bg-white rounded-lg shadow-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100 text-gray-700 sticky top-0 z-20">
+          <tr>
+            <th class="p-3 text-center">{% trans "ID" %}</th>
+            <th class="p-3 text-center">{% trans "Descripción" %}</th>
+            <th class="p-3 text-center">{% trans "Agencia" %}</th>
+            <th class="p-3 text-center">{% trans "Proveedor" %}</th>
+            <th class="p-3 text-center">{% trans "Usuario" %}</th>
+            <th class="p-3 text-center">{% trans "Pasajero / Cliente" %}</th>
+            <th class="p-3 text-center">{% trans "Fecha" %}</th>
+            <th class="p-3 text-center">{% trans "Estatus" %}</th>
+            <th class="p-3 text-center">{% trans "Acciones" %}</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200 text-center">
+          {% for reserva in reservas %}
+          <tr class="hover:bg-indigo-50 transition duration-150">
+        
+            <!-- ID -->
+            <td class="p-3 font-semibold text-gray-700">{{ reserva.id }}</td>
+        
+            <!-- DESCRIPCIÓN -->
+            <td class="p-3">
+              {% if reserva.tipo == 'envio' and reserva.envio and reserva.envio.destinatario %}
+                <span class="font-medium text-indigo-700">
+                  <i class="fas fa-box mr-1"></i>{% trans "Envío a:" %} {{ reserva.envio.destinatario.nombre_completo }}
+                </span>
+              {% elif reserva.tipo == 'remesas' and reserva.remesa and reserva.remesa.destinatario %}
+                <span class="font-medium text-green-700">
+                  <i class="fas fa-money-bill-wave mr-1"></i>{% trans "Remesa a:" %} {{ reserva.remesa.destinatario.nombre_completo }}
+                </span>
+              {% elif reserva.tipo == 'hoteles' %}
+                {% if reserva.hotel_importado %}
+                  <span class="font-medium text-yellow-700">
+                    <i class="fas fa-hotel mr-1"></i>{{ reserva.hotel_importado.hotel_name }}
+                    <span class="ml-1 bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Importado</span>
+                  </span>
+                {% elif reserva.hotel %}
+                  <span class="font-medium text-blue-700">
+                    <i class="fas fa-hotel mr-1"></i>{{ reserva.hotel.hotel_nombre }}
+                  </span>
+                {% else %}
+                  <span class="italic text-gray-400">{% trans "Sin descripción" %}</span>
+                {% endif %}
+              {% elif reserva.tipo == 'traslados' %}
+                <span class="font-medium text-cyan-700">
+                  <i class="fas fa-shuttle-van mr-1"></i>{% trans "Traslado" %}
+                </span>
+              {% elif reserva.tipo == 'certificado' %}
+                <span class="font-medium text-pink-700">
+                  <i class="fas fa-certificate mr-1"></i>{% trans "Certificado de Vacaciones" %}
+                </span>
+              {% else %}
+                <span class="italic text-gray-400">{% trans "Sin descripción" %}</span>
+              {% endif %}
+            </td>
+        
+            <!-- AGENCIA -->
+            <td class="p-3">{{ reserva.agencia }}</td>
+        
+            <!-- PROVEEDOR -->
+            <td class="p-3">
+              {% if reserva.proveedor %}
+                {{ reserva.proveedor.nombre }}
+              {% else %}
+                <span class="text-gray-400 italic">{% trans "Sin proveedor" %}</span>
+              {% endif %}
+            </td>
+        
+            <!-- USUARIO -->
+            <td class="p-3">{{ reserva.nombre_usuario }}</td>
+        
+            <!-- PASAJERO / CLIENTE -->
+            <td class="p-3">
+              {% if reserva.tipo == 'envio' and reserva.envio and reserva.envio.remitente %}
+                <span class="text-gray-700">
+                  <i class="fas fa-user mr-1 text-indigo-500"></i>
+                  {{ reserva.envio.remitente.nombre_apellido }}
+                </span>
+              {% elif reserva.tipo == 'remesas' and reserva.remesa and reserva.remesa.remitente %}
+                <span class="text-gray-700">
+                  <i class="fas fa-user mr-1 text-green-500"></i>
+                  {{ reserva.remesa.remitente.nombre_apellido }}
+                </span>
+              {% elif reserva.tipo == 'traslados' and reserva.traslado and reserva.traslado.pasajero %}
+                {{ reserva.traslado.pasajero.nombre }}
+              {% elif reserva.tipo == 'certificado' %}
+                {% with habitacion=reserva.habitaciones_reserva.first %}
+                  {% if habitacion and habitacion.pasajeros.exists %}
+                    {{ habitacion.pasajeros.first.nombre }}
+                  {% else %}
+                    <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
+                  {% endif %}
+                {% endwith %}
+              {% elif reserva.tipo == 'hoteles' %}
+                {% with habitacion=reserva.habitaciones_reserva.first %}
+                  {% if habitacion and habitacion.pasajeros.exists %}
+                    {{ habitacion.pasajeros.first.nombre }}
+                  {% else %}
+                    <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
+                  {% endif %}
+                {% endwith %}
+              {% else %}
+                <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
+              {% endif %}
+            </td>
+        
+            <!-- FECHA -->
+            <td class="p-3">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</td>
+        
+            <!-- ESTATUS -->
+            <td class="p-3">
+              {% if reserva.estatus == 'solicitada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full">
+                  <i class="fas fa-hourglass-half mr-1"></i> {% trans "Solicitada" %}
+                </span>
+              {% elif reserva.estatus == 'pendiente' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">
+                  <i class="fas fa-clock mr-1"></i> {% trans "Pendiente" %}
+                </span>
+              {% elif reserva.estatus == 'confirmada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                  <i class="fas fa-check mr-1"></i> {% trans "Confirmada" %}
+                </span>
+              {% elif reserva.estatus == 'modificada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-100 rounded-full">
+                  <i class="fas fa-edit mr-1"></i> {% trans "Modificada" %}
+                </span>
+              {% elif reserva.estatus == 'ejecutada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
+                  <i class="fas fa-play mr-1"></i> {% trans "Ejecutada" %}
+                </span>
+              {% elif reserva.estatus == 'cancelada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                  <i class="fas fa-times mr-1"></i> {% trans "Cancelada" %}
+                </span>
+              {% elif reserva.estatus == 'reembolsada' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">
+                  <i class="fas fa-undo mr-1"></i> {% trans "Reembolsada" %}
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full">
+                  <i class="fas fa-question mr-1"></i> {{ reserva.estatus|capfirst }}
+                </span>
+              {% endif %}
+            </td>
+
+        
+            <!-- ACCIONES -->
+            <td class="p-3">
+              <div class="flex justify-center gap-2">
+                <button type="button" class="p-2 bg-blue-100 hover:bg-blue-200 rounded text-blue-700 transition-all ver-detalle-btn" data-id="{{ reserva.pk }}">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <a href="{% url 'backoffice:editar_reserva' reserva.pk %}" class="p-2 bg-yellow-100 hover:bg-yellow-200 rounded text-yellow-700 transition-all">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'backoffice:eliminar_reserva' reserva.pk %}" onclick="return confirm('{% trans '¿Seguro que deseas eliminar?' %}')" class="p-2 bg-red-100 hover:bg-red-200 rounded text-red-700 transition-all">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+            </td>
+        
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="p-4 text-center text-gray-500">{% trans "No hay reservas." %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        
+      </table>
+    </div>
+  </section>
+
+  <!-- PAGINACIÓN -->
+  <section class="mt-10 flex justify-center">
+    <nav class="inline-flex rounded-lg shadow border bg-white">
+      {% if reservas.has_previous %}
+        <a href="?page=1" class="px-3 py-2 hover:bg-gray-100 text-gray-600 border-r"><i class="fas fa-angle-double-left"></i></a>
+        <a href="?page={{ reservas.previous_page_number }}" class="px-3 py-2 hover:bg-gray-100 text-gray-600 border-r"><i class="fas fa-angle-left"></i></a>
+      {% endif %}
+      {% for num in reservas.paginator.page_range %}
+        {% if num == reservas.number %}
+          <span class="px-3 py-2 bg-indigo-600 text-white font-semibold border-r">{{ num }}</span>
+        {% elif num > reservas.number|add:'-4' and num < reservas.number|add:'4' %}
+          <a href="?page={{ num }}" class="px-3 py-2 hover:bg-gray-100 text-gray-600 border-r">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if reservas.has_next %}
+        <a href="?page={{ reservas.next_page_number }}" class="px-3 py-2 hover:bg-gray-100 text-gray-600 border-r"><i class="fas fa-angle-right"></i></a>
+        <a href="?page={{ reservas.paginator.num_pages }}" class="px-3 py-2 hover:bg-gray-100 text-gray-600"><i class="fas fa-angle-double-right"></i></a>
+      {% endif %}
+    </nav>
+  </section>
+
+</main>
+
+<!-- MODAL PRO-MAX -->
+<div id="modal-detalle" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-10 relative transform transition-all duration-300 scale-100">
+    
+    <!-- Botón cerrar -->
+    <button id="cerrar-modal" class="absolute top-5 right-5 text-gray-400 hover:text-red-600 text-3xl transition duration-300">&times;</button>
+
+    <!-- Título -->
+    <h2 class="text-3xl font-extrabold text-gray-800 mb-8 flex items-center gap-3">
+      <i class="fas fa-file-alt text-indigo-500"></i> {% trans "Detalles de la Reserva" %}
+    </h2>
+
+    <!-- Contenido dinámico -->
+    <div id="contenido-detalle" class="text-gray-700 text-base space-y-6">
+      <!-- Aquí se inyectará el contenido -->
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modal-detalle');
+    const cerrar = document.getElementById('cerrar-modal');
+    const contenido = document.getElementById('contenido-detalle');
+
+    document.querySelectorAll('.ver-detalle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idReserva = btn.dataset.id;
+
+        // Mostrar spinner mientras carga
+        contenido.innerHTML = `
+          <div class="flex flex-col justify-center items-center py-10 gap-4">
+            <i class="fas fa-spinner fa-spin text-5xl text-indigo-500"></i>
+            <p class="text-indigo-600 font-semibold text-lg">{% trans "Cargando detalles..." %}</p>
+          </div>
+        `;
+
+        // Mostrar el modal
+        modal.classList.remove('hidden');
+
+        // Hacer el fetch al servidor
+        fetch(`/backoffice/reservas/detalles_reserva/${idReserva}/`)
+          .then(res => {
+            if (!res.ok) throw new Error('Error en la respuesta');
+            return res.json();
+          })
+          .then(data => {
+            contenido.innerHTML = `
+              <div class="bg-gray-100 p-6 rounded-lg text-sm font-mono whitespace-pre overflow-x-auto">
+                ${JSON.stringify(data, null, 2)}
+              </div>
+            `;
+          })
+          .catch(() => {
+            contenido.innerHTML = `
+              <div class="text-center py-10">
+                <p class="text-red-500 font-semibold text-lg">{% trans "Error al cargar los detalles." %}</p>
+              </div>
+            `;
+          });
+      });
+    });
+
+    cerrar.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  });
+</script>
+
+{% endblock %}

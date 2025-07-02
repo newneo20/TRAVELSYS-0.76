@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Crear Opción de Certificado{% endblock %}
+
+{% block content %}
+
+<!-- Incluir el archivo de estilos CSS -->
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1>Crear Opción de Certificado</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Nombre:</label>
+        <input type="text" name="nombre" class="form-control" required>
+        
+        <label>Descripción:</label>
+        <textarea name="descripcion" class="form-control" required></textarea>
+        
+        <label>Categoría (Estrellas):</label>
+        <select name="categoria" class="form-control" required>
+            {% for i in "12345" %}
+            <option value="{{ i }}">{{ i }} Estrellas</option>
+            {% endfor %}
+        </select>
+        
+        <label>Foto:</label>
+        <input type="file" name="foto" class="form-control">
+        
+        <button type="submit" class="btn btn-primary mt-3">Guardar</button>
+    </form>
+</div>
+{% endblock %}

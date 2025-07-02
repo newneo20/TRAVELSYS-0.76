@@ -1,0 +1,31 @@
+{% load i18n %}
+<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+    {% for reserva in reservas %}
+    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <td class="px-4 py-3 text-center">{{ reserva.id }}</td>
+      <td class="px-4 py-3 text-center capitalize">{{ reserva.tipo }}</td>
+      <td class="px-4 py-3 text-center">
+        {% if reserva.tipo == 'hoteles' and reserva.hotel %}
+          {{ reserva.hotel.hotel_nombre }}
+        {% elif reserva.tipo == 'traslados' and reserva.traslado %}
+          {{ reserva.traslado.origen.nombre }} → {{ reserva.traslado.destino.nombre }}
+        {% elif reserva.tipo == 'remesas' and reserva.remesa %}
+          {{ reserva.remesa.nombre_remitente }}
+        {% elif reserva.tipo == 'certificado' and reserva.certificado_vacaciones %}
+          {{ reserva.certificado_vacaciones.nombre }}
+        {% elif reserva.tipo == 'envio' and reserva.envio %}
+          {{ reserva.envio.destinatario }}
+        {% else %}
+          {{ reserva.tipo|upper }}
+        {% endif %}
+      </td>
+      <td class="px-4 py-3 text-center">{{ reserva.fecha_reserva|date:"d/m/Y" }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4" class="px-4 py-3 text-center text-gray-500 dark:text-gray-400 italic">
+        {% trans "No hay reservas recientes." %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>

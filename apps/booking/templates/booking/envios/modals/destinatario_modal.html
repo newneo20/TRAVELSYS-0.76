@@ -1,0 +1,147 @@
+<div
+    x-show="showRecipientModal"
+    x-cloak
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    @click.self="showRecipientModal = false"
+>
+    <!-- CONTENEDOR REAL DEL MODAL -->
+    <div class="bg-white w-full max-w-6xl mx-4 p-8 rounded-2xl shadow-2xl relative animate-slide-up">
+        <!-- Botón de cerrar -->
+        <button 
+            @click="showRecipientModal = false"
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+        >
+            &times;
+        </button>
+
+        <!-- Título -->
+        <h4 class="text-3xl font-bold mb-6 text-gray-900">Nuevo Destinatario</h4>
+
+        <!-- Aquí adentro va el form completo -->
+        <form id="destinatarioForm" class="space-y-6" @submit.prevent="guardarDestinatario()">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+                <!-- Primer Nombre -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Primer Nombre</label>
+                    <input type="text" name="primer_nombre" x-model="destinatario.primer_nombre" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Segundo Nombre -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Segundo Nombre</label>
+                    <input type="text" name="segundo_nombre" x-model="destinatario.segundo_nombre" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Primer Apellido -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Primer Apellido</label>
+                    <input type="text" name="primer_apellido" x-model="destinatario.primer_apellido" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Segundo Apellido -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Segundo Apellido</label>
+                    <input type="text" name="segundo_apellido" x-model="destinatario.segundo_apellido" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- CI / Pasaporte -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CI / Pasaporte</label>
+                    <input type="text" name="ci" x-model="destinatario.ci" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Teléfonos -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="text" name="telefono" x-model="destinatario.telefono" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono Adicional</label>
+                    <input type="text" name="telefono_adicional" x-model="destinatario.telefono_adicional" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" x-model="destinatario.email" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Dirección -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Calle</label>
+                    <input type="text" name="calle" x-model="destinatario.calle" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                    <input type="text" name="numero" x-model="destinatario.numero" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Entre Calle</label>
+                    <input type="text" name="entre_calle" x-model="destinatario.entre_calle" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Y Calle</label>
+                    <input type="text" name="y_calle" x-model="destinatario.y_calle" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Apto / Reparto</label>
+                    <input type="text" name="apto_reparto" x-model="destinatario.apto_reparto" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Piso</label>
+                    <input type="text" name="piso" x-model="destinatario.piso" class="w-full border rounded px-3 py-2 text-sm">
+                </div>
+
+                <!-- Provincia -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+                    <select 
+                    x-model="provincia" 
+                    @change="updateMunicipios()" 
+                    class="w-full border rounded px-3 py-2 text-sm"
+                    >
+                    <option value="">Seleccione provincia…</option>
+                    <template x-for="(municipiosList, prov) in provinciasDisponibles" :key="prov">
+                        <option :value="prov" x-text="prov"></option>
+                    </template>
+                    </select>
+                </div>
+                
+                <!-- Municipio -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Municipio</label>
+                    <select 
+                    x-model="municipio" 
+                    :disabled="!provincia" 
+                    class="w-full border rounded px-3 py-2 text-sm"
+                    >
+                    <option value="">Seleccione municipio…</option>
+                    <template x-for="mun in municipios" :key="mun">
+                        <option :value="mun" x-text="mun"></option>
+                    </template>
+                    </select>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                    <textarea x-model="destinatario.observaciones" class="w-full border rounded px-3 py-2 text-sm"></textarea>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <button type="button" @click="showRecipientModal = false" class="px-6 py-3 bg-gray-200 rounded-lg">Cancelar</button>
+                <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-lg">Guardar Destinatario</button>
+            </div>
+        </form>
+
+    </div>
+</div>

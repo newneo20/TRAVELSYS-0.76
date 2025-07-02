@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Editar Usuario{% endblock %}
+
+{% block content %}
+<main class="w-full max-w-[1600px] mx-auto px-8 py-10">
+
+  <!-- TÍTULO -->
+  <section class="flex justify-between items-center mb-10">
+    <h1 class="text-3xl font-bold text-gray-900">{% trans "Editar Usuario" %}</h1>
+  </section>
+
+  <form method="POST" enctype="multipart/form-data"
+        class="space-y-10 bg-white p-10 rounded-2xl shadow-xl border border-gray-200">
+    {% csrf_token %}
+
+    <!-- BLOQUE 1: DATOS BÁSICOS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+      <!-- Avatar -->
+      <div class="flex flex-col items-center gap-4">
+        {% if usuario.logo %}
+          <img src="{{ usuario.logo.url }}" class="w-36 h-36 rounded-full object-cover border-4 border-cyan-400 shadow-xl" />
+        {% else %}
+          <div class="w-36 h-36 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-400 to-indigo-500 flex justify-center items-center shadow-xl">
+            <i class="fas fa-user text-5xl text-white"></i>
+          </div>
+        {% endif %}
+        <input type="file" id="logo" name="logo" accept="image/*" class="hidden"
+               onchange="logoName.textContent = this.files[0]?.name ?? 'Cambiar logo'">
+        <label for="logo" class="px-4 py-2 rounded-lg bg-cyan-500 text-white text-sm font-semibold hover:bg-cyan-600 cursor-pointer transition">
+          <i class="fas fa-upload mr-1"></i> Cambiar logo
+        </label>
+      </div>
+
+      <!-- Campos -->
+      <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- Usuario -->
+        <div class="relative">
+          <input id="username" name="username" type="text" required minlength="3" value="{{ usuario.username }}"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="username" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-user mr-1"></i> Usuario
+          </label>
+        </div>
+
+        <!-- Agencia -->
+        <div class="relative">
+          <input id="agencia" name="agencia" type="text" value="{{ usuario.agencia }}"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="agencia" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-building mr-1"></i> Agencia
+          </label>
+        </div>
+
+        <!-- Email -->
+        <div class="relative">
+          <input id="email" name="email" type="email" required value="{{ usuario.email }}"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="email" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-envelope mr-1"></i> Email
+          </label>
+        </div>
+
+        <!-- Manager -->
+        <div class="flex items-center mt-3">
+          <input type="checkbox" id="is_manager" name="is_manager" {% if usuario.is_manager %}checked{% endif %}
+                 class="h-5 w-5 text-cyan-400 border-gray-400 rounded">
+          <label for="is_manager" class="ml-3 text-sm text-gray-700 font-semibold">Es manager</label>
+        </div>
+
+        <!-- Dirección -->
+        <div class="sm:col-span-2 relative">
+          <input id="direccion" name="direccion" type="text" required value="{{ usuario.direccion }}"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="direccion" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-map-marker-alt mr-1"></i> Dirección
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BLOQUE 2: PASSWORD Y SALDO -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <!-- Password -->
+      <div class="relative">
+        <input id="password" name="password" type="password"
+               class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+               placeholder=" ">
+        <label for="password" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+          <i class="fas fa-lock mr-1"></i> Nueva Contraseña
+        </label>
+      </div>
+
+      <!-- Confirmar Password -->
+      <div class="relative">
+        <input id="confirm_password" name="confirm_password" type="password"
+               class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+               placeholder=" ">
+        <label for="confirm_password" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+          <i class="fas fa-lock mr-1"></i> Confirmar contraseña
+        </label>
+      </div>
+
+      <!-- Saldo -->
+      <div class="relative">
+        <input id="saldo_pendiente" name="saldo_pendiente" type="number" step="0.01" min="0" value="{{ usuario.saldo_pendiente|default_if_none:'0' }}"
+               class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+               placeholder=" ">
+        <label for="saldo_pendiente" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+          <i class="fas fa-wallet mr-1"></i> Saldo en fondo
+        </label>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="relative">
+        <input id="telefono" name="telefono" type="tel" pattern="\d{7,15}" value="{{ usuario.telefono }}"
+               class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+               placeholder=" ">
+        <label for="telefono" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+          <i class="fas fa-phone mr-1"></i> Teléfono Agencia
+        </label>
+      </div>
+
+    </div>
+
+    <!-- BLOQUE 3: FEES -->
+    <div class="space-y-8">
+      <h3 class="text-lg font-semibold text-gray-900">
+        <i class="fas fa-percent mr-2 text-cyan-500"></i> Configuración de Fees
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+
+        <!-- Fee Hotel -->
+        <div class="relative">
+          <input type="number" step="1" id="fee_hotel" name="fee_hotel" value="{{ usuario.fee_hotel|default_if_none:'0' }}" min="0"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="fee_hotel" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-hotel mr-1"></i> Fee Hotel
+          </label>
+
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <select id="tipo_fee_hotel" name="tipo_fee_hotel" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700">
+              <option value="$" {% if usuario.tipo_fee_hotel == "$" %}selected{% endif %}>$</option>
+              <option value="%" {% if usuario.tipo_fee_hotel == "%" %}selected{% endif %}>%</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fee Niño -->
+        <div class="relative">
+          <input type="number" step="1" id="fee_nino" name="fee_nino" value="{{ usuario.fee_nino|default_if_none:'0' }}" min="0"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="fee_nino" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-child mr-1"></i> Fee Niño
+          </label>
+
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <select id="tipo_fee_nino" name="tipo_fee_nino" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700">
+              <option value="$" {% if usuario.tipo_fee_nino == "$" %}selected{% endif %}>$</option>
+              <option value="%" {% if usuario.tipo_fee_nino == "%" %}selected{% endif %}>%</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fee Carro -->
+        <div class="relative">
+          <input type="number" step="1" id="fee_carro" name="fee_carro" value="{{ usuario.fee_carro|default_if_none:'0' }}" min="0"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="fee_carro" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-car mr-1"></i> Fee Carro
+          </label>
+
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <select id="tipo_fee_carro" name="tipo_fee_carro" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700">
+              <option value="$" {% if usuario.tipo_fee_carro == "$" %}selected{% endif %}>$</option>
+              <option value="%" {% if usuario.tipo_fee_carro == "%" %}selected{% endif %}>%</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fee Traslados -->
+        <div class="relative">
+          <input type="number" step="1" id="fee_traslados" name="fee_traslados" value="{{ usuario.fee_traslados|default_if_none:'0' }}" min="0"
+                 class="peer w-full bg-gray-100 rounded-lg border border-gray-300 px-4 pt-4 pb-1.5 text-gray-900 focus:ring-2 focus:ring-cyan-400"
+                 placeholder=" ">
+          <label for="fee_traslados" class="absolute left-4 top-1 text-sm text-gray-500 peer-placeholder-shown:top-3 peer-focus:top-1 peer-focus:text-sm">
+            <i class="fas fa-shuttle-van mr-1"></i> Fee Traslados
+          </label>
+
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <select id="tipo_fee_traslados" name="tipo_fee_traslados" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-700">
+              <option value="$" {% if usuario.tipo_fee_traslados == "$" %}selected{% endif %}>$</option>
+              <option value="%" {% if usuario.tipo_fee_traslados == "%" %}selected{% endif %}>%</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="flex justify-end gap-5 pt-8">
+      <button type="submit"
+              class="px-8 py-3 rounded-xl bg-indigo-600 text-white text-lg font-semibold shadow-lg hover:bg-indigo-700 transition">
+        Guardar
+      </button>
+      <a href="{% url 'listar_usuarios' %}"
+         class="px-8 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">
+        Cancelar
+      </a>
+    </div>
+
+  </form>
+</main>
+{% endblock %}

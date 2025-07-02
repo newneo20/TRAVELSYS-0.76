@@ -1,0 +1,138 @@
+<div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">Información de Contacto</h3>
+    <p class="text-gray-600">Selecciona o crea nuevos contactos para el envío</p>
+</div>
+
+<!-- Search Bar -->
+<div class="glassmorphism p-4 rounded-lg">
+    <div class="relative">
+        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+        <input
+            type="text"
+            x-model="searchQuery"
+            placeholder="Buscar contactos existentes..."
+            class="pl-10 w-full bg-white/70 border border-white/30 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Destinatario Section -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i data-lucide="user" class="w-5 h-5 mr-2 text-blue-600"></i>
+                Destinatario
+            </h4>
+            <button
+                @click="showRecipientModal = true"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all card-hover"
+            >
+                <i data-lucide="plus" class="w-4 h-4 mr-1 inline"></i>
+                Nuevo
+            </button>
+        </div>
+
+        <div class="space-y-3">
+            <template x-for="destinatario in filteredDestinatarios()" :key="destinatario.id">
+                <div
+                    @click="selectedRecipient = destinatario"
+                    class="glassmorphism p-4 cursor-pointer transition-all duration-200 card-hover rounded-lg"
+                    :class="{
+                        'bg-blue-50 border-blue-200 shadow-md': selectedRecipient?.id === destinatario.id,
+                        'hover:bg-white/70': selectedRecipient?.id !== destinatario.id
+                    }"
+                >
+                    <div class="flex-1">
+                        <h5 class="font-semibold text-gray-900" x-text="destinatario.nombre_completo"></h5>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <div class="flex items-center">
+                                <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                                <span x-text="destinatario.telefono"></span>
+                            </div>
+                            <div class="flex items-center">
+                                <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                                <span x-text="destinatario.direccion_completa"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        
+    </div>
+
+    <!-- Remitente Section -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i data-lucide="user" class="w-5 h-5 mr-2 text-green-600"></i>
+                Remitente
+            </h4>
+            <button
+                @click="showSenderModal = true"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all card-hover"
+            >
+                <i data-lucide="plus" class="w-4 h-4 mr-1 inline"></i>
+                Nuevo
+            </button>
+        </div>
+
+        <div class="space-y-3">
+            <template x-for="remitente in filteredRemitentes()" :key="remitente.id">
+                <div
+                    @click="selectedSender = remitente"
+                    class="glassmorphism p-4 cursor-pointer transition-all duration-200 card-hover rounded-lg"
+                    :class="{
+                        'bg-green-50 border-green-200 shadow-md': selectedSender?.id === remitente.id,
+                        'hover:bg-white/70': selectedSender?.id !== remitente.id
+                    }"
+                >
+                    <div class="flex-1">
+                        <h5 class="font-semibold text-gray-900" x-text="remitente.nombre_apellido"></h5>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <div class="flex items-center">
+                                <i data-lucide="phone" class="w-4 h-4 mr-2"></i>
+                                <span x-text="remitente.telefono"></span>
+                            </div>
+                            <div class="flex items-center">
+                                <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
+                                <span x-text="remitente.direccion"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Summary -->
+<div 
+    x-show="selectedRecipient || selectedSender"
+    x-transition
+    class="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-xl border border-blue-200"
+>
+    <h5 class="font-semibold text-gray-900 mb-3">Resumen de Contactos</h5>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div x-show="selectedRecipient" class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <i data-lucide="user" class="w-4 h-4 text-white"></i>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900">Destinatario seleccionado</p>
+                <p class="text-sm text-gray-600" x-text="selectedRecipient?.nombre_completo"></p>
+            </div>
+        </div>
+        <div x-show="selectedSender" class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <i data-lucide="user" class="w-4 h-4 text-white"></i>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900">Remitente seleccionado</p>
+                <p class="text-sm text-gray-600" x-text="selectedSender?.nombre_apellido"></p>
+            </div>
+        </div>
+    </div>
+</div>

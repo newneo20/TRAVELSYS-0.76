@@ -1,0 +1,229 @@
+{% extends 'booking/traslados/base_traslados.html' %}
+{% load static %}
+
+{% block title %}Detalles del Traslado{% endblock %}
+
+{% block hotel_content %}
+
+<div class="mx-auto mt-5 px-4 max-w-6xl">
+    <!-- Contenedor principal del detalle -->
+    <div class="border shadow-lg rounded overflow-hidden">
+
+        <!-- Header estilo Tailwind (antes era card-header) -->
+        <div class="bg-blue-600 text-white text-center p-4">
+            <h2 class="text-xl font-bold mb-1">
+                {{ traslado.origen.nombre }} → {{ traslado.destino.nombre }}
+            </h2>
+            <p class="text-sm">Detalles del traslado</p>
+        </div>
+
+        <!-- Cuerpo principal (antes card-body) -->
+        <div class="p-4">
+            <form 
+                method="POST"
+                action="{% url 'booking:reserva_traslados' traslado.id %}"
+                id="detalleTrasladoForm"
+                class="space-y-6"
+                novalidate
+            >
+                {% csrf_token %}
+                
+                <!-- Campos ocultos -->
+                <input type="hidden" name="traslado_id" value="{{ traslado.id }}">                
+                <input type="hidden" name="precio" value="{{ traslado.costo }}">
+                <input type="hidden" name="tipologia" value="{{ tipologia }}">
+                <input type="hidden" name="origen" value="{{ traslado.origen.id }}">
+                <input type="hidden" name="destino" value="{{ destino }}">
+                <input type="hidden" name="fecha_traslado" value="{{ fecha_traslado }}">
+                <input type="hidden" name="adultos" value="{{ adultos }}">
+                <input type="hidden" name="ninos" value="{{ ninos }}">
+                <input type="hidden" name="infantes" value="{{ infantes }}">
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <!-- Imagen del Vehículo -->
+                    <div class="md:col-span-4">
+                        <div class="rounded overflow-hidden shadow-sm">
+                            {% if traslado.vehiculo.foto %}
+                                <img 
+                                    src="{{ traslado.vehiculo.foto.url }}" 
+                                    alt="{{ traslado.vehiculo.tipo }}"
+                                    class="w-full h-auto object-cover"
+                                />
+                            {% else %}
+                                <img 
+                                    src="{% static 'backoffice/fotos_vehiculos/default.jpg' %}"
+                                    alt="Vehículo sin imagen"
+                                    class="w-full h-auto object-cover"
+                                />
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Información del Traslado -->
+                    <div class="md:col-span-8 space-y-4">
+                        <!-- Transporte -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="text-blue-700 text-base font-semibold mb-2 flex items-center space-x-2">
+                                    <i class="fas fa-bus"></i> 
+                                    <span>Transporte</span>
+                                </h5>
+                                <span class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm mr-2 mb-2">
+                                    <i class="fas fa-car mr-1"></i> 
+                                    Vehículo: {{ traslado.vehiculo.tipo|title }}
+                                </span>
+                                <span class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded text-sm mb-2">
+                                    <i class="fas fa-users mr-1"></i> 
+                                    Capacidad: {{ traslado.vehiculo.capacidad_min }} - {{ traslado.vehiculo.capacidad_max }}
+                                </span>
+                            </div>
+
+                            <div>
+                                <h5 class="text-blue-700 text-base font-semibold mb-2 flex items-center space-x-2">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Información del Viaje</span>
+                                </h5>
+                                <span class="inline-block bg-yellow-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-calendar-day mr-1"></i> 
+                                    Fecha del Traslado: {{ fecha_traslado }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Origen y Destino Lado a Lado -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Origen -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Origen</strong>
+                                    {% if calificacion_origen == "HOTEL" %}
+                                        <i class="fas fa-hotel text-blue-600"></i>
+                                    {% elif calificacion_origen == "AEROPUERTO" %}
+                                        <i class="fas fa-plane-departure text-red-600"></i>
+                                    {% else %}
+                                        <i class="fas fa-map-marker-alt text-gray-600"></i>
+                                    {% endif %}
+                                </label>
+
+                                {% if calificacion_origen == "HOTEL" %}
+                                    <select 
+                                        id="hotel_origen"
+                                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option value="" selected>Seleccione un hotel</option>
+                                        {% for hotel in hoteles_origen %}
+                                            <option value="{{ hotel.id }}">{{ hotel.hotel_nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <p class="border border-gray-300 rounded bg-gray-50 p-2 text-center">
+                                        {{ traslado.origen.nombre }}
+                                    </p>
+                                {% endif %}
+
+                                {% if calificacion_origen == "AEROPUERTO" %}
+                                    <label class="block text-sm font-medium text-gray-700 mt-2">
+                                        <strong>No. de Vuelo</strong>
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        id="numero_vuelo_origen"
+                                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ingrese el número de vuelo"
+                                        required
+                                    />
+                                {% endif %}
+                            </div>
+
+                            <!-- Destino -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Destino</strong>
+                                    {% if calificacion_destino == "HOTEL" %}
+                                        <i class="fas fa-hotel text-blue-600"></i>
+                                    {% elif calificacion_destino == "AEROPUERTO" %}
+                                        <i class="fas fa-plane-arrival text-red-600"></i>
+                                    {% else %}
+                                        <i class="fas fa-map-marker-alt text-gray-600"></i>
+                                    {% endif %}
+                                </label>
+
+                                {% if calificacion_destino == "HOTEL" %}
+                                    <select 
+                                        id="hotel_destino"
+                                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option value="" selected>Seleccione un hotel</option>
+                                        {% for hotel in hoteles_destino %}
+                                            <option value="{{ hotel.id }}">{{ hotel.hotel_nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <p class="border border-gray-300 rounded bg-gray-50 p-2 text-center">
+                                        {{ traslado.destino.nombre }}
+                                    </p>
+                                {% endif %}
+
+                                {% if calificacion_destino == "AEROPUERTO" %}
+                                    <label class="block text-sm font-medium text-gray-700 mt-2">
+                                        <strong>No. de Vuelo</strong>
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        id="numero_vuelo_destino"
+                                        class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ingrese el número de vuelo"
+                                        required
+                                    />
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Información de Pasajeros y Precio -->
+                        <div class="mt-3 space-y-3">
+                            <h5 class="text-blue-700 text-base font-semibold flex items-center space-x-2">
+                                <i class="fas fa-users"></i>
+                                <span>Pasajeros</span>
+                            </h5>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-user mr-1"></i> Adultos: {{ adultos }}
+                                </span>
+                                <span class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-child mr-1"></i> Niños: {{ ninos }}
+                                </span>
+                                <span class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-baby mr-1"></i> Infantes: {{ infantes }}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <h4 class="text-blue-600 text-2xl font-bold inline-flex items-center space-x-1">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    <span>{{ traslado.costo|floatformat:2 }}</span>
+                                </h4>
+                            </div>
+                        </div>
+
+                        <!-- Botón de Enviar -->
+                        <div class="flex justify-end mt-4">
+                            <button 
+                                class="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                                type="submit"
+                            >
+                                <i class="fas fa-check-circle"></i>
+                                <span>Reservar Traslado</span>
+                            </button>
+                        </div>
+                    </div>
+                </div> <!-- Fin grid general -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Si quisieras validación simple en JS, te recomiendo
+     adaptarlo a tu gusto con 'required-field' etc. -->
+
+{% endblock %}

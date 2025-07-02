@@ -1,0 +1,663 @@
+{% extends 'booking/base_tabs.html' %}
+{% load custom_filters %}
+{% load static %}
+
+<!-- Custom CSS (si lo necesitas) -->
+<link rel="stylesheet" type="text/css" href="{% static 'css/traslados.css' %}">
+
+{% block content %}
+<div class="mx-auto mt-4 px-4 max-w-6xl">
+
+    <!-- Contenedor principal -->
+    <div class="border shadow-sm rounded mb-4 overflow-hidden">
+
+        <!-- Encabezado estilo Tailwind (antes card-header) -->
+        <div class="bg-blue-600 text-white px-4 py-3">
+            <h3 class="text-lg font-bold">Reservar Traslado</h3>
+        </div>
+
+        <!-- Cuerpo principal -->
+        <div class="p-4">
+
+            <!-- Formulario general -->
+            <form 
+                id="form-traslado" 
+                action="{% url 'booking:guardar_traslado' %}" 
+                method="POST"
+                class="space-y-6"
+                novalidate
+            >
+                {% csrf_token %}
+
+                <!-- Tarjeta 1: Datos del Traslado -->
+                <div class="bg-gray-50 border rounded mb-4 p-4">
+                    <h5 class="text-base font-bold mb-3">1. Datos del Traslado</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        
+                        <!-- Tipo de traslado -->
+                        <div class="flex flex-col">
+                            <label for="tipo_traslado" class="text-sm font-medium text-gray-700 mb-1">
+                                <strong>Tipo de traslado</strong>
+                            </label>
+                            <select 
+                                id="tipo_traslado"
+                                name="tipo_traslado"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="colectivo">Colectivo</option>
+                                <option value="privado">Privado</option>
+                            </select>
+                        </div>
+
+                        <!-- Tramos (One Way / Round Trip) -->
+                        <div class="flex flex-col">
+                            <label for="tramos" class="text-sm font-medium text-gray-700 mb-1">
+                                <strong>Tramos</strong>
+                            </label>
+                            <select
+                                id="tramos"
+                                name="tramos"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                            >
+                                <option value="one_way">One Way</option>
+                                <option value="round_trip">Round Trip</option>
+                            </select>
+                        </div>
+
+                        <!-- Fecha del Ida -->
+                        <div class="flex flex-col">
+                            <label for="fecha_ida" class="text-sm font-medium text-gray-700 mb-1">
+                                <strong>Fecha del Ida</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="datepicker border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="fecha_ida"
+                                name="fecha_ida"
+                                required
+                            />
+                        </div>
+
+                        <!-- Fecha del Regreso -->
+                        <div class="flex flex-col">
+                            <label for="fecha_regreso" class="text-sm font-medium text-gray-700 mb-1">
+                                <strong>Fecha del Regreso</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="datepicker border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="fecha_regreso"
+                                name="fecha_regreso"
+                                required
+                            />
+                        </div>
+
+                        <!-- Botón para abrir el modal de selección de PAX -->
+                        <div class="flex flex-col items-center justify-center">
+                            <label for="paxButton" class="text-sm font-medium text-gray-700 mb-1 text-center">
+                                <strong>PAX</strong>
+                            </label>
+                            <button
+                                type="button"
+                                id="paxButton"
+                                class="border border-blue-600 text-blue-600 rounded px-3 py-2 hover:bg-blue-50 transition-colors flex items-center space-x-2"
+                            >
+                                <!-- Muestra lo que venga de request.GET o un default -->
+                                <i class="fas fa-user"></i> {{ request.GET.adultos|default:"1" }}
+                                <i class="fas fa-child"></i> {{ request.GET.ninos|default:"0" }} 
+                                <i class="fas fa-baby"></i> {{ request.GET.infantes|default:"0" }}
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Información de Origen y Destino -->
+                <div class="bg-gray-50 border rounded mb-4 p-4">
+                    <h5 class="text-base font-bold mb-3">2. Información del Traslado</h5>
+
+                    <!-- Conjunto 1 (One Way) -->
+                    <div id="conjunto_1" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            <!-- Origen -->
+                            <div class="flex flex-col">
+                                <label for="desde" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Lugar de origen</strong>
+                                </label>
+                                <select 
+                                    id="desde"
+                                    name="desde"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione</option>
+                                    <option value="la-habana">Hoteles Habana</option>
+                                    <option value="cayo-santa-maria">Hoteles Cayo Santa Maria - Ensenachos</option>
+                                    <option value="varadero">Hoteles Varadero</option>
+                                </select>
+                            </div>
+
+                            <!-- Destino -->
+                            <div class="flex flex-col">
+                                <label for="hacia" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Lugar de destino</strong>
+                                </label>
+                                <select 
+                                    id="hacia"
+                                    name="hacia"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione</option>
+                                    <option value="la-habana">Hoteles Habana</option>
+                                    <option value="cayo-santa-maria">Hoteles Cayo Santa Maria - Ensenachos</option>
+                                    <option value="varadero">Hoteles Varadero</option>
+                                </select>
+                            </div>
+
+                            <!-- Horario -->
+                            <div class="flex flex-col">
+                                <label for="horario" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Horario</strong>
+                                </label>
+                                <select 
+                                    id="horario"
+                                    name="horario"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione horario</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Hotel de origen -->
+                            <div class="flex flex-col">
+                                <label for="hotelOrigen" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Hotel de origen</strong>
+                                </label>
+                                <select 
+                                    id="hotelOrigen"
+                                    name="hotel_origen"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione un hotel</option>
+                                    {% for hotel in hoteles %}
+                                        <option 
+                                            value="{{ hotel.id }}"
+                                            data-polo="{{ hotel.polo_turistico.nombre|default_if_none:''|slugify }}"
+                                        >
+                                            {{ hotel.hotel_nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Hotel de destino -->
+                            <div class="flex flex-col">
+                                <label for="hotelDestino" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Hotel de destino</strong>
+                                </label>
+                                <select 
+                                    id="hotelDestino"
+                                    name="hotel_destino"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione un hotel</option>
+                                    {% for hotel in hoteles %}
+                                        <option 
+                                            value="{{ hotel.id }}"
+                                            data-polo="{{ hotel.polo_turistico.nombre|default_if_none:''|slugify }}"
+                                        >
+                                            {{ hotel.hotel_nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div> <!-- Fin Conjunto 1 -->
+
+                    <!-- Conjunto 2 (Round Trip) -->
+                    <div id="conjunto_2" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Origen (Regreso) -->
+                            <div class="flex flex-col">
+                                <label for="desde_rt" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Lugar de origen (Regreso)</strong>
+                                </label>
+                                <select 
+                                    id="desde_rt"
+                                    name="desde_rt"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione</option>
+                                    <option value="la-habana">Hoteles Habana</option>
+                                    <option value="cayo-santa-maria">Hoteles Cayo Santa Maria - Ensenachos</option>
+                                    <option value="varadero">Hoteles Varadero</option>
+                                </select>
+                            </div>
+
+                            <!-- Destino (Regreso) -->
+                            <div class="flex flex-col">
+                                <label for="hacia_rt" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Lugar de destino (Regreso)</strong>
+                                </label>
+                                <select 
+                                    id="hacia_rt"
+                                    name="hacia_rt"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione</option>
+                                    <option value="la-habana">Hoteles Habana</option>
+                                    <option value="cayo-santa-maria">Hoteles Cayo Santa Maria - Ensenachos</option>
+                                    <option value="varadero">Hoteles Varadero</option>
+                                </select>
+                            </div>
+
+                            <!-- Horario (Regreso) -->
+                            <div class="flex flex-col">
+                                <label for="horario_rt" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Horario (Regreso)</strong>
+                                </label>
+                                <select 
+                                    id="horario_rt"
+                                    name="horario_rt"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione horario</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Hotel de origen (Regreso) -->
+                            <div class="flex flex-col">
+                                <label for="hotelOrigen_rt" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Hotel de origen (Regreso)</strong>
+                                </label>
+                                <select 
+                                    id="hotelOrigen_rt"
+                                    name="hotel_origen_rt"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione un hotel</option>
+                                    {% for hotel in hoteles %}
+                                        <option 
+                                            value="{{ hotel.id }}"
+                                            data-polo="{{ hotel.polo_turistico.nombre|default_if_none:''|slugify }}"
+                                        >
+                                            {{ hotel.hotel_nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Hotel de destino (Regreso) -->
+                            <div class="flex flex-col">
+                                <label for="hotelDestino_rt" class="text-sm font-medium text-gray-700 mb-1">
+                                    <strong>Hotel de destino (Regreso)</strong>
+                                </label>
+                                <select 
+                                    id="hotelDestino_rt"
+                                    name="hotel_destino_rt"
+                                    class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                >
+                                    <option value="" selected disabled>Seleccione un hotel</option>
+                                    {% for hotel in hoteles %}
+                                        <option 
+                                            value="{{ hotel.id }}"
+                                            data-polo="{{ hotel.polo_turistico.nombre|default_if_none:''|slugify }}"
+                                        >
+                                            {{ hotel.hotel_nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div> <!-- Fin Conjunto 2 -->
+
+                    <!-- Polos ocultos (si los necesitas) -->
+                    <input type="hidden" id="poloOrigen"  name="polo_origen"  readonly>
+                    <input type="hidden" id="poloDestino" name="polo_destino" readonly>
+                </div> <!-- Fin card 2 -->
+
+                <!-- Tarjeta 3: Datos del Pasajero -->
+                <div class="bg-gray-50 border rounded mb-4 p-4">
+                    <h5 class="text-base font-bold mb-3">3. Datos del pasajero</h5>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <div class="md:col-span-5 flex flex-col">
+                            <label 
+                                for="nombreX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>Nombre(s) y Apellido(s):</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="nombreX_adultoY"
+                                name="nombreX_adultoY"
+                                placeholder="Como aparece en el pasaporte"
+                                required
+                            />
+                        </div>
+                        <div class="md:col-span-2 flex flex-col">
+                            <label 
+                                for="fecha_nacimientoX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>Fecha de nacimiento:</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="datepicker border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="fecha_nacimientoX_adultoY"
+                                name="fecha_nacimientoX_adultoY"
+                                placeholder="YYYY/MM/DD"
+                                required
+                            />
+                        </div>
+                        <div class="md:col-span-5 flex flex-col">
+                            <label 
+                                for="emailX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>E-mail:</strong>
+                            </label>
+                            <input 
+                                type="email"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="emailX_adultoY"
+                                name="emailX_adultoY"
+                                required
+                            />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-3">
+                        <div class="md:col-span-2 flex flex-col">
+                            <label 
+                                for="pasaporteX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>Número de pasaporte:</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="pasaporteX_adultoY"
+                                name="pasaporteX_adultoY"
+                                required
+                            />
+                        </div>
+                        <div class="md:col-span-3 flex flex-col">
+                            <label 
+                                for="caducidadX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>Caducidad del pasaporte:</strong>
+                            </label>
+                            <input 
+                                type="text"
+                                class="datepicker border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="caducidadX_adultoY"
+                                name="caducidadX_adultoY"
+                                placeholder="YYYY/MM/DD"
+                                required
+                            />
+                        </div>
+                        <div class="md:col-span-3 flex flex-col">
+                            <label 
+                                for="pais_emisionX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>País de emisión:</strong>
+                            </label>
+                            <select 
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="pais_emisionX_adultoY"
+                                name="pais_emisionX_adultoY"
+                                required
+                            >
+                                <option value="" disabled selected>Seleccione un país</option>
+                                <option value="CUBA">CUBA</option>
+                                <option value="ESPANA">ESPAÑA</option>
+                                <option value="ESTADOS UNIDOS">ESTADOS UNIDOS</option>
+                                <option value="MEXICO">MÉXICO</option>
+                                <option value="OTRO">OTRO</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3 flex flex-col">
+                            <label 
+                                for="telefonoX_adultoY"
+                                class="text-sm font-medium text-gray-700 mb-1"
+                            >
+                                <strong>Teléfono:</strong>
+                            </label>
+                            <input 
+                                type="tel"
+                                class="border border-gray-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="telefonoX_adultoY"
+                                name="telefonoX_adultoY"
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Campos ocultos PAX -->
+                <input type="hidden" id="adultosHidden"   name="adultos"   value="{{ request.GET.adultos|default:'2' }}">
+                <input type="hidden" id="ninosHidden"     name="ninos"     value="{{ request.GET.ninos|default:'0' }}">
+                <input type="hidden" id="infantesHidden"  name="infantes"  value="{{ request.GET.infantes|default:'0' }}">
+
+                <!-- Botón final -->
+                <div class="bg-gray-50 border rounded p-4 text-right">
+                    <button 
+                        type="submit"
+                        class="bg-green-600 text-white text-sm px-5 py-2 rounded hover:bg-green-700 transition-colors"
+                    >
+                        Reservar Traslado
+                    </button>
+                </div>
+
+            </form>
+        </div> <!-- Fin del cuerpo -->
+
+    </div> <!-- Fin contenedor principal -->
+</div> <!-- Fin container -->
+
+<!-- Modal Tailwind para seleccionar PAX -->
+<div 
+    id="paxModal" 
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center"
+>
+    <div class="bg-white rounded shadow-lg max-w-xl w-full mx-auto my-8">
+        <!-- Header del modal -->
+        <div class="flex justify-between items-center p-4 border-b">
+            <h5 class="text-lg font-bold">Seleccionar PAX</h5>
+            <button 
+                type="button"
+                id="closePaxModalBtn"
+                class="text-2xl text-gray-600 hover:text-gray-800 focus:outline-none"
+            >
+                &times;
+            </button>
+        </div>
+        <!-- Cuerpo del modal -->
+        <div class="p-4">
+            <div class="grid grid-cols-3 gap-4">
+                <!-- Adultos -->
+                <div>
+                    <label for="adultosSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                        Adultos
+                    </label>
+                    <select id="adultosSelect" class="border border-gray-300 rounded px-2 py-1 w-full">
+                        <option value="1" {% if request.GET.adultos == "1" or not request.GET.adultos %}selected{% endif %}>1</option>
+                        <option value="2" {% if request.GET.adultos == "2" %}selected{% endif %}>2</option>
+                        <option value="3" {% if request.GET.adultos == "3" %}selected{% endif %}>3</option>
+                        <option value="4" {% if request.GET.adultos == "4" %}selected{% endif %}>4</option>
+                        <option value="5" {% if request.GET.adultos == "5" %}selected{% endif %}>5</option>
+                    </select>
+                </div>
+                <!-- Niños -->
+                <div>
+                    <label for="ninosSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                        Niños
+                    </label>
+                    <select id="ninosSelect" class="border border-gray-300 rounded px-2 py-1 w-full">
+                        <option value="0" {% if request.GET.ninos == "0" or not request.GET.ninos %}selected{% endif %}>0</option>
+                        <option value="1" {% if request.GET.ninos == "1" %}selected{% endif %}>1</option>
+                        <option value="2" {% if request.GET.ninos == "2" %}selected{% endif %}>2</option>
+                        <option value="3" {% if request.GET.ninos == "3" %}selected{% endif %}>3</option>
+                    </select>
+                </div>
+                <!-- Infantes -->
+                <div>
+                    <label for="infantesSelect" class="block text-sm font-medium text-gray-700 mb-1">
+                        Infantes
+                    </label>
+                    <select id="infantesSelect" class="border border-gray-300 rounded px-2 py-1 w-full">
+                        <option value="0" {% if request.GET.infantes == "0" or not request.GET.infantes %}selected{% endif %}>0</option>
+                        <option value="1" {% if request.GET.infantes == "1" %}selected{% endif %}>1</option>
+                        <option value="2" {% if request.GET.infantes == "2" %}selected{% endif %}>2</option>
+                        <option value="3" {% if request.GET.infantes == "3" %}selected{% endif %}>3</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <!-- Footer del modal -->
+        <div class="flex justify-end space-x-3 p-4 border-t">
+            <button 
+                type="button"
+                id="cancelarPaxBtn"
+                class="border border-gray-300 text-gray-700 rounded px-4 py-2 hover:bg-gray-100 transition-colors"
+            >
+                Cancelar
+            </button>
+            <button 
+                type="button"
+                id="guardarPax"
+                class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition-colors"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS TAILWIND + LÓGICA -->
+<script 
+    src="https://code.jquery.com/jquery-3.6.0.min.js">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js">
+</script>
+<script 
+    src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js">
+</script>
+<link 
+    rel="stylesheet"
+    type="text/css"
+    href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Quitar .needs-validation y reemplazar con validación nativa o manual si gustas.
+    // (form.traslado checkValidity, etc.)
+
+    // ====== Manejo de Tramos (One Way / Round Trip) ======
+    const tramosSelect = document.getElementById('tramos');
+    const conjunto1 = document.getElementById('conjunto_1');
+    const conjunto2 = document.getElementById('conjunto_2');
+
+    function actualizarTramos() {
+        if (tramosSelect.value === 'round_trip') {
+            conjunto1.style.display = 'block';
+            conjunto2.style.display = 'block';
+        } else {
+            conjunto1.style.display = 'block';
+            conjunto2.style.display = 'none';
+        }
+    }
+    actualizarTramos();
+    tramosSelect.addEventListener('change', actualizarTramos);
+
+    // ====== Datepickers para fechas ======
+    $('input.datepicker').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        minYear: 1924,
+        maxYear: 2034,
+        locale: {
+            format: 'YYYY/MM/DD'
+        }
+    });
+
+    // ====== Lógica del modal PAX con Tailwind ======
+    const paxModal = document.getElementById('paxModal');
+    const openPaxBtn = document.getElementById('paxButton');
+    const closePaxModalBtn = document.getElementById('closePaxModalBtn');
+    const cancelarPaxBtn = document.getElementById('cancelarPaxBtn');
+    const guardarPaxBtn = document.getElementById('guardarPax');
+
+    // Campos del modal
+    const adultosSelect = document.getElementById('adultosSelect');
+    const ninosSelect   = document.getElementById('ninosSelect');
+    const infantesSelect= document.getElementById('infantesSelect');
+
+    // Inputs hidden en el form
+    const adultosHidden  = document.getElementById('adultosHidden');
+    const ninosHidden    = document.getElementById('ninosHidden');
+    const infantesHidden = document.getElementById('infantesHidden');
+
+    function abrirModalPax() {
+        paxModal.classList.remove('hidden');
+    }
+    function cerrarModalPax() {
+        paxModal.classList.add('hidden');
+    }
+
+    openPaxBtn.addEventListener('click', abrirModalPax);
+    closePaxModalBtn.addEventListener('click', cerrarModalPax);
+    cancelarPaxBtn.addEventListener('click', cerrarModalPax);
+
+    guardarPaxBtn.addEventListener('click', () => {
+        // Tomar valores
+        const a = adultosSelect.value;
+        const n = ninosSelect.value;
+        const i = infantesSelect.value;
+
+        // Guardar en los hidden
+        adultosHidden.value  = a;
+        ninosHidden.value    = n;
+        infantesHidden.value = i;
+
+        // Refrescar botón
+        openPaxBtn.innerHTML = `
+            <i class="fas fa-user"></i> ${a}
+            <i class="fas fa-child"></i> ${n}
+            <i class="fas fa-baby"></i> ${i}
+        `;
+
+        cerrarModalPax();
+    });
+
+    // (Opcional) Valida que "desde" != "hacia" y "desde_rt" != "hacia_rt", etc.
+
+});
+</script>
+{% endblock content %}

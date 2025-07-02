@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% load static %} 
+
+{% block title %}Crear Cadena Hotelera{% endblock %}
+
+{% block content %}
+    <!-- Incluir el archivo de estilos CSS -->    
+    <link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+    
+    <div class="container mt-4">
+        <h1>Crear Cadena Hotelera</h1>
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

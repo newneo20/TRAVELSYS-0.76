@@ -1,0 +1,281 @@
+{% load static %}
+<div
+   x-show="tab === 'habitaciones'"
+   x-cloak
+   x-data="habitaciones()"
+   x-init="initDatePicker()"
+   class="space-y-6"
+ >
+  <!-- Header y Botón Agregar -->
+  <div class="flex justify-between items-center">
+    <h3 class="text-xl font-semibold">Habitaciones del Hotel</h3>
+    <button @click="openAddHabitacion()"
+            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <i class="fas fa-plus mr-2"></i>Agregar Habitación
+    </button>
+  </div>
+
+  <!-- Tabla de Habitaciones -->
+  <div class="overflow-x-auto bg-white rounded-lg shadow">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Tipo de Habitación</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Descripción</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Capacidad</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Solo Adultos</th>
+          <th class="px-4 py-2 text-center font-medium text-gray-600">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for habitacion in habitaciones %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 text-center align-middle">{{ habitacion.tipo }}</td>
+          <td class="px-4 py-2 text-center align-middle">{{ habitacion.descripcion }}</td>
+          <td class="px-4 py-2 text-center align-middle">{{ habitacion.max_capacidad }}</td>
+          <td class="px-4 py-2 text-center align-middle">{{ habitacion.solo_adultos|yesno:"Sí,No" }}</td>
+          <td class="px-4 py-2 text-center align-middle space-x-2">
+            <button @click="editHabitacion({{ habitacion.id }})"
+                    class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 focus:outline-none">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button @click="deleteHabitacion({{ habitacion.id }}, '{{ habitacion.tipo|escapejs }}', '{{ habitacion.descripcion|escapejs }}')"
+                    class="px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 focus:outline-none">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-2 text-center text-gray-500">No hay habitaciones registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="liveToast" class="fixed top-5 right-5 bg-white border border-gray-200 shadow-lg rounded-lg px-4 py-2 hidden">
+    <span class="text-gray-800"></span>
+  </div>
+
+  <!-- Modal Agregar/Editar Habitación -->
+  <div x-show="showHabitacionModal" x-cloak class="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center z-50">
+
+    <!-- Contenedor del modal -->
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative">
+
+      <!-- Botón cerrar modal -->
+      <button @click="closeModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <!-- Título del modal -->
+      <h2 x-text="modalTitle" class="text-xl font-bold mb-4"></h2>
+
+      <!-- Formulario de habitación -->
+      <form id="habitacionForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% csrf_token %}
+
+        <!-- Campo oculto: ID del hotel -->
+        <input type="hidden" name="hotel_id" value="{{ hotel.id }}">
+
+        <!-- Campo oculto: ID de la habitación (para editar) -->
+        <input type="hidden" name="habitacion_id" x-model="form.id">
+
+        <!-- Campo: Tipo de habitación -->
+        <div>
+          <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo de Habitación</label>
+          <input type="text" id="tipo" name="tipo" x-model="form.tipo" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+        </div>
+
+        <!-- Campo: Descripción -->
+        <div>
+          <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+          <textarea id="descripcion" name="descripcion" x-model="form.descripcion" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+        </div>
+
+        <!-- Campo: Fechas deshabilitadas -->
+        <div>
+          <label for="datetimes" class="block text-sm font-medium text-gray-700">Fechas Deshabilitadas</label>
+          <input type="text" id="datetimes" name="datetimes" x-model="form.datetimes" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm datepicker"
+          placeholder="Selecciona rango de fechas">
+        </div>
+
+        <!-- Campo: Subida de foto -->
+        <div>
+          <label for="foto" class="block text-sm font-medium text-gray-700">Foto</label>
+          <input type="file" id="foto" name="foto" accept="image/*" class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded cursor-pointer focus:outline-none">
+        </div>
+
+        <!-- Fila con Adultos, Niños, Máxima y Mínima Capacidad -->
+        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Campo: Adultos -->
+          <div>
+            <label for="adultos" class="block text-sm font-medium text-gray-700">Adultos</label>
+            <input type="number" id="adultos" name="adultos" x-model="form.adultos"
+                  class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+
+          <!-- Campo: Niños -->
+          <div>
+            <label for="ninos" class="block text-sm font-medium text-gray-700">Niños</label>
+            <input type="number" id="ninos" name="ninos" x-model="form.ninos"
+                  class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+
+          <!-- Campo: Máxima Capacidad -->
+          <div>
+            <label for="max_capacidad" class="block text-sm font-medium text-gray-700">Máxima Capacidad</label>
+            <input type="number" id="max_capacidad" name="max_capacidad" x-model="form.max_capacidad"
+                  class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+
+          <!-- Campo: Mínima Capacidad -->
+          <div>
+            <label for="min_capacidad" class="block text-sm font-medium text-gray-700">Mínima Capacidad</label>
+            <input type="number" id="min_capacidad" name="min_capacidad" x-model="form.min_capacidad"
+                  class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+          </div>
+        </div>
+
+
+        <!-- Campo: Descripción de capacidad (ocupa toda la fila) -->
+        <div class="md:col-span-2">
+          <label for="descripcion_capacidad" class="block text-sm font-medium text-gray-700">Descripción de Capacidad</label>
+          <textarea id="descripcion_capacidad" name="descripcion_capacidad" x-model="form.descripcion_capacidad" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+        </div>
+
+        <!-- Checkbox: Admite 3 con 1 -->
+        <div class="flex items-center">
+          <input type="checkbox" id="admite_3_con_1" name="admite_3_con_1" x-model="form.admite_3_con_1" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="admite_3_con_1" class="ml-2 text-sm text-gray-700">Admite 3 con 1</label>
+        </div>
+
+        <!-- Checkbox: Solo adultos -->
+        <div class="flex items-center">
+          <input type="checkbox" id="solo_adultos" name="solo_adultos" x-model="form.solo_adultos" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="solo_adultos" class="ml-2 text-sm text-gray-700">Solo adultos</label>
+        </div>
+      </form>
+
+      <!-- Botones de acción -->
+      <div class="mt-4 flex justify-end space-x-2">
+        <!-- Botón cerrar -->
+        <button @click="closeModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">Cerrar</button>
+
+        <!-- Botón guardar -->
+        <button @click="saveHabitacion()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none">Guardar Habitación</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Confirmar Eliminación -->
+  <div x-show="showEliminarModal" x-cloak
+       class="fixed inset-0 bg-gray-700 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+      <button @click="closeEliminarModal()" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900">
+        <i class="fas fa-times"></i>
+      </button>
+      <h2 class="text-xl font-bold mb-4">Eliminar Habitación</h2>
+      <p class="mb-2">¿Estás seguro de que deseas eliminar esta habitación?</p>
+      <p class="mb-1"><strong>Tipo:</strong> <span x-text="toDelete.tipo"></span></p>
+      <p class="mb-4"><strong>Descripción:</strong> <span x-text="toDelete.descripcion"></span></p>
+      <div class="flex justify-end space-x-2">
+        <button @click="closeEliminarModal()"
+                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 focus:outline-none">Cancelar</button>
+        <button @click="confirmDeleteHabitacion()"
+                class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function habitaciones() {
+    return {
+      form: {},
+      toDelete: {},
+      modalTitle: '',
+      showHabitacionModal: false,
+      showEliminarModal: false,
+
+      initDatePicker() {
+        flatpickr('.datepicker', { mode: 'range', dateFormat: 'Y-m-d' });
+      },
+
+      openAddHabitacion() {
+        this.form = {
+          hotel_id: {{ hotel.id|default:"null" }}
+        };
+        this.modalTitle = 'Agregar Habitación';
+        this.showHabitacionModal = true;
+      },
+
+      editHabitacion(id) {
+        this.showHabitacionModal = true;
+        this.modalTitle = 'Editar Habitación';
+        this.form = { id };
+        fetch(`/backoffice/obtener_habitacion_test/${id}/`)
+          .then(r => r.json())
+          .then(data => Object.assign(this.form, data.habitacion));
+      },
+
+      deleteHabitacion(id, tipo, descripcion) {
+        this.toDelete = { id, tipo, descripcion };
+        this.showEliminarModal = true;
+      },
+
+      closeModal() {
+        this.showHabitacionModal = false;
+      },
+
+      closeEliminarModal() {
+        this.showEliminarModal = false;
+      },
+
+      saveHabitacion() {
+        const url = this.form.id
+          ? `/backoffice/editar_habitacion/${this.form.id}/`
+          : `/backoffice/guardar_habitacion/${this.form.hotel_id}/`;
+        fetch(url, {
+          method: 'POST',
+          body: new FormData(document.getElementById('habitacionForm'))
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            this.showToast('Habitación guardada');
+            location.reload();
+          }
+        });
+      },
+
+      confirmDeleteHabitacion() {
+        fetch(`/backoffice/eliminar_habitacion/${this.toDelete.id}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token|escapejs }}'
+          }
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            this.showToast('Habitación eliminada');
+            location.reload();
+          }
+        });
+      },
+
+      showToast(msg) {
+        const toast = document.getElementById('liveToast');
+        toast.querySelector('span').textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+      }
+    }
+  }
+</script>
+
+

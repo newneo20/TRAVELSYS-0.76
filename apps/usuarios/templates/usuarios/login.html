@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAVELSYS Login</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white font-inter">
+
+    <div class="bg-white/10 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+
+        <div class="flex justify-center mb-6">
+            <img src="{% static 'img/TRAVELSYS_logo_W.png' %}" alt="Logo" class="h-16">
+        </div>
+
+        <h2 class="text-center text-2xl font-semibold mb-6">Acceda a su cuenta</h2>
+
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="bg-red-500 text-white p-2 rounded">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <!-- Usuario -->
+            <div class="relative mb-6">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-400 text-xl">
+                    <i class="fas fa-user"></i>
+                </div>
+                <input type="text" name="username" id="username"
+                    class="peer pl-12 pr-4 pt-6 pb-2 w-full bg-white/10 backdrop-blur-md rounded-xl border-2 border-cyan-400 text-white focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+                    placeholder=" " required autocomplete="username" value="{{ form.username.value|default:'' }}">
+                <label for="username"
+                    class="absolute left-12 top-2 text-cyan-300 text-sm transition-all duration-200 ease-in-out transform scale-100 origin-left
+                    peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
+                    peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
+                    Usuario
+                </label>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="relative mb-8">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-400 text-xl">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <input type="password" name="password" id="password"
+                    class="peer pl-12 pr-4 pt-6 pb-2 w-full bg-white/10 backdrop-blur-md rounded-xl border-2 border-cyan-400 text-white focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
+                    placeholder=" " required autocomplete="current-password">
+                <label for="password"
+                    class="absolute left-12 top-2 text-cyan-300 text-sm transition-all duration-200 ease-in-out transform scale-100 origin-left
+                    peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
+                    peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
+                    Contraseña
+                </label>
+            </div>
+
+            <button type="submit"
+                class="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg">
+                Entrar
+            </button>
+        </form>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends 'booking/base_tabs.html' %}
+
+{% block title %}Buscar Autos{% endblock %}
+
+{% block content %}
+<div class="container mt-4 search-bar">
+    <div class="row">
+        <div class="col-md-3">
+            <select class="custom-select" id="categoria">
+                <option selected>Todas las categorías</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.nombre|slugify }}">{{ categoria.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="text" class="form-control" id="fechas_viaje" name="fechas_viaje">
+        </div>
+        <div class="col-md-3">
+            <select class="custom-select" id="lugar_recogida">
+                <option selected>Lugar de Recogida</option>
+                {% for lugar in lugares_recogida %}
+                    <option value="{{ lugar.nombre|slugify }}">{{ lugar.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-primary">Búsqueda</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,321 @@
+{% extends 'booking/base_tabs.html' %}
+{% load static %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl mt-2 px-4">
+
+  <!-- Barra estilo chips -->
+  <form
+    method="POST"
+    action="{% url 'booking:result_traslados' %}"
+    id="formTraslados"
+    class="bg-white shadow-md rounded-full p-2 flex flex-col md:flex-row 
+           md:items-center space-y-2 md:space-y-0 md:space-x-2"
+    novalidate
+  >
+    {% csrf_token %}
+
+    <!-- Chip: Modo -->
+    <div class="field-chip flex-1">
+      <i class="fas fa-random text-gray-400 ml-2"></i>
+      <select
+        id="tipologia"
+        name="tipologia"
+        class="select2-chip required-field"
+        required
+      >
+        <option value="" disabled {% if not tipologia %}selected{% endif %}>
+          Elige el modo...
+        </option>
+        <option value="colectivo" {% if tipologia == "colectivo" %}selected{% endif %}>Colectivo</option>
+        <option value="privado" {% if tipologia == "privado" %}selected{% endif %}>Privado</option>
+      </select>
+      <p class="error-msg hidden"></p>
+    </div>
+
+    <!-- Chip: Origen (Select2) -->
+    <div class="field-chip flex-1">
+      <i class="fas fa-map-marker-alt text-gray-400 ml-2"></i>
+      <select
+        id="origen"
+        name="origen"
+        class="select2-chip required-field"
+        data-url="{% url 'booking:obtener_destinos' %}"
+        required
+      >
+        <option value="" disabled {% if not origen %}selected{% endif %}>
+          Selecciona origen
+        </option>
+        {% for ubicacion in ubicaciones %}
+          <option value="{{ ubicacion.id }}"
+            {% if origen == ubicacion.id|stringformat:"s" %}selected{% endif %}
+          >
+            {{ ubicacion.nombre }}
+          </option>
+        {% endfor %}
+      </select>
+      <p class="error-msg hidden"></p>
+    </div>
+
+    <!-- Chip: Destino (Select2) -->
+    <div class="field-chip flex-1">
+      <i class="fas fa-map-signs text-gray-400 ml-2"></i>
+      <select
+        id="destino"
+        name="destino"
+        class="select2-chip required-field"
+        required
+      >
+        <option value="" disabled {% if not destino %}selected{% endif %}>
+          Selecciona destino
+        </option>
+        {% if destino %}
+          <option value="{{ destino }}" selected>{{ destino }}</option>
+        {% endif %}
+      </select>
+      <p class="error-msg hidden"></p>
+    </div>
+
+    <!-- Chip: Fecha -->
+    <div class="field-chip flex-1">
+      <i class="fas fa-calendar-alt text-gray-400 ml-2"></i>
+      <input
+        type="text"
+        id="fecha_traslado"
+        name="fecha_traslado"
+        class="bg-transparent border-none outline-none px-2 text-sm text-gray-700 w-full required-field"
+        value="{{ fecha_traslado }}"
+        placeholder="Fecha de traslado"
+        required
+      />
+      <p class="error-msg hidden"></p>
+    </div>
+
+    <!-- Chip: Pasajeros (abre modal) -->
+    <div 
+      id="openPaxModalBtn"
+      class="field-chip border-blue-600 text-blue-600 cursor-pointer flex items-center justify-center"
+    >
+      <i class="fas fa-user text-blue-600 ml-2"></i>
+      <span class="px-2 text-sm flex items-center gap-2">
+        <span class="flex items-center gap-1">
+          <span id="adultosDisplay">{{ request.GET.adultos|default:"1" }}</span>
+          <i class="fas fa-user"></i>
+        </span>
+        <span class="flex items-center gap-1">
+          <span id="ninosDisplay">{{ request.GET.ninos|default:"0" }}</span>
+          <i class="fas fa-child"></i>
+        </span>
+        <span class="flex items-center gap-1">
+          <span id="infantesDisplay">{{ request.GET.infantes|default:"0" }}</span>
+          <i class="fas fa-baby"></i>
+        </span>
+      </span>
+    </div>
+
+
+
+    <!-- Botón Buscar -->
+    <button
+      type="submit"
+      class="bg-blue-600 text-white rounded-full py-2 px-6 text-sm font-medium 
+             hover:bg-blue-700 transition-colors whitespace-nowrap"
+    >
+      Buscar
+    </button>
+
+    <!-- Hidden fields para pasajeros -->
+    <input type="hidden" name="adultos" id="adultos" value="{{ adultos|default:"1" }}">
+    <input type="hidden" name="ninos" id="ninos" value="{{ ninos|default:"0" }}">
+    <input type="hidden" name="infantes" id="infantes" value="{{ infantes|default:"0" }}">
+  </form>
+</div>
+
+<!-- Modal de Pasajeros “redondeado” -->
+<div
+  id="paxModal"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center"
+>
+  <div class="bg-white rounded-2xl shadow-lg max-w-lg w-full mx-auto my-8 p-4">
+    <div class="flex justify-between items-center border-b pb-2">
+      <h5 class="text-xl font-bold">Seleccionar Pasajeros</h5>
+      <button
+        type="button"
+        class="text-2xl text-gray-600 hover:text-gray-800 focus:outline-none"
+        id="closePaxModalBtn"
+      >
+        &times;
+      </button>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Chip: Adultos -->
+      <div class="field-chip w-full">
+        <i class="fas fa-user text-gray-400 ml-2"></i>
+        <input
+          type="number"
+          id="adultosInput"
+          class="bg-transparent border-none outline-none px-2 text-sm text-gray-700 w-full"
+          min="1"
+          max="10"
+          value="{{ adultos|default:1 }}"
+        />
+      </div>
+      <!-- Chip: Niños -->
+      <div class="field-chip w-full">
+        <i class="fas fa-child text-gray-400 ml-2"></i>
+        <input
+          type="number"
+          id="ninosInput"
+          class="bg-transparent border-none outline-none px-2 text-sm text-gray-700 w-full"
+          min="0"
+          max="10"
+          value="{{ ninos|default:0 }}"
+        />
+      </div>
+      <!-- Chip: Infantes -->
+      <div class="field-chip w-full">
+        <i class="fas fa-baby text-gray-400 ml-2"></i>
+        <input
+          type="number"
+          id="infantesInput"
+          class="bg-transparent border-none outline-none px-2 text-sm text-gray-700 w-full"
+          min="0"
+          max="5"
+          value="{{ infantes|default:0 }}"
+        />
+      </div>
+    </div>
+
+    <div class="flex justify-end space-x-3 pt-4 border-t mt-4">
+      <button
+        type="button"
+        class="border border-gray-300 text-gray-700 rounded-full px-4 py-2 hover:bg-gray-100 transition-colors"
+        id="cancelarPaxBtn"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="bg-blue-600 text-white rounded-full px-4 py-2 hover:bg-blue-700 transition-colors"
+        id="guardarPax"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Librerías -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1/daterangepicker.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1/daterangepicker.css"/>
+
+<script>
+$(document).ready(function() {
+  // Inicializar select2
+  $('.select2-chip').select2({
+    placeholder: "Selecciona una opción...",
+    allowClear: true
+  });
+
+  // Quitar borde extra de select2
+  $('.select2-chip').on('select2:open', function() {
+    $('.select2-container .select2-selection--single').css('border','none');
+  });
+
+  // DateRangePicker (fecha única)
+  $('#fecha_traslado').daterangepicker({
+    singleDatePicker: true,
+    autoUpdateInput: true,
+    locale: { format: 'DD-MM-YYYY' }
+  });
+
+  // AJAX Origen->Destino
+  $('#origen').change(function() {
+    var origenID = $(this).val();
+    var destinoSelect = $('#destino');
+    if (origenID) {
+      $.ajax({
+        url: $(this).data('url'),
+        data: { origen_id: origenID },
+        dataType: 'json',
+        success: function(data) {
+          destinoSelect.empty()
+            .append('<option value="" disabled selected>Selecciona destino</option>');
+          let addedDestinos = new Set();
+          $.each(data.destinos, function(index, d) {
+            if (!addedDestinos.has(d.nombre)) {
+              destinoSelect.append(`<option value="${d.nombre}">${d.nombre}</option>`);
+              addedDestinos.add(d.nombre);
+            }
+          });
+          destinoSelect.trigger('change');
+        },
+        error: function() {
+          alert("Error al cargar los destinos.");
+        }
+      });
+    }
+  });
+
+  // Validación
+  $('#formTraslados').on('submit', function(e) {
+    let formValid = true;
+    $('.required-field').removeClass('border-red-500 ring ring-red-500');
+    $('.error-msg').addClass('hidden').text('');
+
+    $(this).find('.required-field').each(function() {
+      if (!$(this).val()) {
+        formValid = false;
+        $(this).addClass('border-red-500 ring ring-red-500');
+        $(this).siblings('.error-msg').removeClass('hidden').text('Este campo es obligatorio.');
+      }
+    });
+
+    if (!formValid) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  $('.required-field').on('input change', function() {
+    if ($(this).val()) {
+      $(this).removeClass('border-red-500 ring ring-red-500');
+      $(this).siblings('.error-msg').addClass('hidden').text('');
+    }
+  });
+
+  // Manejo del modal Pasajeros
+  function abrirModal() {
+    $('#paxModal').removeClass('hidden');
+  }
+  function cerrarModal() {
+    $('#paxModal').addClass('hidden');
+  }
+  $('#openPaxModalBtn').click(abrirModal);
+  $('#closePaxModalBtn, #cancelarPaxBtn').click(cerrarModal);
+
+  $('#guardarPax').click(function() {
+    var adultos = $('#adultosInput').val();
+    var ninos = $('#ninosInput').val();
+    var infantes = $('#infantesInput').val();
+    if (adultos < 1) {
+      alert("Debe haber al menos un adulto.");
+      return;
+    }
+    $('#adultos').val(adultos);
+    $('#ninos').val(ninos);
+    $('#infantes').val(infantes);
+    $('#adultosDisplay').text(adultos);
+    $('#ninosDisplay').text(ninos);
+    $('#infantesDisplay').text(infantes);
+    cerrarModal();
+  });
+});
+</script>
+{% block hotel_content %}{% endblock %}
+{% endblock %}

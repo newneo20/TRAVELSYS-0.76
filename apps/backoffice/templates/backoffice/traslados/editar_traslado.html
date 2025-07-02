@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Editar Traslado{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title">Editar Traslado</h1>
+    <form class="row g-3 needs-validation" method="post" novalidate>
+        {% csrf_token %}
+        
+        <div class="col-md-6">
+            <label for="transportista" class="form-label">Transportista</label>
+            <select class="form-select" id="transportista" name="transportista" required>
+                <option value="" disabled>Seleccione un transportista</option>
+                {% for transportista in transportistas %}
+                    <option value="{{ transportista.id }}" {% if traslado.transportista.id == transportista.id %}selected{% endif %}>
+                        {{ transportista.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona un transportista válido.
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="origen" class="form-label">Origen</label>
+            <select class="form-select" id="origen" name="origen" required>
+                <option value="" disabled>Seleccione una ubicación de origen</option>
+                {% for ubicacion in ubicaciones %}
+                    <option value="{{ ubicacion.id }}" {% if traslado.origen.id == ubicacion.id %}selected{% endif %}>
+                        {{ ubicacion.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona una ubicación de origen válida.
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="destino" class="form-label">Destino</label>
+            <select class="form-select" id="destino" name="destino" required>
+                <option value="" disabled>Seleccione una ubicación de destino</option>
+                {% for ubicacion in ubicaciones %}
+                    <option value="{{ ubicacion.id }}" {% if traslado.destino.id == ubicacion.id %}selected{% endif %}>
+                        {{ ubicacion.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona una ubicación de destino válida.
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="vehiculo" class="form-label">Vehículo</label>
+            <select class="form-select" id="vehiculo" name="vehiculo" required>
+                <option value="" disabled>Seleccione un vehículo</option>
+                {% for vehiculo in vehiculos %}
+                    <option value="{{ vehiculo.id }}" {% if traslado.vehiculo.id == vehiculo.id %}selected{% endif %}>
+                        {{ vehiculo.tipo }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona un vehículo válido.
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label for="costo" class="form-label">Costo</label>
+            <input type="number" class="form-control" id="costo" name="costo" value="{{ traslado.costo }}" step="0.01" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona un costo válido.
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+    })();
+</script>
+
+{% endblock %}

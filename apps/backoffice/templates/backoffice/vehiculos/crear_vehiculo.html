@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Crear Vehículo{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+
+<div class="form-container">
+    <h1 class="form-title text-center">Crear Vehículo</h1>
+    <form class="needs-validation" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="tipo" class="form-label">Tipo de Vehículo</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+                <option value="" disabled selected>Seleccione un tipo de vehículo</option>
+                {% for key, value in vehiculo.TIPO_VEHICULO_CHOICES %}
+                    <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor, selecciona un tipo de vehículo.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="capacidad_min" class="form-label">Capacidad Mínima</label>
+            <input type="number" class="form-control" id="capacidad_min" name="capacidad_min" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona la capacidad mínima.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="capacidad_max" class="form-label">Capacidad Máxima</label>
+            <input type="number" class="form-control" id="capacidad_max" name="capacidad_max" required>
+            <div class="invalid-feedback">
+                Por favor, proporciona la capacidad máxima.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="foto" class="form-label">Foto del Vehículo</label>
+            <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+            <div class="invalid-feedback">
+                Por favor, sube una imagen válida del vehículo.
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
+            <a href="{% url 'backoffice:listar_vehiculos' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+{% endblock %}
