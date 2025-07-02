@@ -20,7 +20,7 @@ POLOS = [
 CAMPOS_CSV = [
     'destino', 'city_code', 'hotel_code', 'hotel_name', 'hotel_city_code',
     'area_id', 'giata_id', 'country_iso_code', 'country_name',
-    'address', 'email'
+    'address', 'email', 'latitude', 'longitude', 'rating'
 ]
 
 def obtener_hoteles(city_code):
@@ -65,11 +65,14 @@ def obtener_detalles_hotel(hotel_code):
 
         direccion = root.findtext(".//ns:Address/ns:AddressLine", default="", namespaces=ns).strip()
         email = root.findtext(".//ns:Email", default="", namespaces=ns).strip()
+        lat = root.findtext(".//ns:Latitude", default="", namespaces=ns).strip()
+        lon = root.findtext(".//ns:Longitude", default="", namespaces=ns).strip()
+        rating = root.findtext(".//ns:Award/ns:Rating", default="", namespaces=ns).strip()
 
-        return direccion, email
+        return direccion, email, lat, lon, rating
     except Exception as e:
         print(f"⚠️ No se pudo obtener detalles para {hotel_code}: {e}")
-        return "", ""
+        return "", "", "", "", ""
 
 def procesar_hoteles(city_code, hoteles):
     filas = []
@@ -81,10 +84,10 @@ def procesar_hoteles(city_code, hoteles):
         area_id = hotel.attrib.get("AreaID", "")
 
         # Consultar detalles
-        address, email = obtener_detalles_hotel(codigo)
+        address, email, lat, lon, rating = obtener_detalles_hotel(codigo)
 
         filas.append({
-            'destino': nombre,
+            'destino': area_id,
             'city_code': city_code,
             'hotel_code': codigo,
             'hotel_name': nombre,
@@ -92,9 +95,12 @@ def procesar_hoteles(city_code, hoteles):
             'area_id': area_id,
             'giata_id': giata,
             'country_iso_code': "CU",
-            'country_name': "Cuba",
+            'country_name': "CUBA",
             'address': address,
-            'email': email
+            'email': email,
+            'latitude': lat,
+            'longitude': lon,
+            'rating': rating
         })
     return filas
 

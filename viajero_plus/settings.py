@@ -123,37 +123,37 @@ WSGI_APPLICATION = 'viajero_plus.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 # BD LOCAL
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',      # Motor de base de datos SQLite
-#        'NAME': BASE_DIR / 'db.sqlite3',             # Ruta del archivo de la base de datos dentro del proyecto
-#    }
-#}
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_build',
-        'USER': 'newneo20',
-        'PASSWORD': '0123456789',
-        'HOST': 'store.prod.travel-sys.loc',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    },
-    'readonly': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_build',
-        'USER': 'newneo20',
-        'PASSWORD': '0123456789',
-        'HOST': 'store.prod.travel-sys.loc',
-        'PORT': '5433',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+        'ENGINE': 'django.db.backends.sqlite3',      # Motor de base de datos SQLite
+        'NAME': BASE_DIR / 'db.sqlite3',             # Ruta del archivo de la base de datos dentro del proyecto
     }
 }
+
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'db_build',
+#        'USER': 'newneo20',
+#        'PASSWORD': '0123456789',
+#        'HOST': 'store.prod.travel-sys.loc',
+#        'PORT': '5432',
+#        'OPTIONS': {
+#            'sslmode': 'require',
+#        },
+#    },
+#    'readonly': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'db_build',
+#        'USER': 'newneo20',
+#        'PASSWORD': '0123456789',
+#        'HOST': 'store.prod.travel-sys.loc',
+#        'PORT': '5433',
+#        'OPTIONS': {
+#            'sslmode': 'require',
+#        },
+#    }
+#}
 
 # 🚦 Aquí se especifica el enrutador de bases de datos personalizado
 DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']
