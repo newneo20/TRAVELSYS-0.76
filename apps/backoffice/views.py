@@ -4316,43 +4316,44 @@ from apps.booking.xml_builders_1way2italy import build_booking_xml, enviar_booki
 @manager_required
 @transaction.atomic
 def enviar_booking_distal(request, reserva_id):
+    print("🔄 Iniciando proceso de envío de booking a Distal...")
+
     reserva = get_object_or_404(Reserva, id=reserva_id)
+    print(f"✅ Reserva encontrada: ID {reserva.id}, usuario: {reserva.nombre_usuario}")
 
-    # Cargamos las habitaciones y pasajeros directamente de BD
-    habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
-    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
+    try:
+        # 1. Generar el XML con la reserva
+        xml_data = generar_xml_reserva_distal(reserva)
+        print("📦 XML generado para enviar a Distal:")
+        print(xml_data)
 
-    # Preparación para construir el XML
-    habitaciones_data = []
-    for habitacion in habitaciones:
-        habitaciones_data.append({
-            'habitacion_nombre': habitacion.habitacion_nombre,
-            'fechas_viaje': habitacion.fechas_viaje,
-            'adultos': habitacion.adultos,
-            'ninos': habitacion.ninos,
-            'opcion': {
-                'RoomTypeCode': '',  # si tuvieras guardado esto lo incluyes
-                'nombre': habitacion.habitacion_nombre,
-                'precio_cliente': habitacion.precio,
-                'moneda': 'USD',  # o la moneda real si la tienes
-            }
-        })
+        # 2. Enviar el XML a la API
+        print("🚀 Enviando XML a la API de Distal...")
+        booking_id, success, error_message = enviar_booking_api(xml_data)
 
-    # Armado XML
-    xml_data = build_booking_xml(reserva, habitaciones_data, pasajeros)
+        # 3. Revisar respuesta
+        print("📥 Respuesta de la API:")
+        print(f"🔑 Booking ID recibido: {booking_id}")
+        print(f"✅ Éxito: {success}")
+        print(f"❌ Error (si hubo): {error_message}")
 
-    # Envío a API
-    booking_id, success, error_message = enviar_booking_api(xml_data)
+        if success:
+            reserva.numero_confirmacion = booking_id
+            reserva.estatus = 'confirmada'
+            reserva.save()
+            print(f"💾 Reserva actualizada con número de confirmación: {booking_id}")
+            messages.success(request, f"Reserva confirmada en Distal (BookingID: {booking_id})")
+        else:
+            messages.error(request, f"❌ Error al confirmar booking: {error_message}")
 
-    if success:
-        reserva.numero_confirmacion = booking_id
-        reserva.estatus = 'confirmada'
-        reserva.save()
-        messages.success(request, f"Reserva confirmada en Distal (BookingID: {booking_id})")
-    else:
-        messages.error(request, f"Error al confirmar booking: {error_message}")
+    except Exception as e:
+        print("💥 Excepción atrapada durante el proceso:")
+        print(str(e))
+        messages.error(request, f"⚠️ Error inesperado: {str(e)}")
 
+    print("✅ Finalizado proceso de envío de booking.\n" + "-"*60)
     return redirect('backoffice:editar_reserva', reserva_id=reserva.id)
+
 
 
 import uuid
@@ -4393,25 +4394,83 @@ def generar_xml_reserva_distal(reserva):
     if not habitaciones.exists():
         raise ValueError("No hay habitaciones asociadas.")
 
-    habitacion = habitaciones.first()
-    try:
-        fecha_inicio, fecha_fin = habitacion.fechas_viaje.split(' - ')
-    except Exception as e:
-        raise ValueError(f"No se pudo obtener fechas desde fechas_viaje: {e}")
+    chain_code = 'DISTALCU'
+    hotel_code = reserva.hotel_importado.hotel_code
 
+    room_stays_xml = ''
+    rph_counter = 1
+    rph_map = {}  # Mapea habitación.id -> lista de RPHs
+
+    for habitacion in habitaciones:
+        try:
+            fecha_inicio, fecha_fin = habitacion.fechas_viaje.split(' - ')
+        except Exception as e:
+            raise ValueError(f"No se pudo obtener fechas de la habitación {habitacion.id}: {e}")
+
+        if not habitacion.booking_code:
+            raise ValueError(f"La habitación {habitacion.id} no tiene booking_code.")
+
+        rph_list = []
+        pasajeros = habitacion.pasajeros.all()
+        for _ in pasajeros:
+            rph_list.append(str(rph_counter))
+            rph_counter += 1
+
+        rphs_xml = ''.join(f'<ResGuestRPH>{r}</ResGuestRPH>' for r in rph_list)
+        rph_map[habitacion.id] = rph_list
+
+        room_stays_xml += f"""
+        <RoomStay>
+            <RoomRates>
+                <RoomRate BookingCode="{habitacion.booking_code}">
+                    <Total AmountAfterTax="{habitacion.precio}" CurrencyCode="EUR"/>
+                </RoomRate>
+            </RoomRates>
+            <TimeSpan Start="{fecha_inicio}" End="{fecha_fin}"/>
+            <BasicPropertyInfo ChainCode="{chain_code}" HotelCode="{hotel_code}"/>
+            <ResGuestRPHs>
+                {rphs_xml}
+            </ResGuestRPHs>
+        </RoomStay>
+        """
+
+    # Ahora generamos la lista de pasajeros
     pasajeros = []
     for hab in habitaciones:
-        pasajeros.extend(hab.pasajeros.all())
+        pasajeros.extend([(p, rph) for p, rph in zip(hab.pasajeros.all(), rph_map.get(hab.id, []))])
 
     if not pasajeros:
         raise ValueError("No hay pasajeros registrados.")
 
-    booking_code = habitacion.booking_code
-    hotel_code = reserva.hotel_importado.hotel_code
-    chain_code = 'DISTALCU'
-
-    rphs_xml = ''.join([f'<ResGuestRPH>{i+1}</ResGuestRPH>' for i in range(len(pasajeros))])
-    pasajeros_xml = generar_xml_pasajeros(pasajeros)
+    pasajeros_xml = ''
+    for pasajero, rph in pasajeros:
+        nombre_parts = pasajero.nombre.split()
+        nombre = nombre_parts[0]
+        apellido = nombre_parts[-1] if len(nombre_parts) > 1 else nombre_parts[0]
+        pasajeros_xml += f"""
+        <ResGuest ResGuestRPH="{rph}">
+            <Profiles>
+                <ProfileInfo>
+                    <Profile>
+                        <Customer BirthDate="{pasajero.fecha_nacimiento or '1990-01-01'}">
+                            <PersonName>
+                                <GivenName>{nombre}</GivenName>
+                                <Surname>{apellido}</Surname>
+                            </PersonName>
+                            <Telephone CountryAccessCode="1" PhoneNumber="{pasajero.telefono or '0000000000'}" PhoneTechType="5"/>
+                            <Email>{pasajero.email or 'reservas@travelsys.com'}</Email>
+                            <Address>
+                                <AddressLine>{pasajero.direccion or 'Dirección Genérica'}</AddressLine>
+                                <CityName>Havana</CityName>
+                                <PostalCode>00000</PostalCode>
+                                <StateProv/>
+                                <CountryName Code="CU">CUBA</CountryName>
+                            </Address>
+                        </Customer>
+                    </Profile>
+                </ProfileInfo>
+            </Profiles>
+        </ResGuest>"""
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <OTA_HotelResRQ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -4426,28 +4485,16 @@ def generar_xml_reserva_distal(reserva):
     <HotelReservations>
         <HotelReservation>
             <RoomStays>
-                <RoomStay>
-                    <RoomRates>
-                        <RoomRate BookingCode="{booking_code}">
-                            <Total AmountAfterTax="{reserva.costo_total}" CurrencyCode="EUR"/>
-                        </RoomRate>
-                    </RoomRates>
-                    <TimeSpan Start="{fecha_inicio}" End="{fecha_fin}"/>
-                    <BasicPropertyInfo ChainCode="{chain_code}" HotelCode="{hotel_code}"/>
-                    <ResGuestRPHs>
-                        {rphs_xml}
-                    </ResGuestRPHs>
-                </RoomStay>
+                {room_stays_xml.strip()}
             </RoomStays>
             <ResGuests>
-                {pasajeros_xml}
+                {pasajeros_xml.strip()}
             </ResGuests>
         </HotelReservation>
     </HotelReservations>
 </OTA_HotelResRQ>
 """
-    xml_limpio = minidom.parseString(xml).toprettyxml(indent="  ")
-    return xml_limpio
+    return minidom.parseString(xml).toprettyxml(indent="  ")
 
 
 def generar_xml_pasajeros(pasajeros):
@@ -4478,3 +4525,33 @@ def generar_xml_pasajeros(pasajeros):
             </Profiles>
         </ResGuest>"""
     return xml.strip()
+
+
+
+
+@login_required
+@manager_required
+def vista_preview_voucher_distal(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    habitaciones = reserva.habitaciones_reserva.all()
+    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
+
+    # Obtener fechas del primer y último rango
+    fechas_checkin = ''
+    fechas_checkout = ''
+    if habitaciones.exists():
+        fechas = [h.fechas_viaje for h in habitaciones if h.fechas_viaje]
+        if fechas:
+            fechas_inicio = min([f.split(' - ')[0] for f in fechas])
+            fechas_fin = max([f.split(' - ')[1] for f in fechas])
+            fechas_checkin = f"{fechas_inicio} a las 4:00 PM"
+            fechas_checkout = f"{fechas_fin} a las 12:00 M"
+
+    context = {
+        'reserva': reserva,
+        'habitaciones': habitaciones,
+        'pasajeros': pasajeros,
+        'fechas_checkin': fechas_checkin,
+        'fechas_checkout': fechas_checkout,
+    }
+    return render(request, 'backoffice/emails/voucher_hotel_distal.html', context)

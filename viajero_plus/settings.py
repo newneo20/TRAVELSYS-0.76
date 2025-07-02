@@ -156,7 +156,7 @@ DATABASES = {
 #}
 
 # 🚦 Aquí se especifica el enrutador de bases de datos personalizado
-DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']
+#DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']
 
 
 

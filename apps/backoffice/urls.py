@@ -49,6 +49,8 @@ urlpatterns = [
     path('hotel_editar/<int:hotel_id>/', views.hotel_editar, name='hotel_editar'), 
     path('guardar_hotel_editado/<int:hotel_id>/', views.guardar_hotel_editado, name='guardar_hotel_editado'),
     path('guardar_hotel/', views.guardar_hotel, name='guardar_hotel'),        
+    path('reserva/<int:reserva_id>/preview_voucher_distal/', views.vista_preview_voucher_distal, name='vista_preview_voucher_distal'),
+
     
     # ============ #
     # HABITACIONES #    

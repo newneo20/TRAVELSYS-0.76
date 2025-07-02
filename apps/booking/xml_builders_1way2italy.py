@@ -143,28 +143,33 @@ def build_booking_xml(reserva, habitaciones, pasajeros):
 
     return pretty_xml  
   
+
 def enviar_booking_api(xml_string):
     """
     Envía el BookingRQ al endpoint de reservas de 1way2italy.
     Retorna el resultado de la API: bookingID, success, errorMessage.
     """
 
-    # 🚩 IMPORTANTE: cuando Michele nos confirme, actualizamos el endpoint si es diferente
-    endpoint = "http://api.1way2italy.it/service/test/v10/otaservice/hotelbooking"
+    # ✅ Endpoint oficial de producción (confirmado por Distal)
+    endpoint = "https://api.1way2italy.it/Service/Production/v10/OtaService/HotelRes"
 
     headers = {
         "Content-Type": "application/xml"
     }
 
     try:
+        print("🌍 Enviando solicitud POST a:", endpoint)
         response = requests.post(endpoint, data=xml_string.encode("utf-8"), headers=headers, timeout=20)
         response.raise_for_status()
     except Exception as e:
         print(f"[ERROR] Fallo al enviar el BookingRQ: {e}")
         return None, False, str(e)
 
-    # ✅ Ahora parseamos la respuesta (muy básica por ahora, luego la refinamos)
-    import xml.etree.ElementTree as ET
+    # 📥 Imprimir respuesta XML cruda
+    print("📩 Respuesta XML de Distal:")
+    print(response.text)
+
+    # ✅ Parseo del XML para extraer BookingID
     ns = {'ns': 'http://www.opentravel.org/OTA/2003/05'}
     root = ET.fromstring(response.content)
 
