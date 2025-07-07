@@ -80,3 +80,10 @@ propcache==0.3.2
 frozenlist==1.7.0
 multidict==6.6.3
 wrapt==1.17.2
+
+# ===============================
+# Generación de PDFs y Reportes
+# ===============================
+reportlab==4.4.2
+pillow==11.2.1
+weasyprint==61.2
