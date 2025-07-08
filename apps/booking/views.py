@@ -456,7 +456,7 @@ def hotel_detalle(request, hotel_id):
     }
     return render(request, 'booking/hotel/hotel_detalle.html', context)
 
-@login_required
+
 def calcular_cantidad_noches(rango_fechas):
     #print('Entro a: calcular_cantidad_noches')
     
@@ -473,7 +473,7 @@ def calcular_cantidad_noches(rango_fechas):
     return dias
 
 # Función auxiliar para obtener las opciones de habitación
-@login_required
+
 def get_opciones_habitacion(habitaciones, ofertas, habitacion_info, fechas_viaje, tipo_fee_hotel, fee_hotel, fee_nino):
     opciones = []
 
@@ -536,7 +536,7 @@ def get_opciones_habitacion(habitaciones, ofertas, habitacion_info, fechas_viaje
     return opciones
 
 # Función auxiliar para calcular los días aplicables de una oferta
-@login_required
+
 def calcular_dias_por_oferta(ofertas, fecha_viaje):
     #print('-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+')
     #print('Entro a: calcular_dias_por_oferta(ofertas, fecha_viaje)')
@@ -625,7 +625,7 @@ def calcular_dias_por_oferta(ofertas, fecha_viaje):
     return resultado
 
 # Función auxiliar para calcular el precio de una habitación según la oferta
-@login_required
+
 def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion , cant_dias):
     
     #print('------------------------------')
@@ -879,7 +879,7 @@ def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion , cant_dias):
     return precio_total, precio_sin_fee, total_fee
 
 # Función auxiliar para calcular los precios por tipo de habitación
-@login_required
+
 def calcular_precios_por_tipo_habitacion(cant_adultos, nino1, nino2, fecha_viaje, ofertas, habitacion):
     precio_total = 0
     precio_sin_fee_total = 0
@@ -930,7 +930,7 @@ def calcular_precios_por_tipo_habitacion(cant_adultos, nino1, nino2, fecha_viaje
     return precio_total, precio_sin_fee_total, total_fee
 
 # Función auxiliar para obtener la descripción del plan alimenticio según el código
-@login_required
+
 def get_plan_alimenticio(plan_code):
 
     #print('Entro a: get_plan_alimenticio')
@@ -1055,13 +1055,13 @@ def hotel_pago_reserva(request, hotel_id):
     return render(request, 'booking/hotel/hotel_pago_reserva.html', context)
 
 # Vista para completar la solicitud de reserva
+@login_required
 @transaction.atomic
-def complete_solicitud(request, hotel_id):
+def complete_solicitud(request, pk):
+    hotel = get_object_or_404(Hotel, id=pk)
     destinos = PoloTuristico.objects.all()
-    context = {'destinos': destinos}
 
     if request.method == 'POST':
-        hotel = get_object_or_404(Hotel, id=hotel_id)
         post_data = request.POST
         nombre_usuario = f"{request.user.agencia}"
         email_empleado = post_data.get('email_empleado', '')
@@ -1069,29 +1069,23 @@ def complete_solicitud(request, hotel_id):
         fechas_viaje = post_data.get('habitacion_fechas_viaje', '')
         precio_total = post_data.get('precio_total', '')
 
-        # Validar y procesar fechas de viaje
         try:
             fecha_inicio_str, fecha_fin_str = fechas_viaje.split(' - ')
             fecha_inicio = datetime.strptime(fecha_inicio_str.strip(), '%Y-%m-%d')
             fecha_fin = datetime.strptime(fecha_fin_str.strip(), '%Y-%m-%d')
-            cantidad_noches = (fecha_fin - fecha_inicio).days
         except ValueError:
             messages.error(request, "Las fechas de viaje no son válidas.")
-            return redirect('hotel_detalle', hotel_id=hotel_id)
+            return redirect('hotel_detalle', hotel_id=hotel.id)
 
-        # Obtener el número de habitaciones
         try:
             habitacion_count = int(post_data.get('habitacion_count', 0))
         except ValueError:
             messages.error(request, "La cantidad de habitaciones no es válida.")
-            return redirect('hotel_detalle', hotel_id=hotel_id)
+            return redirect('hotel_detalle', hotel_id=hotel.id)
 
         personas_por_habitacion = []
-
-        # Obtener las ofertas disponibles para el hotel
         ofertas = Oferta.objects.filter(hotel=hotel, disponible=True)
 
-        # Iterar sobre cada habitación para procesar y recalcular los precios
         for habitacion_index in range(1, habitacion_count + 1):
             habitacion_info = {
                 'adultos': [],
@@ -1102,175 +1096,137 @@ def complete_solicitud(request, hotel_id):
                 'opcion': {}
             }
 
-            # Obtener el nombre de la opción seleccionada desde el formulario POST
             habitacion_nombre = post_data.get(f"habitacion_{habitacion_index}_nombre", f"Habitación {habitacion_index}")
             habitacion_info['opcion']['nombre'] = habitacion_nombre
 
-            # Obtener el número de adultos y niños
             try:
                 num_adultos = int(post_data.get(f"habitacion_{habitacion_index}_adultos", 0))
                 num_ninos = int(post_data.get(f"habitacion_{habitacion_index}_ninos", 0))
             except ValueError:
                 messages.error(request, "El número de adultos o niños no es válido.")
-                return redirect('hotel_detalle', hotel_id=hotel_id)
+                return redirect('hotel_detalle', hotel_id=hotel.id)
 
-            # Procesar adultos
             for i in range(1, num_adultos + 1):
-                nombre = post_data.get(f"nombre{habitacion_index}_adulto{i}")
-                fecha_nacimiento = post_data.get(f"fecha_nacimiento{habitacion_index}_adulto{i}")
-                pasaporte = post_data.get(f"pasaporte{habitacion_index}_adulto{i}")
-                caducidad = post_data.get(f"caducidad{habitacion_index}_adulto{i}")
-                pais_emision = post_data.get(f"pais_emision{habitacion_index}_adulto{i}")
-                email = post_data.get(f"email{habitacion_index}_adulto{i}")
-                telefono = post_data.get(f"telefono{habitacion_index}_adulto{i}")
-
                 habitacion_info['adultos'].append({
-                    'nombre': nombre,
-                    'fecha_nacimiento': fecha_nacimiento,
-                    'pasaporte': pasaporte,
-                    'caducidad': caducidad,
-                    'pais_emision': pais_emision,
-                    'email': email,
-                    'telefono': telefono,
+                    'nombre': post_data.get(f"nombre{habitacion_index}_adulto{i}"),
+                    'fecha_nacimiento': post_data.get(f"fecha_nacimiento{habitacion_index}_adulto{i}"),
+                    'pasaporte': post_data.get(f"pasaporte{habitacion_index}_adulto{i}"),
+                    'caducidad': post_data.get(f"caducidad{habitacion_index}_adulto{i}"),
+                    'pais_emision': post_data.get(f"pais_emision{habitacion_index}_adulto{i}"),
+                    'email': post_data.get(f"email{habitacion_index}_adulto{i}"),
+                    'telefono': post_data.get(f"telefono{habitacion_index}_adulto{i}"),
                 })
 
-            # Procesar niños
-            edades_ninos = []
             for i in range(1, num_ninos + 1):
-                nombre = post_data.get(f"nombre{habitacion_index}_nino{i}")
-                fecha_nacimiento = post_data.get(f"fecha_nacimiento{habitacion_index}_nino{i}")
-                pasaporte = post_data.get(f"pasaporte{habitacion_index}_nino{i}")
-                caducidad = post_data.get(f"caducidad{habitacion_index}_nino{i}")
-                pais_emision = post_data.get(f"pais_emision{habitacion_index}_nino{i}")
-                edad = post_data.get(f"edad_nino{habitacion_index}_{i}", '0')
-                try:
-                    edades_ninos.append(int(edad))
-                except ValueError:
-                    edades_ninos.append(0)
-
                 habitacion_info['ninos'].append({
-                    'nombre': nombre,
-                    'fecha_nacimiento': fecha_nacimiento,
-                    'pasaporte': pasaporte,
-                    'caducidad': caducidad,
-                    'pais_emision': pais_emision
+                    'nombre': post_data.get(f"nombre{habitacion_index}_nino{i}"),
+                    'fecha_nacimiento': post_data.get(f"fecha_nacimiento{habitacion_index}_nino{i}"),
+                    'pasaporte': post_data.get(f"pasaporte{habitacion_index}_nino{i}"),
+                    'caducidad': post_data.get(f"caducidad{habitacion_index}_nino{i}"),
+                    'pais_emision': post_data.get(f"pais_emision{habitacion_index}_nino{i}"),
                 })
 
-            # Recalcular el precio en el servidor
-            cant_adultos = num_adultos
-            cant_ninos = num_ninos
-            nino1 = 1 if cant_ninos >= 1 else 0
-            nino2 = 1 if cant_ninos >= 2 else 0
-
-            # Obtener la habitación correspondiente
             try:
                 habitacion_obj = Habitacion.objects.get(hotel=hotel, tipo=habitacion_nombre)
             except Habitacion.DoesNotExist:
-                messages.error(request, f"No se encontró la habitación {habitacion_nombre} en el hotel.")
-                return redirect('hotel_detalle', hotel_id=hotel_id)
+                messages.error(request, f"No se encontró la habitación {habitacion_nombre}.")
+                return redirect('hotel_detalle', hotel_id=hotel.id)
 
-            # Recalcular el precio usando las funciones existentes
             try:
-                precio_total_habitacion, precio_sin_fee_habitacion, total_fee_habitacion = calcular_precios_por_tipo_habitacion(
+                from apps.booking.views import calcular_precios_por_tipo_habitacion
+                cant_adultos = num_adultos
+                nino1 = 1 if num_ninos >= 1 else 0
+                nino2 = 1 if num_ninos >= 2 else 0
+
+                precio_total_hab, precio_sin_fee_hab, total_fee_hab = calcular_precios_por_tipo_habitacion(
                     cant_adultos, nino1, nino2, fechas_viaje, ofertas, habitacion_obj
                 )
-
-                # Convertir a Decimal para cálculos precisos
-                habitacion_info['precio'] = Decimal(str(precio_total_habitacion))
-                habitacion_info['precio_sin_fee'] = Decimal(str(precio_sin_fee_habitacion))
-                habitacion_info['total_fee'] = Decimal(str(total_fee_habitacion))
+                habitacion_info['precio'] = Decimal(str(precio_total_hab))
+                habitacion_info['precio_sin_fee'] = Decimal(str(precio_sin_fee_hab))
+                habitacion_info['total_fee'] = Decimal(str(total_fee_hab))
             except Exception as e:
-                messages.error(request, f"Error al calcular el precio de la habitación: {e}")
-                return redirect('hotel_detalle', hotel_id=hotel_id)
+                messages.error(request, f"Error al calcular precio: {e}")
+                return redirect('hotel_detalle', hotel_id=hotel.id)
 
             personas_por_habitacion.append(habitacion_info)
 
-        # Calcular el precio total, costo sin fee y total de fees              
-        costo_sin_fee = sum(habitacion['precio_sin_fee'] for habitacion in personas_por_habitacion)
-        total_fees = sum(habitacion['total_fee'] for habitacion in personas_por_habitacion)
-
-        # Calcular el costo total (para el agente) sumando el costo sin fee y los fees 
+        costo_sin_fee = sum(h['precio_sin_fee'] for h in personas_por_habitacion)
+        total_fees = sum(h['total_fee'] for h in personas_por_habitacion)
         costo_total = total_fees
-        
-        #Convertir el Precio total de STR a Decimal 
-        precio_total_str = precio_total.replace(',', '.') 
-        precio_total = Decimal(precio_total_str)
 
-        # Redondear a dos decimales si es necesario
-        precio_total = precio_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-        costo_sin_fee = costo_sin_fee.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        precio_total = Decimal(precio_total.replace(',', '.')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         costo_total = costo_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        costo_sin_fee = costo_sin_fee.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        print("🔎 Buscando proveedor MULTI PROVEEDOR HOTELES...")
+        try:
+            multi_proveedor = Proveedor.objects.get(nombre__iexact="MULTI PROVEEDOR HOTELES")
+            print("✅ Proveedor MULTI PROVEEDOR HOTELES encontrado.")
+            print(multi_proveedor)
+        except Proveedor.DoesNotExist:
+            multi_proveedor = None
+            print("❌ Proveedor MULTI PROVEEDOR HOTELES no existe.")
 
-        # Crear la reserva
         reserva = Reserva.objects.create(
             hotel=hotel,
             fecha_reserva=timezone.now(),
             nombre_usuario=nombre_usuario,
             email_empleado=email_empleado,
             notas=notas,
-            costo_total=costo_total,  # Ahora asignamos el costo total correcto
+            costo_total=costo_total,
             costo_sin_fee=costo_sin_fee,
             precio_total=precio_total,
             tipo='hoteles',
-            estatus='solicitada'
+            estatus='solicitada',
+            agencia=request.user.agencia,
+            proveedor=multi_proveedor
         )
 
-        habitaciones = []
-
-        # Crear las habitaciones y pasajeros asociados
-        for habitacion_index, habitacion_info in enumerate(personas_por_habitacion, start=1):
-            habitacion_reserva = HabitacionReserva.objects.create(
+        for idx, habitacion in enumerate(personas_por_habitacion, start=1):
+            hab_res = HabitacionReserva.objects.create(
                 reserva=reserva,
-                habitacion_nombre=habitacion_info['opcion']['nombre'],
-                adultos=len(habitacion_info['adultos']),
-                ninos=len(habitacion_info['ninos']),
+                habitacion_nombre=habitacion['opcion']['nombre'],
+                adultos=len(habitacion['adultos']),
+                ninos=len(habitacion['ninos']),
                 fechas_viaje=fechas_viaje,
-                precio=habitacion_info['precio'],
-                oferta_codigo=post_data.get(f"oferta_codigo_{habitacion_index}", '')
+                precio=habitacion['precio'],
+                oferta_codigo=post_data.get(f"oferta_codigo_{idx}", '')
             )
 
-            habitaciones.append(habitacion_reserva)
-
-            for adulto in habitacion_info['adultos']:
+            for a in habitacion['adultos']:
                 try:
-                    pasajero = Pasajero.objects.create(
-                        habitacion=habitacion_reserva,
-                        nombre=adulto['nombre'],
-                        fecha_nacimiento=datetime.strptime(adulto['fecha_nacimiento'], '%Y/%m/%d').strftime('%Y-%m-%d'),
-                        pasaporte=adulto['pasaporte'],
-                        caducidad_pasaporte=datetime.strptime(adulto['caducidad'], '%Y/%m/%d').strftime('%Y-%m-%d'),
-                        pais_emision_pasaporte=adulto['pais_emision'],
-                        email=adulto['email'],
-                        telefono=adulto['telefono'],
+                    Pasajero.objects.create(
+                        habitacion=hab_res,
+                        nombre=a['nombre'],
+                        fecha_nacimiento=datetime.strptime(a['fecha_nacimiento'], '%Y/%m/%d'),
+                        pasaporte=a['pasaporte'],
+                        caducidad_pasaporte=datetime.strptime(a['caducidad'], '%Y/%m/%d'),
+                        pais_emision_pasaporte=a['pais_emision'],
+                        email=a['email'],
+                        telefono=a['telefono'],
                         tipo='adulto'
                     )
                 except ValueError:
-                    messages.error(request, "Las fechas de nacimiento o caducidad no son válidas.")
-                    return redirect('hotel_detalle', hotel_id=hotel_id)
+                    messages.error(request, "Error en fecha del adulto.")
+                    return redirect('hotel_detalle', hotel_id=hotel.id)
 
-            for nino in habitacion_info['ninos']:
+            for n in habitacion['ninos']:
                 try:
-                    pasajero = Pasajero.objects.create(
-                        habitacion=habitacion_reserva,
-                        nombre=nino['nombre'],
-                        fecha_nacimiento=datetime.strptime(nino['fecha_nacimiento'], '%Y/%m/%d').strftime('%Y-%m-%d'),
-                        pasaporte=nino['pasaporte'],
-                        caducidad_pasaporte=datetime.strptime(nino['caducidad'], '%Y/%m/%d').strftime('%Y-%m-%d'),
-                        pais_emision_pasaporte=nino['pais_emision'],
-                        email='',
-                        telefono='',
+                    Pasajero.objects.create(
+                        habitacion=hab_res,
+                        nombre=n['nombre'],
+                        fecha_nacimiento=datetime.strptime(n['fecha_nacimiento'], '%Y/%m/%d'),
+                        pasaporte=n['pasaporte'],
+                        caducidad_pasaporte=datetime.strptime(n['caducidad'], '%Y/%m/%d'),
+                        pais_emision_pasaporte=n['pais_emision'],
                         tipo='nino'
                     )
                 except ValueError:
-                    messages.error(request, "Las fechas de nacimiento o caducidad no son válidas.")
-                    return redirect('hotel_detalle', hotel_id=hotel_id)
+                    messages.error(request, "Error en fecha del niño.")
+                    return redirect('hotel_detalle', hotel_id=hotel.id)
 
-        reserva.save()
-
-        # Enviar correo de confirmación
         funciones_externas_booking.correo_confirmacion_reserva(reserva)
-
-        messages.success(request, 'Reserva completada con éxito.')
+        messages.success(request, "Reserva completada con éxito.")
         return redirect('booking:user_dashboard')
 
     return redirect('booking:user_dashboard')
