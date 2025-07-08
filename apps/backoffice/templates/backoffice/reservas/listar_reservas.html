@@ -116,6 +116,7 @@
             <!-- USUARIO -->
             <td class="p-3">{{ reserva.nombre_usuario }}</td>
         
+            
             <!-- PASAJERO / CLIENTE -->
             <td class="p-3">
               {% if reserva.tipo == 'envio' and reserva.envio and reserva.envio.remitente %}
@@ -123,33 +124,36 @@
                   <i class="fas fa-user mr-1 text-indigo-500"></i>
                   {{ reserva.envio.remitente.nombre_apellido }}
                 </span>
+
               {% elif reserva.tipo == 'remesas' and reserva.remesa and reserva.remesa.remitente %}
                 <span class="text-gray-700">
                   <i class="fas fa-user mr-1 text-green-500"></i>
                   {{ reserva.remesa.remitente.nombre_apellido }}
                 </span>
+
               {% elif reserva.tipo == 'traslados' and reserva.traslado and reserva.traslado.pasajero %}
-                {{ reserva.traslado.pasajero.nombre }}
-              {% elif reserva.tipo == 'certificado' %}
+                <span class="text-gray-700">
+                  <i class="fas fa-user mr-1 text-cyan-500"></i>
+                  {{ reserva.traslado.pasajero.nombre }}
+                </span>
+
+              {% elif reserva.tipo == 'certificado' or reserva.tipo == 'hoteles' %}
                 {% with habitacion=reserva.habitaciones_reserva.first %}
                   {% if habitacion and habitacion.pasajeros.exists %}
-                    {{ habitacion.pasajeros.first.nombre }}
+                    <span class="text-gray-700">
+                      <i class="fas fa-user mr-1 text-blue-500"></i>
+                      {{ habitacion.pasajeros.first.nombre }}
+                    </span>
                   {% else %}
                     <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
                   {% endif %}
                 {% endwith %}
-              {% elif reserva.tipo == 'hoteles' %}
-                {% with habitacion=reserva.habitaciones_reserva.first %}
-                  {% if habitacion and habitacion.pasajeros.exists %}
-                    {{ habitacion.pasajeros.first.nombre }}
-                  {% else %}
-                    <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
-                  {% endif %}
-                {% endwith %}
+
               {% else %}
                 <span class="text-gray-400 italic">{% trans "Sin Pasajero" %}</span>
               {% endif %}
             </td>
+
         
             <!-- FECHA -->
             <td class="p-3">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</td>
