@@ -307,8 +307,11 @@
           <h3 class="font-semibold text-lg mb-4 flex items-center text-red-600">
             <i class="fas fa-exclamation-circle mr-2"></i> Alerta de Pago ({{ total_alerta_pago }})
           </h3>
+          <!-- Tabla responsiva para mostrar reservas con alerta de pago -->
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
+              
+              <!-- Encabezado de la tabla -->
               <thead class="bg-gray-100">
                 <tr>
                   <th class="py-2">Hotel</th>
@@ -317,20 +320,45 @@
                   <th>Estado</th>
                 </tr>
               </thead>
+
+              <!-- Cuerpo de la tabla -->
               <tbody class="divide-y divide-gray-200">
+
+                <!-- Iteración sobre las reservas con alerta de pago -->
                 {% for reserva in reservas_alerta_pago %}
                   <tr>
-                    <td class="py-2">{{ reserva.hotel.hotel_nombre }}</td>
+                    <!-- Mostrar el nombre del hotel (local o importado desde API Distal) -->
+                    <td class="py-2">
+                      {% if reserva.hotel %}
+                        {{ reserva.hotel.hotel_nombre }}
+                      {% elif reserva.hotel_importado %}
+                        {{ reserva.hotel_importado.hotel_name }}
+                      {% else %}
+                        <!-- En caso de que no exista ninguno -->
+                        <span class="text-gray-400 italic">Sin hotel</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Mostrar nombre de usuario o cliente -->
                     <td>{{ reserva.nombre_usuario }}</td>
+
+                    <!-- Mostrar la fecha de check-in (se corta para mostrar solo YYYY-MM-DD) -->
                     <td>{{ reserva.habitaciones_reserva.first.fechas_viaje|slice:":10" }}</td>
+
+                    <!-- Mostrar estatus de la reserva -->
                     <td>{{ reserva.estatus }}</td>
                   </tr>
+
+                <!-- Si no hay reservas en la lista -->
                 {% empty %}
-                  <tr><td colspan="4" class="py-4 text-gray-400">Sin registros.</td></tr>
+                  <tr>
+                    <td colspan="4" class="py-4 text-gray-400">Sin registros.</td>
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
+
 
           <!-- Paginador Pago -->
           <div class="flex justify-center mt-4">
@@ -353,8 +381,11 @@
           <h3 class="font-semibold text-lg mb-4 flex items-center text-yellow-600">
             <i class="fas fa-exclamation-triangle mr-2"></i> Alerta de Cobro ({{ total_alerta_cobro }})
           </h3>
+          <!-- Tabla responsiva para mostrar reservas con alerta de cobro -->
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
+              
+              <!-- Encabezado de la tabla -->
               <thead class="bg-gray-100">
                 <tr>
                   <th class="py-2">Hotel</th>
@@ -363,20 +394,45 @@
                   <th>Estado</th>
                 </tr>
               </thead>
+
+              <!-- Cuerpo de la tabla -->
               <tbody class="divide-y divide-gray-200">
+
+                <!-- Iteración sobre las reservas con alerta de cobro -->
                 {% for reserva in reservas_alerta_cobro %}
                   <tr>
-                    <td class="py-2">{{ reserva.hotel.hotel_nombre }}</td>
+                    <!-- Mostrar el nombre del hotel (local o importado desde API Distal) -->
+                    <td class="py-2">
+                      {% if reserva.hotel %}
+                        {{ reserva.hotel.hotel_nombre }}
+                      {% elif reserva.hotel_importado %}
+                        {{ reserva.hotel_importado.hotel_name }}
+                      {% else %}
+                        <!-- En caso de que no exista ninguno -->
+                        <span class="text-gray-400 italic">Sin hotel</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Mostrar nombre de usuario o cliente -->
                     <td>{{ reserva.nombre_usuario }}</td>
+
+                    <!-- Mostrar la fecha de check-in (se corta para mostrar solo YYYY-MM-DD) -->
                     <td>{{ reserva.habitaciones_reserva.first.fechas_viaje|slice:":10" }}</td>
+
+                    <!-- Mostrar estatus de la reserva -->
                     <td>{{ reserva.estatus }}</td>
                   </tr>
+
+                <!-- Si no hay reservas en la lista -->
                 {% empty %}
-                  <tr><td colspan="4" class="py-4 text-gray-400">Sin registros.</td></tr>
+                  <tr>
+                    <td colspan="4" class="py-4 text-gray-400">Sin registros.</td>
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
+
 
           <!-- Paginador Cobro -->
           <div class="flex justify-center mt-4">

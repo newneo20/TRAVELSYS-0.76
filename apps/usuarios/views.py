@@ -259,6 +259,11 @@ def contar_reservas_por_mes(reservas):
     return [reservas.filter(fecha_reserva__month=mes).count() for mes in range(1, 13)]
 
 def obtener_reservas_alerta(reservas):
+    """
+    Retorna dos listas: 
+    - reservas de hoteles no pagadas con check-in en los próximos 15 días
+    - reservas de hoteles no cobradas con check-in en los próximos 15 días
+    """
     hoy = timezone.now().date()
     quince_dias_despues = hoy + timedelta(days=15)
 
@@ -266,21 +271,23 @@ def obtener_reservas_alerta(reservas):
     reservas_alerta_cobro = []
 
     for reserva in reservas:
-        if reserva.tipo == 'hoteles':  # Filtrar sólo hoteles
+        # Nos enfocamos solo en reservas de hoteles
+        if reserva.tipo == 'hoteles':
             for habitacion in reserva.habitaciones_reserva.all():
                 fechas_str = getattr(habitacion, 'fechas_viaje', '')
+                
+                # Esperamos un formato: 'YYYY-MM-DD - YYYY-MM-DD'
                 partes = fechas_str.split(' - ')
                 if len(partes) != 2:
-                    # no tiene formato esperado, lo saltamos
-                    continue
+                    continue  # formato inválido
 
                 try:
                     check_in = datetime.strptime(partes[0], '%Y-%m-%d').date()
                     check_out = datetime.strptime(partes[1], '%Y-%m-%d').date()
                 except ValueError:
-                    # fecha no parseable, lo saltamos
-                    continue
+                    continue  # fecha malformateada
 
+                # Verificamos si está dentro del rango de alerta
                 if hoy <= check_in <= quince_dias_despues:
                     if not reserva.pagada:
                         reservas_alerta_pago.append(reserva)
@@ -288,6 +295,7 @@ def obtener_reservas_alerta(reservas):
                         reservas_alerta_cobro.append(reserva)
 
     return reservas_alerta_pago, reservas_alerta_cobro
+
 
 
 
