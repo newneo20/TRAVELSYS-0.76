@@ -215,36 +215,44 @@
           </div>
 
           <!-- Pasajeros -->
-          <div id="pasajeros_habitacion_{{ forloop.counter }}" class="space-y-3">
+          <div id="pasajeros_habitacion_{{ habitacion.id }}" class="space-y-3">
             {% for pasajero in habitacion.pasajeros.all %}
             <div class="grid grid-cols-7 gap-2 items-end pasajero-item">
-              <input type="hidden" name="pasajero_id_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.id }}">
+              
+              <!-- ID del pasajero (clave para backend) -->
+              <input type="hidden" name="pasajero_id_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.id }}">
 
+              <!-- Nombre -->
               <div class="relative">
                 <i class="fas fa-user absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="pasajero_nombre_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.nombre }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Nombre">
+                <input type="text" name="pasajero_nombre_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.nombre }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Nombre">
               </div>
 
+              <!-- Fecha de nacimiento -->
               <div class="relative">
                 <i class="fas fa-calendar-day absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="date" name="pasajero_fecha_nacimiento_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.fecha_nacimiento|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
+                <input type="date" name="pasajero_fecha_nacimiento_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.fecha_nacimiento|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
               </div>
 
+              <!-- Pasaporte -->
               <div class="relative">
                 <i class="fas fa-passport absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="pasajero_pasaporte_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Pasaporte">
+                <input type="text" name="pasajero_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Pasaporte">
               </div>
 
+              <!-- Caducidad del pasaporte -->
               <div class="relative">
                 <i class="fas fa-calendar-check absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="date" name="pasajero_caducidad_pasaporte_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.caducidad_pasaporte|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
+                <input type="date" name="pasajero_caducidad_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.caducidad_pasaporte|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
               </div>
 
+              <!-- País de emisión -->
               <div class="relative">
                 <i class="fas fa-flag absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="pasajero_pais_emision_pasaporte_{{ forloop.counter }}_{{ forloop.counter0 }}" value="{{ pasajero.pais_emision_pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="País">
+                <input type="text" name="pasajero_pais_emision_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pais_emision_pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="País">
               </div>
 
+              <!-- Botón eliminar -->
               <div class="flex justify-end">
                 <button type="button" class="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full eliminar-pasajero" aria-label="Eliminar pasajero">
                   <i class="fas fa-trash text-xs"></i>
@@ -253,6 +261,7 @@
             </div>
             {% endfor %}
           </div>
+
 
           <div class="mt-4">
             <button type="button" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full agregar-pasajero" data-hab="{{ forloop.counter }}">
@@ -342,7 +351,7 @@
       const count = container.find('.pasajero-item').length;
       const pasajero = `
         <div class="grid grid-cols-7 gap-2 items-end pasajero-item">
-          <input type="hidden" name="pasajero_id_${hab}_${count}" value="">
+          <input type="hidden" name="pasajero_id_${hab}_${count}" value="nuevo">
           <input name="pasajero_nombre_${hab}_${count}" class="border rounded-lg px-2 py-1 text-sm" placeholder="Nombre">
           <input name="pasajero_fecha_nacimiento_${hab}_${count}" class="border rounded-lg px-2 py-1 text-sm" placeholder="Nacimiento">
           <input name="pasajero_pasaporte_${hab}_${count}" class="border rounded-lg px-2 py-1 text-sm" placeholder="Pasaporte">

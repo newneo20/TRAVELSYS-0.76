@@ -6,8 +6,12 @@
 import os
 import json
 import logging
+import time
+import requests
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from random import randint
+from xml.dom import minidom
 
 # ===============================
 # Imports de Django
@@ -25,7 +29,7 @@ from django.core.paginator import Paginator  # type: ignore
 from django.core.exceptions import ValidationError, ObjectDoesNotExist  # type: ignore
 from django.core.files.storage import default_storage  # type: ignore
 from django.urls import reverse  # type: ignore
-from django.db import transaction # type: ignore
+from django.db import transaction  # type: ignore
 
 # ===============================
 # Imports locales
@@ -43,6 +47,7 @@ from .forms import (
     HabitacionForm, OfertasEspecialesForm
 )
 from .funciones_externas import combinacion_habitaciones, leer_datos_hoteles
+from apps.booking.xml_builders_1way2italy import build_booking_xml, enviar_booking_api
 
 @login_required
 def logout_view(request):
@@ -3562,19 +3567,27 @@ def parse_fecha(fecha_str):
     except:
         return None
 
+
 @transaction.atomic
 def guardar_edicion_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
 
     if request.method == 'POST':
-        # Datos generales
+        print("\n===========================")
+        print(f"📝 ENTRANDO A EDITAR RESERVA ID {reserva.id}...")
+        for h in reserva.habitaciones_reserva.all():
+            print(f"➡️ Habitación: {h.habitacion_nombre} | ID: {h.id}")
+            for p in h.pasajeros.all():
+                print(f"   👤 Pasajero: {p.nombre} | ID: {p.id}")
+        print("===========================\n")
+
+        print("===========================")
+        print("📥 PARTE DE RESERVA: Procesando POST para guardar reserva...")
         reserva.nombre_usuario = request.POST.get('nombre_usuario', '')
         reserva.email_empleado = request.POST.get('email_empleado', '')
         reserva.numero_confirmacion = request.POST.get('numero_confirmacion', '')
-
         proveedor_id = request.POST.get('proveedor', '')
         reserva.proveedor = get_object_or_404(Proveedor, id=proveedor_id) if proveedor_id else None
-
         reserva.costo_sin_fee = Decimal(request.POST.get('costo_sin_fee') or 0)
         reserva.costo_total = Decimal(request.POST.get('costo_total') or 0)
         reserva.precio_total = Decimal(request.POST.get('precio_total') or 0)
@@ -3583,8 +3596,8 @@ def guardar_edicion_reserva(request, reserva_id):
         reserva.pagada = request.POST.get('pagada') == 'on'
         reserva.notas = request.POST.get('notas', '')
         reserva.save()
+        print("✅ Datos generales de reserva actualizados\n")
 
-        # Habitaciones
         habitaciones_existentes = {str(h.id): h for h in reserva.habitaciones_reserva.all()}
         habitaciones_enviadas = []
 
@@ -3596,8 +3609,10 @@ def guardar_edicion_reserva(request, reserva_id):
         habitaciones_actualizadas = []
 
         for hab_index in habitaciones_enviadas:
-            habitacion_id = request.POST.get(f'habitacion_id_{hab_index}', '')
+            print("===========================")
+            print(f"🔁 Procesando habitación índice {hab_index}...")
 
+            habitacion_id = request.POST.get(f'habitacion_id_{hab_index}', '')
             habitacion_nombre = request.POST.get(f'habitacion_nombre_{hab_index}', '')
             fechas_viaje = request.POST.get(f'fechas_viaje_{hab_index}', '')
             precio = Decimal(request.POST.get(f'precio_{hab_index}', 0) or 0)
@@ -3612,7 +3627,7 @@ def guardar_edicion_reserva(request, reserva_id):
                 habitacion.adultos = adultos
                 habitacion.ninos = ninos
                 habitacion.save()
-                habitaciones_actualizadas.append(habitacion.id)
+                print(f"🔁 Habitación actualizada ID {habitacion.id} ({habitacion_nombre})")
             else:
                 habitacion = HabitacionReserva.objects.create(
                     reserva=reserva,
@@ -3623,60 +3638,69 @@ def guardar_edicion_reserva(request, reserva_id):
                     ninos=ninos,
                     oferta_codigo=''
                 )
-                habitaciones_actualizadas.append(habitacion.id)
+                print(f"🆕 Habitación creada ID {habitacion.id} ({habitacion_nombre})")
 
-            # Pasajeros
+            habitaciones_actualizadas.append(habitacion.id)
+
             pasajeros_existentes = {str(p.id): p for p in habitacion.pasajeros.all()}
-            pasajeros_enviados = []
-
-            for key in request.POST.keys():
-                if key.startswith(f'pasajero_id_{hab_index}_'):
-                    pasajero_index = key.split('_')[-1]
-                    pasajeros_enviados.append(pasajero_index)
-
             pasajeros_actualizados = []
 
-            for pasajero_index in pasajeros_enviados:
-                pasajero_id = request.POST.get(f'pasajero_id_{hab_index}_{pasajero_index}', '')
+            print("===========================")
+            print(f"🧍 Procesando pasajeros de habitación ID {habitacion.id} ({habitacion_nombre})...")
 
-                nombre = request.POST.get(f'pasajero_nombre_{hab_index}_{pasajero_index}', '')
-                fecha_nacimiento = parse_fecha(request.POST.get(f'pasajero_fecha_nacimiento_{hab_index}_{pasajero_index}', ''))
-                pasaporte = request.POST.get(f'pasajero_pasaporte_{hab_index}_{pasajero_index}', '')
-                caducidad_pasaporte = parse_fecha(request.POST.get(f'pasajero_caducidad_pasaporte_{hab_index}_{pasajero_index}', ''))
-                pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{hab_index}_{pasajero_index}', '')
+            for key in request.POST.keys():
+                if key.startswith(f'pasajero_id_{habitacion.id}_'):
+                    pasajero_id = key.split(f'pasajero_id_{habitacion.id}_')[-1]
+                    id_valor = request.POST.get(key)
 
-                if pasajero_id and pasajero_id in pasajeros_existentes:
-                    pasajero = pasajeros_existentes[pasajero_id]
-                    pasajero.nombre = nombre
-                    pasajero.fecha_nacimiento = fecha_nacimiento
-                    pasajero.pasaporte = pasaporte
-                    pasajero.caducidad_pasaporte = caducidad_pasaporte
-                    pasajero.pais_emision_pasaporte = pais_emision_pasaporte
-                    pasajero.save()
-                    pasajeros_actualizados.append(pasajero.id)
-                else:
-                    pasajero = Pasajero.objects.create(
-                        habitacion=habitacion,
-                        nombre=nombre,
-                        fecha_nacimiento=fecha_nacimiento,
-                        pasaporte=pasaporte,
-                        caducidad_pasaporte=caducidad_pasaporte,
-                        pais_emision_pasaporte=pais_emision_pasaporte
-                    )
-                    pasajeros_actualizados.append(pasajero.id)
+                    nombre = request.POST.get(f'pasajero_nombre_{habitacion.id}_{pasajero_id}', '')
+                    fecha_nacimiento = parse_fecha(request.POST.get(f'pasajero_fecha_nacimiento_{habitacion.id}_{pasajero_id}', ''))
+                    pasaporte = request.POST.get(f'pasajero_pasaporte_{habitacion.id}_{pasajero_id}', '')
+                    caducidad_pasaporte = parse_fecha(request.POST.get(f'pasajero_caducidad_pasaporte_{habitacion.id}_{pasajero_id}', ''))
+                    pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{habitacion.id}_{pasajero_id}', '')
+
+                    if id_valor != 'nuevo' and id_valor in pasajeros_existentes:
+                        pasajero = pasajeros_existentes[id_valor]
+                        pasajero.nombre = nombre
+                        pasajero.fecha_nacimiento = fecha_nacimiento
+                        pasajero.pasaporte = pasaporte
+                        pasajero.caducidad_pasaporte = caducidad_pasaporte
+                        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
+                        pasajero.save()
+                        pasajeros_actualizados.append(int(id_valor))
+                        print(f"🔁 Editando pasajero ID {pasajero.id} ({nombre})")
+                    else:
+                        pasajero = Pasajero.objects.create(
+                            habitacion=habitacion,
+                            nombre=nombre,
+                            fecha_nacimiento=fecha_nacimiento,
+                            pasaporte=pasaporte,
+                            caducidad_pasaporte=caducidad_pasaporte,
+                            pais_emision_pasaporte=pais_emision_pasaporte
+                        )
+                        pasajeros_actualizados.append(pasajero.id)
+                        print(f"🆕 Creando pasajero ID {pasajero.id} ({nombre})")
 
             for p_id, pasajero in pasajeros_existentes.items():
                 if int(p_id) not in pasajeros_actualizados:
+                    print(f"🗑️ Eliminando pasajero ID {p_id} ({pasajero.nombre})")
                     pasajero.delete()
 
         for h_id, habitacion in habitaciones_existentes.items():
             if int(h_id) not in habitaciones_actualizadas:
+                print(f"🗑️ Habitación eliminada ID {h_id} ({habitacion.habitacion_nombre})")
                 habitacion.delete()
-                
-        # Si el estatus es 'confirmada' o 'ejecutada' y hay correo del empleado
-        # Si el estatus es 'confirmada' o 'ejecutada' y hay correo del empleado
+
+        print("===========================")
+        print(f"📝 ESTADO FINAL RESERVA ID {reserva.id}...")
+        for h in reserva.habitaciones_reserva.all():
+            print(f"➡️ Habitación: {h.habitacion_nombre} | ID: {h.id}")
+            for p in h.pasajeros.all():
+                print(f"   👤 Pasajero: {p.nombre} | ID: {p.id}")
+        print("===========================\n")
+
         if reserva.estatus in ['confirmada', 'ejecutada'] and reserva.email_empleado:
-            print(f"🚀 Enviando voucher automático para reserva ID {reserva.id} con estatus '{reserva.estatus}'...")
+            print(f"📤 Enviando voucher automático para reserva ID {reserva.id} con estatus '{reserva.estatus}'...")
             try:
                 from apps.backoffice.utils.email_voucher_distal import enviar_voucher_hotel_distal
                 enviar_voucher_hotel_distal(reserva)
@@ -3686,15 +3710,14 @@ def guardar_edicion_reserva(request, reserva_id):
                 print(f"❌ Error al enviar el voucher: {e}")
                 messages.warning(request, f"Reserva actualizada, pero ocurrió un error al enviar el voucher: {str(e)}")
 
-
         messages.success(request, "Reserva actualizada correctamente.")
         return redirect('backoffice:listar_reservas')
 
     else:
         messages.error(request, "Error al procesar la solicitud.")
-        return redirect('backoffice:editar_reserva', reserva_id=reserva_id) 
-    
-    
+        return redirect('backoffice:editar_reserva', reserva_id=reserva_id)
+
+
 # ====================================================================================== #
 # ----------------------------------- CLIENTES  ---------------------------------------- #
 # ====================================================================================== #
@@ -4324,17 +4347,6 @@ def eliminar_item_envio(request, item_id):
 # ─────────────────────────────────────
 #   ENVÍO A BOOKING DISTAL (BookingRQ)
 # ─────────────────────────────────────
-from apps.booking.xml_builders_1way2italy import build_booking_xml, enviar_booking_api
-import requests
-import time
-import requests
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db import transaction
-from apps.usuarios.decorators import manager_required
-from xml.dom import minidom
-from random import randint
 
 # ============================
 # FUNCIONES AUXILIARES
@@ -4530,11 +4542,6 @@ def enviar_booking_distal(request, reserva_id):
 
     print("✅ Finalizado proceso de envío de booking.\n" + "-"*60)
     return redirect('backoffice:editar_reserva', reserva_id=reserva.id)
-
-
-
-
-
 
 
 @login_required
