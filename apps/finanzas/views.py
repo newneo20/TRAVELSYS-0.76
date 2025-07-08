@@ -34,25 +34,23 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from datetime import datetime
-from apps.backoffice.models import Reserva
+from apps.backoffice.models import Reserva, Proveedor
 from apps.usuarios.decorators import manager_required
+
+
+from django.conf import settings
 
 
 @manager_required
 @login_required
 def listar_reservas_finanzas(request):
     reservas = Reserva.objects.select_related(
-        'proveedor',
-        'hotel',
-        'hotel_importado',
-        'traslado',
-        'envio',
-        'remesa'
+        'proveedor', 'hotel', 'hotel_importado', 'traslado', 'envio', 'remesa'
     ).prefetch_related(
         'habitaciones_reserva__pasajeros'
     ).all()
 
-    # Filtros...
+    # Filtros de texto
     query = request.GET.get('q', '').strip()
     if query:
         reservas = reservas.filter(
@@ -71,26 +69,42 @@ def listar_reservas_finanzas(request):
     if nombre_pasajero:
         reservas = reservas.filter(habitaciones_reserva__pasajeros__nombre__icontains=nombre_pasajero)
 
+    # Filtros por fecha
     fecha_inicio = request.GET.get('fecha_inicio', '').strip()
     fecha_fin = request.GET.get('fecha_fin', '').strip()
 
-    if fecha_inicio:
-        try:
+    try:
+        if fecha_inicio:
             reservas = reservas.filter(fecha_reserva__date__gte=datetime.strptime(fecha_inicio, "%Y-%m-%d").date())
-        except ValueError:
-            print(f"⚠️ Fecha inválida inicio: {fecha_inicio}")
-
-    if fecha_fin:
-        try:
+        if fecha_fin:
             reservas = reservas.filter(fecha_reserva__date__lte=datetime.strptime(fecha_fin, "%Y-%m-%d").date())
-        except ValueError:
-            print(f"⚠️ Fecha inválida fin: {fecha_fin}")
+    except ValueError as e:
+        if settings.DEBUG:
+            print(f"⚠️ Error al parsear fechas: {e}")
 
+    # Filtro por tipo de reserva
+    tipo = request.GET.get('tipo', '').strip()
+    if tipo:
+        reservas = reservas.filter(tipo=tipo)
+
+    # Filtro por estatus
+    estatus = request.GET.get('estatus', '').strip()
+    if estatus:
+        reservas = reservas.filter(estatus=estatus)
+
+    # Filtro por proveedor
+    proveedor_id = request.GET.get('proveedor', '').strip()
+    if proveedor_id.isdigit():
+        reservas = reservas.filter(proveedor__id=proveedor_id)
+
+    # Ordenar y paginar
     reservas = reservas.order_by('-fecha_reserva').distinct()
-
     paginator = Paginator(reservas, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # Proveedores únicos para usar en el <select>
+    proveedores = Proveedor.objects.all().order_by('nombre')
 
     context = {
         'reservas': page_obj,
@@ -99,9 +113,13 @@ def listar_reservas_finanzas(request):
         'nombre_pasajero': nombre_pasajero,
         'fecha_inicio': fecha_inicio,
         'fecha_fin': fecha_fin,
+        'tipo': tipo,
+        'estatus': estatus,
+        'proveedor_id': proveedor_id,
+        'proveedores': proveedores,
     }
-    return render(request, 'finanzas/listar_reservas_finanzas.html', context)
 
+    return render(request, 'finanzas/listar_reservas_finanzas.html', context)
 
 
 
