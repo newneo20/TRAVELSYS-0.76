@@ -1462,6 +1462,7 @@ def guardar_remesa(request):
             print(f"🔁 Tasa aplicada: {tasa}")
             monto_estimado_recepcion = Decimal(monto_envio) * tasa
             print(f"💸 monto_estimado_recepcion: {monto_estimado_recepcion}")
+                       
 
             # Crear la remesa
             remesa = Remesa.objects.create(
@@ -1470,10 +1471,19 @@ def guardar_remesa(request):
                 monto_envio=monto_envio,
                 moneda_envio=moneda_envio,
                 monto_estimado_recepcion=monto_estimado_recepcion,
-                moneda_recepcion=moneda_recepcion
+                moneda_recepcion=moneda_recepcion                
             )
 
             print(f"✅ Remesa creada ID {remesa.id}")
+            
+            print("🔎 Buscando proveedor MULTI PROVEEDOR HOTELES...")
+            try:
+                multi_proveedor = Proveedor.objects.get(nombre__iexact="MULTI PROVEEDOR HOTELES")
+                print("✅ Proveedor MULTI PROVEEDOR HOTELES encontrado.")
+                print(multi_proveedor)
+            except Proveedor.DoesNotExist:
+                multi_proveedor = None
+                print("❌ Proveedor MULTI PROVEEDOR HOTELES no existe.")
 
             # Crear reserva
             reserva = Reserva.objects.create(
@@ -1487,7 +1497,9 @@ def guardar_remesa(request):
                 numero_confirmacion=None,
                 cobrada=False,
                 pagada=False,
-                fecha_reserva=timezone.now()
+                fecha_reserva=timezone.now(),
+                agencia=request.user.agencia,
+                proveedor=multi_proveedor
             )
 
             print(f"📦 Reserva vinculada creada ID {reserva.id}")
