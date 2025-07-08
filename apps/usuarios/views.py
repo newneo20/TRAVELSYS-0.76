@@ -131,6 +131,7 @@ def dashboard(request):
 
     # Filtrar las reservas según la fecha
     reservas = Reserva.objects.filter(fecha_reserva__gte=fecha_inicio)
+    total_reservas = reservas.count()
     
     hoteles = Hotel.objects.all()
     usuarios = CustomUser.objects.all()
@@ -203,6 +204,8 @@ def dashboard(request):
     cobro_paginator = Paginator(reservas_alerta_cobro, 5)
     cobro_page = request.GET.get('cobro_page')
     cobro_paginated = cobro_paginator.get_page(cobro_page)
+    
+    ganancia_total = ingresos_totales - gastos_totales
 
     context = {
         'hoteles': hoteles,
@@ -222,6 +225,8 @@ def dashboard(request):
         'top_agencias': top_agencias,
         'top_hoteles': top_hoteles,
         'ultimos_usuarios': ultimos_usuarios,
+        'total_reservas': total_reservas,
+        'ganancia_total': ganancia_total,
 
         # Variables para abrir/cerrar submenús
         'booking_open': booking_open,

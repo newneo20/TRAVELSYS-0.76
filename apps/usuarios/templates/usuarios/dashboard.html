@@ -49,65 +49,66 @@
       </div>
     </div>
 
+    
     <!-- BLOQUE 2: TARJETAS DE RESUMEN PRO-MAX -->
     <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
 
       <!-- Total de Reservas -->
-      <a href="{% url 'backoffice:listar_reservas' %}" class="flex items-center p-6 bg-gradient-to-r from-blue-500 to-blue-400 rounded-3xl shadow-lg hover:scale-105 transition transform duration-300">
-        <i class="fas fa-clipboard-list text-white text-4xl mr-4"></i>
+      <a href="{% url 'backoffice:listar_reservas' %}" 
+        class="group flex items-center p-6 bg-gradient-to-r from-blue-500/90 to-blue-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
+        <i class="fas fa-clipboard-list text-white text-4xl mr-4 group-hover:animate-bounce"></i>
         <div class="text-white">
           <h3 class="font-bold text-lg">Total Reservas</h3>
-          <p class="text-2xl font-extrabold">{{ total_reservas }}</p>
+          <p class="text-2xl font-extrabold tracking-wider">{{ total_reservas }}</p>
         </div>
       </a>
 
       <!-- Ingresos Totales -->
-      <div class="flex items-center p-6 bg-gradient-to-r from-green-600 to-green-400 rounded-3xl shadow-lg hover:scale-105 transition transform duration-300">
-        <i class="fas fa-dollar-sign text-white text-4xl mr-4"></i>
+      <div class="group flex items-center p-6 bg-gradient-to-r from-green-600/90 to-green-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
+        <i class="fas fa-dollar-sign text-white text-4xl mr-4 group-hover:animate-bounce"></i>
         <div class="text-white">
           <h3 class="font-bold text-lg">Ingresos</h3>
-          <p class="text-2xl font-extrabold">${{ ingresos_totales|floatformat:2 }}</p>
+          <p class="text-2xl font-extrabold tracking-wider">${{ ingresos_totales|floatformat:2 }}</p>
         </div>
       </div>
 
       <!-- Gastos Totales -->
-      <div class="flex items-center p-6 bg-gradient-to-r from-red-600 to-red-400 rounded-3xl shadow-lg hover:scale-105 transition transform duration-300">
-        <i class="fas fa-chart-line text-white text-4xl mr-4"></i>
+      <div class="group flex items-center p-6 bg-gradient-to-r from-red-600/90 to-red-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
+        <i class="fas fa-chart-line text-white text-4xl mr-4 group-hover:animate-bounce"></i>
         <div class="text-white">
           <h3 class="font-bold text-lg">Gastos</h3>
-          <p class="text-2xl font-extrabold">${{ gastos_totales|floatformat:2 }}</p>
+          <p class="text-2xl font-extrabold tracking-wider">${{ gastos_totales|floatformat:2 }}</p>
         </div>
       </div>
 
-      <!-- Usuarios -->
-      <a href="{% url 'listar_usuarios' %}" class="flex items-center p-6 bg-gradient-to-r from-purple-600 to-purple-400 rounded-3xl shadow-lg hover:scale-105 transition transform duration-300">
-        <i class="fas fa-users text-white text-4xl mr-4"></i>
+      <!-- Ganancia Total -->
+      <div class="group flex items-center p-6 bg-gradient-to-r from-yellow-500/90 to-yellow-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
+        <i class="fas fa-coins text-white text-4xl mr-4 group-hover:animate-bounce"></i>
         <div class="text-white">
-          <h3 class="font-bold text-lg">Usuarios</h3>
-          <p class="text-2xl font-extrabold">{{ total_usuarios }}</p>
+          <h3 class="font-bold text-lg">Ganancia Total</h3>
+          <p class="text-2xl font-extrabold tracking-wider">${{ ganancia_total|floatformat:2 }}</p>
         </div>
-      </a>
+      </div>
 
-      <!-- Hoteles -->
-      <a href="{% url 'backoffice:listar_hoteles' %}" class="flex items-center p-6 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-3xl shadow-lg hover:scale-105 transition transform duration-300">
-        <i class="fas fa-hotel text-white text-4xl mr-4"></i>
+      <!-- Usuarios Activos -->
+      <div class="group flex items-center p-6 bg-gradient-to-r from-purple-600/90 to-purple-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
+        <i class="fas fa-user-check text-white text-4xl mr-4 group-hover:animate-bounce"></i>
         <div class="text-white">
-          <h3 class="font-bold text-lg">Hoteles</h3>
-          <p class="text-2xl font-extrabold">{{ total_hoteles }}</p>
+          <h3 class="font-bold text-lg">Usuarios Activos</h3>
+          <p class="text-2xl font-extrabold tracking-wider">{{ usuarios_activos }}</p>
         </div>
-      </a>
+      </div>
 
     </section>
 
     <!-- BLOQUE 3: ACCIONES RÁPIDAS PRO-MAX -->
     <section class="mb-12">
       <h2 class="text-xl font-bold text-gray-700 mb-6">Acciones Rápidas</h2>
-
       <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
 
         <!-- Crear Hotel -->
-        <a href="{% url 'backoffice:crear_hotel' %}" class="flex items-center p-4 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-hotel text-white text-4xl mr-4"></i>
+        <a href="{% url 'backoffice:crear_hotel' %}" class="group flex items-center p-4 bg-gradient-to-r from-cyan-500/90 to-cyan-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-hotel text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Nuevo Hotel</h3>
             <p class="text-sm">Agregar hotel</p>
@@ -115,8 +116,8 @@
         </a>
 
         <!-- Crear Usuario -->
-        <a href="{% url 'crear_usuario' %}" class="flex items-center p-4 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-user-plus text-white text-4xl mr-4"></i>
+        <a href="{% url 'crear_usuario' %}" class="group flex items-center p-4 bg-gradient-to-r from-blue-600/90 to-blue-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-user-plus text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Nuevo Usuario</h3>
             <p class="text-sm">Registrar usuario</p>
@@ -124,66 +125,64 @@
         </a>
 
         <!-- Generar Reporte -->
-        <a href="#" class="flex items-center p-4 bg-gradient-to-r from-green-600 to-green-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-file-invoice-dollar text-white text-4xl mr-4"></i>
+        <a href="#" class="group flex items-center p-4 bg-gradient-to-r from-green-600/90 to-green-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-file-invoice-dollar text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Generar Reporte</h3>
             <p class="text-sm">Ver informes</p>
           </div>
         </a>
 
-        <!-- Configuración (placeholder, lo puedes cambiar luego) -->
-        <a href="#" class="flex items-center p-4 bg-gradient-to-r from-indigo-600 to-indigo-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-cogs text-white text-4xl mr-4"></i>
+        <!-- Configuración -->
+        <a href="#" class="group flex items-center p-4 bg-gradient-to-r from-indigo-600/90 to-indigo-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-cogs text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Configuración</h3>
             <p class="text-sm">Parámetros del sistema</p>
           </div>
         </a>
-
       </div>
     </section>
 
     <!-- BLOQUE CONTABLE PRO-MAX -->
     <section class="mb-12">
       <h2 class="text-xl font-bold text-gray-700 mb-6">Panel Financiero</h2>
-
       <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-      
-        <a href="{% url 'backoffice:listar_tasas_cambio' %}" class="flex items-center p-4 bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-exchange-alt text-white text-4xl mr-4"></i>
+
+        <a href="{% url 'backoffice:listar_tasas_cambio' %}" class="group flex items-center p-4 bg-gradient-to-r from-yellow-500/90 to-yellow-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-exchange-alt text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Tasas de Cambio</h3>
             <p class="text-sm">Gestión de divisas</p>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_certificados' %}" class="flex items-center p-4 bg-gradient-to-r from-pink-500 to-pink-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-certificate text-white text-4xl mr-4"></i>
+        <a href="{% url 'backoffice:listar_certificados' %}" class="group flex items-center p-4 bg-gradient-to-r from-pink-500/90 to-pink-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-certificate text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Certificados</h3>
             <p class="text-sm">Reservas prepago</p>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_proveedores' %}" class="flex items-center p-4 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-truck text-white text-4xl mr-4"></i>
+        <a href="{% url 'backoffice:listar_proveedores' %}" class="group flex items-center p-4 bg-gradient-to-r from-indigo-500/90 to-indigo-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-truck text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Proveedores</h3>
             <p class="text-sm">Control de gastos</p>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_clientes' %}" class="flex items-center p-4 bg-gradient-to-r from-green-500 to-green-400 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-users text-white text-4xl mr-4"></i>
+        <a href="{% url 'backoffice:listar_clientes' %}" class="group flex items-center p-4 bg-gradient-to-r from-green-500/90 to-green-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
+          <i class="fas fa-users text-white text-4xl mr-4 group-hover:animate-bounce"></i>
           <div class="text-white">
             <h3 class="font-semibold text-lg">Clientes</h3>
             <p class="text-sm">Cuentas y créditos</p>
           </div>
         </a>
-
       </div>
     </section>
+
 
     <!-- BLOQUE 4: MÉTRICAS GRÁFICAS DE RENDIMIENTO -->
     <section class="mb-12">
