@@ -56,31 +56,34 @@
     <!-- Contenedor optimizado para tamaño carta -->
     <div class="w-full max-w-[8.5in] bg-white border border-gray-300 print-border-0 print-shadow-none print-max-w-none rounded-lg shadow-lg">
         
-        <!-- Header con color azul muy claro -->
-        <!-- Header con color azul muy claro -->
+        
+        <!-- Header -->
         <div class="bg-blue-50 border-b border-blue-200 print-bg-blue-50 p-6 rounded-t-lg">
             <div class="flex justify-between items-start gap-6">
             <div>
                 <h1 class="text-3xl font-extrabold text-blue-900 tracking-wide mb-2">
-                {{ reserva.hotel_importado.hotel_name }}
+                {{ hotel_nombre }}
                 </h1>
                 <p class="text-sm text-gray-700 flex items-center gap-2">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {{ reserva.hotel_importado.address }}
+                <svg class="w-4 h-4 text-blue-600" …></svg>
+                {{ hotel_direccion }}
                 </p>
+                {% if hotel_telefono %}
                 <p class="text-xs text-gray-600 mt-1">
-                Tel: +1 786 499 0612 &nbsp;|&nbsp; Email: info@rutamultiservice.com
+                Tel: {{ hotel_telefono }} &nbsp;|&nbsp; Email: info@rutamultiservice.com
                 </p>
+                {% endif %}
             </div>
             <div class="text-right border border-blue-300 bg-white rounded-lg px-4 py-2 shadow-sm">
-                <p class="text-sm font-semibold text-blue-800 uppercase tracking-wide">Voucher Confirmado</p>
-                <p class="text-xs text-gray-700 mt-1 font-medium">ID de Reserva: <strong>{{ reserva.id }}</strong></p>
-                <p class="text-xs text-gray-700 font-medium">Confirmación: <strong>{{ reserva.numero_confirmacion }}</strong></p>
+                <p class="text-sm font-semibold text-blue-800 uppercase tracking-wide">
+                Voucher Confirmado
+                </p>
+                <p class="text-xs text-gray-700 mt-1 font-medium">
+                ID de Reserva: <strong>{{ reserva.id }}</strong>
+                </p>
+                <p class="text-xs text-gray-700 font-medium">
+                Confirmación: <strong>{{ reserva.numero_confirmacion }}</strong>
+                </p>
             </div>
             </div>
         </div>

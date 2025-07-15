@@ -1907,7 +1907,7 @@ def correo_confirmada(reserva):
     pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
     habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
     encabezado = "{% trans 'Muchas gracias por reservar con RUTA MULTISERVICE, su solicitud ha sido confirmada:' %}"
-    enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
+    #enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
 
 @login_required
 def recalcular_precio_y_costo(reserva):
@@ -2058,7 +2058,7 @@ def correo_confirmada(reserva):
     pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
     habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
     encabezado = "{% trans 'Muchas gracias por reservar con RUTA MULTISERVICE, su solicitud ha sido confirmada:' %}"
-    enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
+    #enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
 
 @login_required
 def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
@@ -4626,27 +4626,44 @@ def generar_xml_pasajeros(pasajeros):
         </ResGuest>"""
     return xml.strip()
 
+
+@login_required
+@manager_required
 def vista_preview_voucher_distal(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva      = get_object_or_404(Reserva, id=reserva_id)
     habitaciones = reserva.habitaciones_reserva.all()
-    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
+    pasajeros    = Pasajero.objects.filter(habitacion__reserva=reserva)
 
-    # Obtener fechas del primer y último rango
-    fechas_checkin = ''
-    fechas_checkout = ''
+    # Selecciona datos del hotel (local o importado)
+    if reserva.hotel:
+        hotel_nombre = reserva.hotel.hotel_nombre or "No disponible"
+        hotel_direccion = reserva.hotel.direccion or ""
+        hotel_telefono = reserva.hotel.telefono or ""
+    else:
+        imp    = reserva.hotel_importado
+        hotel_nombre    = getattr(imp, 'hotel_name', 'No disponible')
+        hotel_direccion = getattr(imp, 'address', '')
+        hotel_telefono  = getattr(imp, 'email', '')
+
+    # Fechas checkin/checkout
+    fechas_checkin = fechas_checkout = ""
     if habitaciones.exists():
-        fechas = [h.fechas_viaje for h in habitaciones if h.fechas_viaje]
-        if fechas:
-            fechas_inicio = min([f.split(' - ')[0] for f in fechas])
-            fechas_fin = max([f.split(' - ')[1] for f in fechas])
-            fechas_checkin = f"{fechas_inicio} a las 4:00 PM"
-            fechas_checkout = f"{fechas_fin} a las 12:00 M"
+        rangos = [h.fechas_viaje for h in habitaciones if h.fechas_viaje]
+        if rangos:
+            inicio = min(r.split(' - ')[0] for r in rangos)
+            fin    = max( r.split(' - ')[1] for r in rangos)
+            fechas_checkin  = f"{inicio} a las 4:00 PM"
+            fechas_checkout = f"{fin} a las 12:00 M"
 
-    context = {
-        'reserva': reserva,
-        'habitaciones': habitaciones,
-        'pasajeros': pasajeros,
-        'fechas_checkin': fechas_checkin,
-        'fechas_checkout': fechas_checkout,
-    }
-    return render(request, 'backoffice/emails/voucher_hotel_distal.html', context)
+    return render(request,
+                  'backoffice/emails/voucher_hotel_distal.html',
+                  {
+                    'reserva': reserva,
+                    'habitaciones': habitaciones,
+                    'pasajeros': pasajeros,
+                    'fechas_checkin': fechas_checkin,
+                    'fechas_checkout': fechas_checkout,
+                    'hotel_nombre': hotel_nombre,
+                    'hotel_direccion': hotel_direccion,
+                    'hotel_telefono': hotel_telefono,
+                  })
