@@ -4470,19 +4470,57 @@ def generar_xml_reserva_distal(reserva):
     return minidom.parseString(xml).toprettyxml(indent="  ")
 
 
-def enviar_booking_api(xml_data, url):
+import time
+import requests
+from xml.dom import minidom
+from xml.etree import ElementTree as ET
+
+
+# ─────────────────────────────────────
+#   ENVÍO A BOOKING DISTAL (BookingRQ)
+# ─────────────────────────────────────
+
+def enviar_booking_api(xml_data: str, url: str):
     headers = {"Content-Type": "application/xml"}
-    response = requests.post(url, data=xml_data.encode('utf-8'), headers=headers)
-    if response.status_code == 200:
-        # Aquí deberías parsear la respuesta XML real para extraer el booking ID
-        return "OK123456", True, None
+    resp = requests.post(url, data=xml_data.encode("utf-8"), headers=headers)
+    print("📥 Respuesta cruda de Distal:\n", resp.text)  # para debug
+
+    if resp.status_code != 200:
+        return None, False, f"{resp.status_code} {resp.reason} for url: {url}"
+
+    # Parsear XML de respuesta
+    try:
+        root = ET.fromstring(resp.text)
+    except ET.ParseError as e:
+        return None, False, f"XML mal formado: {e}"
+
+    ns = {"ota": "http://www.opentravel.org/OTA/2003/05"}
+
+    # 1) Si hay <Errors>, extraerlo y devolver fallo
+    error_node = root.find(".//ota:Error", ns) or root.find(".//Error")
+    if error_node is not None:
+        code = error_node.get("Code", "")
+        msg  = error_node.get("ShortText", error_node.text or "")
+        return None, False, f"Distal Error {code}: {msg}"
+
+    # 2) Intentar BookingID
+    booking_el = root.find(".//ota:BookingID", ns) or root.find(".//BookingID")
+    if booking_el is not None and booking_el.text:
+        booking_id = booking_el.text.strip()
     else:
-        return None, False, f"{response.status_code} {response.reason} for url: {url}"
+        # 2b) buscar UniqueID/@ID
+        unique = root.find(".//ota:UniqueID", ns) or root.find(".//UniqueID")
+        booking_id = unique.get("ID") if (unique is not None and unique.get("ID")) else None
 
+    if not booking_id:
+        return None, False, "No se encontró BookingID ni UniqueID/@ID en la respuesta"
 
-# ============================
-# VISTA PRINCIPAL DE ENVÍO
-# ============================
+    # 3) Extraer Success
+    success_el = root.find(".//ota:Success", ns) or root.find(".//Success")
+    success = (success_el is not None and success_el.text.strip().lower() == "true")
+
+    return booking_id, success, None
+
 @login_required
 @manager_required
 @transaction.atomic
@@ -4494,14 +4532,14 @@ def enviar_booking_distal(request, reserva_id):
     try:
         print("🧾 Generando XML de la reserva...")
         xml_data = generar_xml_reserva_distal(reserva)
-        print("📦 XML generado para enviar a Distal:")
-        print(xml_data)
+        print("📦 XML generado para enviar a Distal:\n", xml_data)
 
         url = "http://api.1way2italy.it/Service/Production/v10/OtaService/HotelRes"
-
         max_intentos = 3
         intento = 1
-        booking_id, success, error_message = None, False, None
+        booking_id = None
+        success = False
+        error_message = None
 
         while intento <= max_intentos:
             print(f"🌍 Intento #{intento}: Enviando solicitud POST a: {url}")
@@ -4510,21 +4548,23 @@ def enviar_booking_distal(request, reserva_id):
                 if success:
                     print("✅ Solicitud enviada con éxito.")
                     break
-                elif "503" in str(error_message) or "502" in str(error_message):
-                    print("🔁 Error 503/502 recibido. Esperando 2 segundos para reintentar...")
+                # Si es error transitorio, espera y reintenta
+                if error_message and any(code in error_message for code in ("502", "503")):
+                    print(f"🔁 Recibido {error_message}. Reintentando en 2s...")
                     time.sleep(2)
                     intento += 1
-                else:
-                    break
-            except requests.exceptions.RequestException as e:
-                print(f"💥 Excepción de red: {e}")
+                    continue
+                # otro error: salir del bucle
+                break
+            except requests.RequestException as e:
+                print(f"💥 Excepción de red: {e}. Reintentando en 2s...")
                 time.sleep(2)
                 intento += 1
 
-        print("📥 Respuesta de la API:")
-        print(f"🔑 Booking ID recibido: {booking_id}")
-        print(f"✅ Éxito: {success}")
-        print(f"❌ Error (si hubo): {error_message}")
+        print("📥 Respuesta de la API:",
+              f"\n   🔑 Booking ID recibido: {booking_id}"
+              f"\n   ✅ Éxito: {success}"
+              f"\n   ❌ Error: {error_message}")
 
         if success:
             reserva.numero_confirmacion = booking_id
@@ -4536,9 +4576,8 @@ def enviar_booking_distal(request, reserva_id):
             messages.error(request, f"❌ Error al confirmar booking: {error_message}")
 
     except Exception as e:
-        print("💥 Excepción atrapada durante el proceso:")
-        print(str(e))
-        messages.error(request, f"⚠️ Error inesperado: {str(e)}")
+        print("💥 Excepción inesperada durante el proceso:", e)
+        messages.error(request, f"⚠️ Error inesperado: {e}")
 
     print("✅ Finalizado proceso de envío de booking.\n" + "-"*60)
     return redirect('backoffice:editar_reserva', reserva_id=reserva.id)

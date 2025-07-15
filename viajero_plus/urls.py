@@ -13,6 +13,8 @@ urlpatterns = [
     path('usuarios/', include('apps.usuarios.urls')),
     path('backoffice/', include('apps.backoffice.urls', namespace='backoffice')),
     path('booking/', include('apps.booking.urls', namespace='booking')),
+    path('common/', include('apps.common.urls', namespace='common')),
+
     path('finanzas/', include('apps.finanzas.urls')),
     path('renta_hoteles/', include('apps.renta_hoteles.urls')),
     path('renta_autos/', include('apps.renta_autos.urls')),
