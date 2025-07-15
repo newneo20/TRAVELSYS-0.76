@@ -36,6 +36,7 @@ TRAVELSYS/
 ├── postcss.config.js      # Configuración PostCSS
 ├── requirements.txt       # Dependencias del entorno
 ├── README.md              # Este archivo
+
 ```
 
 ---
