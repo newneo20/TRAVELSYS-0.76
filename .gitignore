@@ -1,68 +1,60 @@
-# Entorno virtual
+# ─── Entorno virtual y variables de entorno ───────────────────────
 venv/
 .env
-.env.*
+.env.local
+.env.*.local
 
-# Archivos Python compilados
+# ─── Python compilado y caché ────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Archivos temporales de sistema operativo
+# ─── Sistema operativo ───────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Archivos de base de datos local
-db.sqlite3
+# ─── Bases de datos y logs ───────────────────────────────────────
 *.sqlite3
-
-# Archivos de logs
+db.sqlite3
 *.log
 
-# Archivos de backup
+# ─── Backups y ediciones temporales ─────────────────────────────
 *.bak
 *.swp
 *.swo
 
-# Archivos de configuración locales
+# ─── Configuraciones locales o secretas ─────────────────────────
 *.local
 *.secret
-
-# Archivos de migraciones
-**/migrations/*.pyc
-**/migrations/__pycache__/
-**/migrations/*.py
-
-# Archivos de media generados por usuarios
-/media/
-
-# Archivos de caché de Django
-staticfiles/
-static_root/
-collected_static/
-
-# VSCode
-.vscode/
-
-# PyCharm
-.idea/
-
-# Archivos de exportaciones y scripts
-z_mis_script/000/HotelImportado*.csv
-
-# Archivos XML/CSV temporales de pruebas
-*.xml
-*.csv
-*.xls
-*.xlsx
-
-# Archivos de credenciales o tokens
 *.pem
 *.key
 *.crt
 *.p12
 
-# Carpetas específicas del proyecto
+# ─── Media y estáticos generados ────────────────────────────────
+media/
+staticfiles/
+static_root/
+collected_static/
+
+# ─── Frameworks front-end ────────────────────────────────────────
+node_modules/
+public/build/
+
+# ─── IDEs y editores ─────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ─── Scripts propios y exportaciones ────────────────────────────
+z_mis_script/000/HotelImportado*.csv
+
+# ─── Archivos de pruebas temporales ─────────────────────────────
+*.xml
+*.csv
+*.xls
+*.xlsx
+
+# ─── Carpetas de logs o backups extra ───────────────────────────
 logs/
 backup/
 documentos/

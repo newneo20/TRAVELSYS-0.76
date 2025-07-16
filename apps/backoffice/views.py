@@ -46,8 +46,8 @@ from .forms import (
     PoloTuristicoForm, ProveedorForm, CadenaHoteleraForm, ReservaForm, PasajeroForm,
     HabitacionForm, OfertasEspecialesForm
 )
-from .funciones_externas import combinacion_habitaciones, leer_datos_hoteles
-from apps.booking.xml_builders_1way2italy import build_booking_xml, enviar_booking_api
+from .funciones_externas import leer_datos_hoteles
+from apps.booking.xml_builders_1way2italy import enviar_booking_api
 
 @login_required
 def logout_view(request):
@@ -1554,44 +1554,6 @@ def edit_reserva_load(request, reserva_id):
         'habitaciones': habitaciones,
         'tipos_habitacion': tipos_habitacion,
     })
-
-@manager_required
-@login_required
-def edit_reserva_save(request, reserva_id):
-    """
-    Vista para guardar cambios en una reserva.
-    Según el tipo de reserva (hoteles o traslados), se actualizan los campos generales y los detalles específicos.
-    """
-    if request.method == 'POST':
-        reserva = get_object_or_404(Reserva, pk=reserva_id)
-        
-        # Actualizar los campos generales de la reserva
-        actualizar_reserva_principal(request, reserva)
-        
-        if reserva.tipo == 'hoteles':
-            # Para reservas de hoteles se actualizan habitaciones y pasajeros
-            actualizar_habitaciones_y_pasajeros(request, reserva)
-            agregar_nuevas_habitaciones(request, reserva)
-            #-------------------------------------------------------
-            #nuevo_precio_total = recalcular_precio_y_costo(reserva)
-            #-------------------------------------------------------
-            nuevo_precio_total = 1000
-            reserva.precio_total = nuevo_precio_total
-        elif reserva.tipo == 'traslados':
-            # Para reservas de traslados se actualizan los datos del traslado y sus pasajeros
-            actualizar_traslado_y_pasajeros(request, reserva)
-            # Aquí podrías recalcular el precio para traslados si la lógica es diferente
-            # reserva.precio_total = nuevo_precio_traslado (si aplica)
-        
-        reserva.save()
-        
-        # Si la reserva está confirmada, se envía el correo de confirmación (con voucher/factura si corresponde)
-        if reserva.estatus == 'confirmada':
-            correo_confirmada(reserva)
-        
-        return redirect('backoffice:listar_reservas')
-    
-    return redirect('backoffice:edit_reserva_load', reserva_id=reserva_id)
 
 @csrf_exempt
 @login_required
@@ -3232,22 +3194,6 @@ logger = logging.getLogger(__name__)
 
 
 # ------------------ Funciones Auxiliares de Conversión ------------------ #
-@login_required
-def convertir_decimal(valor, valor_original):
-    """
-    Convierte una cadena en un número Decimal. Si falla, devuelve el valor original.
-    """
-    
-    print(f'            >>>>> Entro a Convertir Decimal')
-    
-    if valor:
-        valor = valor.replace(',', '.')  # Reemplaza coma por punto
-        try:
-            return Decimal(valor)
-        except InvalidOperation:
-            logger.error(f"Valor inválido para Decimal: {valor}")
-            # Aquí no tenemos request, así que no podemos usar messages.error directamente
-    return valor_original
 
 @login_required
 def convertir_fecha(valor, valor_default="2050-12-31"):
@@ -3327,132 +3273,6 @@ def procesar_pasajeros(request, room, habitacion_index, pasajero_count):
             messages.error(request, f"Error al guardar pasajero: {e}")
 
     return adultos, ninos
-
-@login_required
-def procesar_habitaciones(request, reserva):
-    """
-    Procesa las habitaciones y sus pasajeros asociados, asignando
-    adultos, niños, fechas, etc. También calcula el precio de cada habitación.
-    """
-    
-    print(f'          >>>>> Entro a procesar habitaciones con esta reserva: {reserva}')
-    
-    post_data = request.POST
-    try:
-        habitacion_count = int(post_data.get('habitacion_count', '0'))
-    except ValueError:
-        logger.error("habitacion_count no es un entero válido.")
-        messages.error(request, "Número de habitaciones no es válido.")
-        return
-
-    print(f"            Número de habitaciones a procesar: {habitacion_count}")
-
-    for i in range(1, habitacion_count + 1):
-        print(f"            Número de iteracion: {i}")
-        room_id = post_data.get(f"habitacion_id_{i}")
-        if room_id:
-            try:
-                room = HabitacionReserva.objects.get(id=room_id)
-                logger.debug(f"Habitación existente con id: {room_id}")
-            except HabitacionReserva.DoesNotExist:
-                logger.error(f"No se encontró la habitación con id {room_id}.")
-                messages.error(request, f"No se encontró la habitación con id {room_id}.")
-                continue
-        else:
-            # Creamos una nueva
-            room = HabitacionReserva(reserva=reserva)
-            logger.debug(f"Creando nueva habitación índice: {i}")
-
-        # Asignamos campos
-        room.habitacion_nombre = post_data.get(f"habitacion_nombre_{i}", '')
-
-        try:
-            room.adultos = int(post_data.get(f"adultos_{i}", '0'))
-        except ValueError:
-            logger.error(f"adultos_{i} no es un entero válido. Se asigna 0.")
-            room.adultos = 0
-
-        try:
-            room.ninos = int(post_data.get(f"ninos_{i}", '0'))
-        except ValueError:
-            logger.error(f"ninos_{i} no es un entero válido. Se asigna 0.")
-            room.ninos = 0
-
-        room.fechas_viaje = post_data.get(f"fechas_viaje_{i}", '')
-
-        # Antes de guardar la habitación, calculamos el precio
-        try:
-            # Buscamos el tipo de habitación a partir del nombre seleccionado.
-            # Se asume que en el modelo Habitacion se guarda el tipo en el campo "tipo".
-            tipo_habitacion = Habitacion.objects.filter(
-                hotel=reserva.hotel, 
-                tipo=room.habitacion_nombre
-            ).first()
-            if not tipo_habitacion:
-                logger.error(f"No se encontró el tipo de habitación para {room.habitacion_nombre}. Usando datos de la reserva como fallback.")
-                # Si no se encuentra, podrías asignar room o definir valores por defecto.
-                tipo_habitacion = room
-
-            # Obtenemos las ofertas para el hotel
-            ofertas = Oferta.objects.filter(hotel=reserva.hotel)
-            # Aquí se definen fee_hotel, fee_nino y tipo_fee_hotel a partir del hotel.
-            fee_hotel = reserva.hotel.fee if reserva.hotel.fee else "0"
-            tipo_fee_hotel = reserva.hotel.tipo_fee if reserva.hotel.tipo_fee else "PAX"
-            fee_nino = "0"  # Cambia este valor si tienes fee específico para niños.
-            # Si en el formulario no se envían las edades de los niños, se puede usar una lista vacía.
-            edades_ninos = []
-
-            # Llamamos a la función para calcular el precio
-            precio_calculado = calcular_precio_habitacion(
-                habitacion=tipo_habitacion,
-                ofertas=ofertas,
-                cant_adultos=room.adultos,
-                cant_ninos=room.ninos,
-                edades_ninos=edades_ninos,
-                fecha_viaje=room.fechas_viaje,
-                fee_hotel=fee_hotel,
-                fee_nino=fee_nino,
-                tipo_fee_hotel=tipo_fee_hotel
-            )
-            room.precio = precio_calculado
-            logger.debug(f"Precio calculado para habitación {i}: {precio_calculado}")
-        except Exception as e:
-            logger.error(f"Error al calcular el precio de la habitación: {e}", exc_info=True)
-            messages.error(request, f"Error al calcular el precio de la habitación: {e}")
-            # Si falla el cálculo, podrías asignar un valor por defecto
-            room.precio = Decimal("0.00")
-
-        try:
-            room.save()
-            logger.debug(f"Habitación {room.id} guardada correctamente.")
-        except Exception as e:
-            logger.error(f"Error al guardar la habitación: {e}", exc_info=True)
-            messages.error(request, f"Error al guardar la habitación: {e}")
-            continue
-
-        # Procesar pasajeros
-        try:
-            pasajero_count = int(post_data.get(f"pasajero_count_{i}", '0'))
-        except ValueError:
-            logger.error(f"pasajero_count_{i} no es un entero válido.")
-            messages.error(request, f"Número de pasajeros para habitación {i} no es válido.")
-            pasajero_count = 0
-
-        logger.debug(f"Habitación {i} - Número de pasajeros: {pasajero_count}")
-        adultos, ninos = procesar_pasajeros(request, room, i, pasajero_count)
-
-        # Actualizar la habitación con el total real de adultos/ninos
-        room.adultos = adultos
-        room.ninos = ninos
-
-        # Vuelve a guardar la habitación con los datos actualizados y el precio calculado
-        try:
-            room.save()
-            logger.debug(f"Habitación {room.id} actualizada: {adultos} adultos y {ninos} niños.")
-        except Exception as e:
-            logger.error(f"Error al actualizar la habitación: {e}", exc_info=True)
-            messages.error(request, f"Error al actualizar la habitación: {e}")
-
 
 # ------------------ Funciones de Cálculo de Precios ------------------ #
 @login_required

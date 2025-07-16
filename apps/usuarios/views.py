@@ -37,10 +37,7 @@ from apps.backoffice.models import (
     TipoFee, Oferta, HotelFacility, HotelSetting, CadenaHotelera, 
     Reserva, Pasajero
 )
-from apps.backoffice.funciones_externas import (
-    combinacion_habitaciones, leer_datos_hoteles, generar_voucher_pdf, 
-    enviar_correo, calcular_precio_total_por_mes, contar_reservas_por_mes
-)
+from apps.backoffice.funciones_externas import (contar_reservas_por_mes)
 
 
 
@@ -95,12 +92,6 @@ def index(request):
 def logout_view(request):
     logout(request)    
     return redirect('login')
-
-
-@login_required
-def reservar_hotel(request):
-    return render(request, 'renta_hoteles/reservar_hotel.html')
-
 
 @login_required
 @manager_required

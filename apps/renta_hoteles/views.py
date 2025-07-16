@@ -89,27 +89,6 @@ def listar_polos(request):
     polos = PoloTuristico.objects.all()
     return render(request, 'renta_hoteles/polos/listar_polo.html', {'polos': polos})
 
-def crear_polo(request):
-    if request.method == 'POST':
-        form = PoloTuristicoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_polos')
-    else:
-        form = PoloTuristicoForm()
-    return render(request, 'renta_hoteles/polos/crear_polo.html', {'form': form})
-
-def editar_polo(request, pk):
-    polo = get_object_or_404(PoloTuristico, pk=pk)
-    if request.method == 'POST':
-        form = PoloTuristicoForm(request.POST, instance=polo)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_polos')
-    else:
-        form = PoloTuristicoForm(instance=polo)
-    return render(request, 'renta_hoteles/polos/editar_polo.html', {'form': form})
-
 def eliminar_polo(request, pk):
     polo = get_object_or_404(PoloTuristico, pk=pk)
     if request.method == 'POST':

@@ -6,26 +6,28 @@ from django.conf.urls.static import static  # type: ignore
 from .views import index_redirect
 
 urlpatterns = [
+    # Página raíz
     path("", index_redirect, name="index"),
-    path('admin/', admin.site.urls),
+
+    # Admin
+    path("admin/", admin.site.urls),
 
     # Apps internas
-    path('usuarios/', include('apps.usuarios.urls')),
-    path('backoffice/', include('apps.backoffice.urls', namespace='backoffice')),
-    path('booking/', include('apps.booking.urls', namespace='booking')),
-    path('common/', include('apps.common.urls', namespace='common')),
+    path("usuarios/", include("apps.usuarios.urls")),
+    path("backoffice/", include("apps.backoffice.urls", namespace="backoffice")),
+    path("booking/", include("apps.booking.urls", namespace="booking")),
+    path("common/", include("apps.common.urls", namespace="common")),
+    path("finanzas/", include("apps.finanzas.urls")),
+    path("renta_hoteles/", include("apps.renta_hoteles.urls")),
+    path("renta_autos/", include("apps.renta_autos.urls")),
+    path("vuelos/", include("apps.vuelos.urls")),
+    path("gestion_economica/", include("apps.gestion_economica.urls")),
 
-    path('finanzas/', include('apps.finanzas.urls')),
-    path('renta_hoteles/', include('apps.renta_hoteles.urls')),
-    path('renta_autos/', include('apps.renta_autos.urls')),
-    path('vuelos/', include('apps.vuelos.urls')),
-    path('gestion_economica/', include('apps.gestion_economica.urls')),
+    # API (mismo archivo de booking, namespace distinto)
+    path("api/", include("apps.booking.urls", namespace="booking_api")),
 
-    # API (usando mismo archivo de booking, con namespace distinto)
-    path('api/', include('apps.booking.urls', namespace='booking_api')),
-
-    # Página principal temporal
-    path('', TemplateView.as_view(template_name='index.html')),
+    # Ruta a un template estático si aún lo necesitas
+    path("home/", TemplateView.as_view(template_name="index.html"), name="home"),
 ]
 
 if settings.DEBUG:

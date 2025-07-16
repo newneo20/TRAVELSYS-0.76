@@ -1,7 +1,7 @@
 # tasks.py
 from celery import shared_task
 from datetime import date, datetime
-from backoffice.models import Oferta  # Asegúrate de importar tu modelo
+from apps.backoffice.models import Oferta  # Asegúrate de importar tu modelo
 
 print("Archivo tasks.py cargado correctamente")
 
