@@ -21,6 +21,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 # Paginación para Alerta de Pago
 from django.core.paginator import Paginator
+from django.db import transaction
 
 # ────────────────────────────
 #  App imports
@@ -287,9 +288,6 @@ def obtener_reservas_alerta(reservas):
 
     return reservas_alerta_pago, reservas_alerta_cobro
 
-
-
-
 def calcular_tiempo_promedio_reserva():
     reservas = Reserva.objects.all()
     tiempos_reserva = []
@@ -325,7 +323,6 @@ def calcular_tiempo_promedio_reserva():
         tiempo_promedio_reserva = 0
 
     return tiempo_promedio_reserva
-
 
 def top_5_agencias_mas_reservas():
     reservas = Reserva.objects.all()
@@ -394,9 +391,6 @@ def top_5_hoteles_mas_reservados():
     
 
     return resultados
-
-
-
 
 @manager_required
 @login_required
@@ -492,59 +486,6 @@ def crear_usuario(request):
 
 @manager_required
 @login_required
-def editar_usuario(request, usuario_id):
-    usuario = get_object_or_404(CustomUser, id=usuario_id)
-    lista_fees = ['hotel', 'nino', 'carro', 'traslados']
-
-    if request.method == 'POST':
-        usuario.agencia          = request.POST.get('agencia')
-        usuario.username         = request.POST.get('username')
-        usuario.email            = request.POST.get('email')
-        usuario.telefono         = request.POST.get('telefono')
-        usuario.direccion        = request.POST.get('direccion')
-        usuario.nombre_dueno     = request.POST.get('nombre_dueno')
-        usuario.telefono_dueno   = request.POST.get('telefono_dueno')
-        usuario.is_manager       = request.POST.get('is_manager') == 'on'
-
-        password        = request.POST.get('password')
-        confirm_passwd  = request.POST.get('confirm_password')
-        if password:
-            if password != confirm_passwd:
-                messages.error(request, "Las contraseñas no coinciden.")
-                return render(request, 'usuarios/editar_usuario.html', {
-                    'usuario': usuario,
-                    'lista_fees': lista_fees
-                })
-            usuario.set_password(password)
-
-        usuario.saldo_pendiente      = request.POST.get('saldo_pendiente')
-        usuario.fee_hotel            = request.POST.get('fee_hotel')
-        usuario.tipo_fee_hotel       = request.POST.get('tipo_fee_hotel')
-        usuario.fee_nino             = request.POST.get('fee_nino')
-        usuario.tipo_fee_nino        = request.POST.get('tipo_fee_nino')
-        usuario.fee_carro            = request.POST.get('fee_carro')
-        usuario.tipo_fee_carro       = request.POST.get('tipo_fee_carro')
-        usuario.fee_traslados        = request.POST.get('fee_traslados')
-        usuario.tipo_fee_traslados   = request.POST.get('tipo_fee_traslados')
-
-        # Logo nuevo o por defecto si no tiene ninguno
-        if 'logo' in request.FILES:
-            usuario.logo = request.FILES['logo']
-        elif not usuario.logo:
-            usuario.logo.name = 'logos/user_default_logo.png'
-
-        usuario.save()
-        messages.success(request, "Usuario actualizado correctamente.")
-        return redirect('listar_usuarios')
-
-    return render(request, 'usuarios/editar_usuario.html', {
-        'usuario': usuario,
-        'lista_fees': lista_fees
-    })
-
-
-@manager_required
-@login_required
 def eliminar_usuario(request, user_id):
     usuario = get_object_or_404(CustomUser, id=user_id)
     if request.method == 'POST':
@@ -553,3 +494,132 @@ def eliminar_usuario(request, user_id):
         return redirect('listar_usuarios')
     return render(request, 'usuarios/eliminar_usuario.html', {'usuario': usuario})
 
+
+from decimal import Decimal, InvalidOperation
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
+from .decorators import manager_required
+from .models import CustomUser
+
+def _to_decimal(value, default="0"):
+    txt = (value or "").strip()
+    if txt == "":
+        txt = default
+    try:
+        return Decimal(txt)
+    except (InvalidOperation, TypeError):
+        return Decimal(default)
+
+@login_required
+@manager_required
+@transaction.atomic
+def editar_usuario(request, usuario_id):
+    usuario = get_object_or_404(CustomUser, id=usuario_id)
+
+    if request.method == 'POST':
+        # Básicos
+        username = (request.POST.get('username') or '').strip()
+        email    = (request.POST.get('email') or '').strip().lower()
+        agencia  = (request.POST.get('agencia') or '').strip()
+        telefono = (request.POST.get('telefono') or '').strip()
+        direccion = (request.POST.get('direccion') or '').strip()
+
+        nombre_dueno   = (request.POST.get('nombre_dueno') or '').strip()
+        telefono_dueno = (request.POST.get('telefono_dueno') or '').strip()
+
+        is_manager = request.POST.get('is_manager') == 'on'
+
+        # Unicidad username/email
+        if CustomUser.objects.exclude(id=usuario.id).filter(username=username).exists():
+            messages.error(request, "El nombre de usuario ya está en uso.")
+            return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+
+        if CustomUser.objects.exclude(id=usuario.id).filter(email=email).exists():
+            messages.error(request, "El email ya está en uso.")
+            return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+
+        # Email válido
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "El email no es válido.")
+            return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+
+        # Contraseña (opcional)
+        password       = request.POST.get('password') or ''
+        confirm_passwd = request.POST.get('confirm_password') or ''
+        if password:
+            if password != confirm_passwd:
+                messages.error(request, "Las contraseñas no coinciden.")
+                return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+            usuario.set_password(password)
+            # Si edito mi propia cuenta, mantén la sesión
+            if request.user.id == usuario.id:
+                update_session_auth_hash(request, usuario)
+
+        # Saneos simples
+        telefono = ''.join(c for c in telefono if c.isdigit() or c in '+-() ')
+        telefono_dueno = ''.join(c for c in telefono_dueno if c.isdigit() or c in '+-() ')
+
+        # Decimals
+        saldo_pendiente = _to_decimal(request.POST.get('saldo_pendiente'), "0")
+        if saldo_pendiente < 0:
+            messages.error(request, "El saldo no puede ser negativo.")
+            return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+
+        # Fees + tipos
+        def get_fee_pair(prefix):
+            fee = _to_decimal(request.POST.get(f'fee_{prefix}'), "0")
+            tipo = request.POST.get(f'tipo_fee_{prefix}') or '$'
+            tipo = tipo if tipo in ('$', '%') else '$'
+            if tipo == '%' and not (Decimal('0') <= fee <= Decimal('100')):
+                raise ValueError(f"El Fee {prefix.capitalize()} en % debe estar entre 0 y 100.")
+            if fee < 0:
+                raise ValueError(f"El Fee {prefix.capitalize()} no puede ser negativo.")
+            return fee, tipo
+
+        try:
+            fee_hotel, tipo_fee_hotel = get_fee_pair('hotel')
+            fee_nino, tipo_fee_nino   = get_fee_pair('nino')
+            fee_carro, tipo_fee_carro = get_fee_pair('carro')
+            fee_tras,  tipo_fee_tras  = get_fee_pair('traslados')
+        except ValueError as e:
+            messages.error(request, str(e))
+            return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})
+
+        # Logo (solo si suben archivo)
+        if 'logo' in request.FILES:
+            usuario.logo = request.FILES['logo']
+        # Si no hay archivo, dejamos el actual/fallback del template
+
+        # Asignaciones finales
+        usuario.username        = username
+        usuario.email           = email
+        usuario.agencia         = agencia
+        usuario.telefono        = telefono
+        usuario.direccion       = direccion
+        usuario.nombre_dueno    = nombre_dueno
+        usuario.telefono_dueno  = telefono_dueno
+        usuario.is_manager      = is_manager
+
+        usuario.saldo_pendiente    = saldo_pendiente
+        usuario.fee_hotel          = fee_hotel
+        usuario.tipo_fee_hotel     = tipo_fee_hotel
+        usuario.fee_nino           = fee_nino
+        usuario.tipo_fee_nino      = tipo_fee_nino
+        usuario.fee_carro          = fee_carro
+        usuario.tipo_fee_carro     = tipo_fee_carro
+        usuario.fee_traslados      = fee_tras
+        usuario.tipo_fee_traslados = tipo_fee_tras
+
+        usuario.save()
+        messages.success(request, "Usuario actualizado correctamente.")
+        return redirect('listar_usuarios')
+
+    return render(request, 'usuarios/editar_usuario.html', {'usuario': usuario})

@@ -1,18 +1,19 @@
-# booking/views.py
+# apps/booking/views.py
+
 # ──────────────────────────────
 # Standard library
 # ──────────────────────────────
+import html
 import json
 import os
+import smtplib
 import time
-import html
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import smtplib
 
 # ──────────────────────────────
 # Third-party
@@ -24,57 +25,65 @@ import requests
 # ──────────────────────────────
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import F, Q, Sum as DjangoSum
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render, redirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
-from django.utils.safestring import mark_safe
 
 # ──────────────────────────────
 # Local apps
 # ──────────────────────────────
 from apps.booking.parsers_1way2italy import parse_hotel_avail_rs
 from apps.booking.xml_builders_1way2italy import build_hotel_avail_xml
-
-
-@csrf_protect
-@require_POST
-def crear_destinatario(request):
-    ...
-
-
-# ──────────────────────────────
-# Project-specific imports
-# ──────────────────────────────
 from apps.backoffice.models import (
-    PoloTuristico, Hotel, Habitacion, Oferta, HabitacionOpcion,
-    Reserva, HabitacionReserva, Pasajero, OfertasEspeciales, Remesa,
-    TasaCambio, Ubicacion, Traslado, Transportista, Vehiculo, Envio,
-    ItemEnvio, Remitente, Destinatario, HotelImportado, Proveedor
+    Destinatario,
+    Envio,
+    Habitacion,
+    HabitacionReserva,
+    HabitacionOpcion,
+    Hotel,
+    HotelImportado,
+    ItemEnvio,
+    OfertasEspeciales,
+    Pasajero,
+    PoloTuristico,
+    Proveedor,
+    Remesa,
+    Reserva,
+    TasaCambio,
+    Transportista,
+    Traslado,
+    Ubicacion,
+    Vehiculo,
 )
 from apps.backoffice.funciones_externas import (
+    ChequearIntervalos,
     calcular_precio_total_por_mes,
     contar_reservas_por_mes,
-    ChequearIntervalos,
-    obtener_ofertas_mas_baratas
+    obtener_ofertas_mas_baratas,
 )
 from apps.usuarios.models import CustomUser
-from .forms import (
-    PoloTuristicoForm, ProveedorForm, CadenaHoteleraForm,
-    ReservaForm, PasajeroForm, HabitacionForm, OfertasEspecialesForm
-)
 from . import funciones_externas_booking
-
+from .forms import (
+    CadenaHoteleraForm,
+    HabitacionForm,
+    OfertasEspecialesForm,
+    PasajeroForm,
+    PoloTuristicoForm,
+    ProveedorForm,
+    ReservaForm,
+)
 from apps.common.notifications import enviar_correo_confirmacion
-
 
 
 @login_required
@@ -116,7 +125,6 @@ def admin_dashboard_data(request):
     }
     return JsonResponse(data)
 
-
 @login_required
 @require_GET
 def cargar_ofertas_especiales(request):
@@ -142,7 +150,6 @@ def cargar_reservas_recientes(request):
 
     html = render_to_string('booking/partials/_bloque_reservas_recientes.html', {'reservas': reservas})
     return JsonResponse({'html': html})
-
 
 
 @login_required
@@ -243,59 +250,100 @@ def user_dashboard(request):
 
     return render(request, 'booking/user_dashboard.html', context)
 
+
+def _to_decimal(val, default="0"):
+    s = (val or "").strip()
+    if s == "":
+        s = default
+    try:
+        return Decimal(s)
+    except (InvalidOperation, TypeError):
+        return Decimal(default)
+
 @login_required
+@transaction.atomic
 def perfil_cliente(request):
-    usuario = request.user
+    usuario: CustomUser = request.user  # el propio usuario
 
     if request.method == 'POST':
-        # Obtener los datos del formulario
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        telefono = request.POST.get('telefono')
-        direccion = request.POST.get('direccion')        
-        nombre_dueno = request.POST.get('nombre_dueno')        
-        telefono_dueno = request.POST.get('telefono_dueno')        
-        fee_hotel = request.POST.get('fee_hotel')
-        tipo_fee_hotel = request.POST.get('tipo_fee_hotel')
-        fee_carro = request.POST.get('fee_carro')  
-        tipo_fee_carro = request.POST.get('tipo_fee_carro')
-        fee_tarara = request.POST.get('fee_tarara')
-        tipo_fee_tarara = request.POST.get('tipo_fee_tarara')
+        # 1) Datos básicos
+        first_name = (request.POST.get('first_name') or '').strip()
+        last_name  = (request.POST.get('last_name') or '').strip()
+        email      = (request.POST.get('email') or '').strip().lower()
+        telefono   = (request.POST.get('telefono') or '').strip()
+        direccion  = (request.POST.get('direccion') or '').strip()
+        nombre_dueno   = (request.POST.get('nombre_dueno') or '').strip()
+        telefono_dueno = (request.POST.get('telefono_dueno') or '').strip()
 
-        # Actualizar los datos del usuario
-        usuario.first_name = first_name
-        usuario.last_name = last_name
-        usuario.email = email
-        usuario.telefono = telefono
-        usuario.direccion = direccion
-        usuario.nombre_dueno = nombre_dueno
-        usuario.telefono_dueno = telefono_dueno
-        usuario.fee_hotel = fee_hotel
-        usuario.tipo_fee_hotel = tipo_fee_hotel
-        usuario.fee_carro = fee_carro
-        usuario.tipo_fee_carro = tipo_fee_carro
-        usuario.fee_tarara = fee_tarara
-        usuario.tipo_fee_tarara = tipo_fee_tarara
+        # 2) Validar email formato + unicidad (excluyéndose a sí mismo)
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "El email no es válido.")
+            return redirect('booking:perfil_cliente')
 
-        # Si se subió una nueva imagen de logo
+        if CustomUser.objects.exclude(id=usuario.id).filter(email=email).exists():
+            messages.error(request, "Este email ya está en uso por otro usuario.")
+            return redirect('booking:perfil_cliente')
+
+        # 3) Saneos simples de teléfono
+        clean_phone = lambda s: ''.join(c for c in s if c.isdigit() or c in '+-() ')
+        telefono        = clean_phone(telefono)
+        telefono_dueno  = clean_phone(telefono_dueno)
+
+        # 4) Fees (si tu modelo permite que el usuario final los edite)
+        def get_fee_pair(prefix):
+            fee  = _to_decimal(request.POST.get(f'fee_{prefix}'), "0")
+            tipo = (request.POST.get(f'tipo_fee_{prefix}') or '$').strip()
+            tipo = tipo if tipo in ('$', '%') else '$'
+            if fee < 0:
+                raise ValueError(f"El Fee {prefix.capitalize()} no puede ser negativo.")
+            if tipo == '%' and not (Decimal('0') <= fee <= Decimal('100')):
+                raise ValueError(f"El Fee {prefix.capitalize()} en % debe estar entre 0 y 100.")
+            return fee, tipo
+
+        try:
+            fee_hotel,  tipo_fee_hotel  = get_fee_pair('hotel')
+            fee_carro,  tipo_fee_carro  = get_fee_pair('carro')
+            # “tarara” según tu template. Asegúrate de que exista en el modelo:
+            fee_tarara, tipo_fee_tarara = get_fee_pair('tarara')
+            fee_tras,   tipo_fee_tras   = get_fee_pair('traslados')
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect('booking:perfil_cliente')
+
+        # 5) Logo (opcional)
         if 'logo' in request.FILES:
             usuario.logo = request.FILES['logo']
 
-        # Guardar cambios
+        # 6) Asignaciones finales
+        usuario.first_name      = first_name
+        usuario.last_name       = last_name
+        usuario.email           = email
+        usuario.telefono        = telefono
+        usuario.direccion       = direccion
+        usuario.nombre_dueno    = nombre_dueno
+        usuario.telefono_dueno  = telefono_dueno
+
+        usuario.fee_hotel          = fee_hotel
+        usuario.tipo_fee_hotel     = tipo_fee_hotel
+        usuario.fee_carro          = fee_carro
+        usuario.tipo_fee_carro     = tipo_fee_carro
+        usuario.fee_tarara         = fee_tarara
+        usuario.tipo_fee_tarara    = tipo_fee_tarara
+        usuario.fee_traslados      = fee_tras
+        usuario.tipo_fee_traslados = tipo_fee_tras
+
         try:
             usuario.save()
             messages.success(request, 'Perfil guardado correctamente.')
         except Exception as e:
-            messages.error(request, f'Error al actualizar el perfil: {str(e)}')
+            messages.error(request, f'Error al actualizar el perfil: {e}')
 
-        return redirect('booking:perfil_cliente')  # Asegúrate de que 'perfil_cliente' es el nombre correcto en tus URLs
+        return redirect('booking:perfil_cliente')
 
-    # Renderiza la plantilla con los datos del usuario
-    context = {
-        'user': usuario,
-    }
-    return render(request, 'booking/perfil_cliente.html', context)
+    # GET
+    return render(request, 'booking/perfil_cliente.html', {'user': usuario})
 
 # Vista para el dashboard de hoteles
 @login_required
