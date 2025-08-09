@@ -1,3 +1,6 @@
+<!-- =============================
+FILE: templates/booking/hotel/base_hotel.html
+============================= -->
 {% extends 'booking/base_tabs.html' %}
 {% load i18n %}
 {% load static %}
@@ -6,12 +9,14 @@
 
 {% block content %}
 <div class="mx-auto max-w-6xl mt-2 px-4">
-  <form method="GET" action="{% url 'booking:hotel_results' %}" class="bg-white shadow-md rounded-full p-2 flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-2">
+  <form method="GET" action="{% url 'booking:hotel_results' %}"
+        class="bg-white dark:bg-gray-800 shadow-md rounded-full p-2 flex flex-col md:flex-row md:items-center gap-2">
 
     <!-- Destino -->
-    <div class="field-chip flex-1">
+    <div class="field-chip flex-1 flex items-center rounded-full border border-gray-200 dark:border-gray-700">
       <i class="fas fa-map-marker-alt text-gray-400 ml-2"></i>
-      <select id="destino" name="destino" class="select2-chip w-full">
+      <label for="destino" class="sr-only">{% trans "Destino" %}</label>
+      <select id="destino" name="destino" class="select2-chip w-full bg-transparent px-2 py-1 text-sm">
         <option value="todos-los-destinos" {% if request.GET.destino == "todos-los-destinos" %}selected{% endif %}>
           ¿A dónde vas?
         </option>
@@ -23,242 +28,293 @@
       </select>
     </div>
 
-    <!-- Estrellas -->
-    <div class="field-chip flex-1 cursor-default justify-center">
-      <div class="flex space-x-1 text-yellow-400 ml-2">
-        {% for _ in "12345" %}
-        <i class="fas fa-star"></i>
-        {% endfor %}
+    <!-- Estrellas decorativas -->
+    <div class="field-chip flex-1 hidden sm:flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700">
+      <div class="flex space-x-1 text-yellow-400 ml-2" aria-hidden="true">
+        {% for _ in "12345" %}<i class="fas fa-star"></i>{% endfor %}
       </div>
     </div>
 
     <!-- Fechas -->
-    <div class="field-chip flex-1">
+    <div class="field-chip flex-1 flex items-center rounded-full border border-gray-200 dark:border-gray-700">
       <i class="fas fa-calendar-alt text-gray-400 ml-2"></i>
-      <input type="text" id="fechas_viaje" name="fechas_viaje" class="bg-transparent border-none outline-none px-2 text-sm text-gray-700 w-full" value="{{ request.GET.fechas_viaje }}" placeholder="Fechas" />
+      <label for="fechas_viaje" class="sr-only">{% trans "Fechas" %}</label>
+      <input type="text" id="fechas_viaje" name="fechas_viaje"
+             class="bg-transparent border-0 outline-none px-2 text-sm text-gray-700 dark:text-gray-200 w-full"
+             value="{{ request.GET.fechas_viaje }}" placeholder="YYYY-MM-DD - YYYY-MM-DD" />
     </div>
 
-    <!-- Habitaciones -->
-    <div class="flex justify-center items-center ">
-      <div id="openModalBtn" class="field-chip border-blue-600 text-blue-600 cursor-pointer flex items-center justify-center w-full">
-        
-        <span class="px-2 text-sm flex items-center space-x-2">
-          <i class="fas fa-bed"></i> <span>{{ request.GET.habitaciones|default:"1" }}</span>
-          <i class="fas fa-user"></i> <span>{{ request.GET.adultos|default:"2" }}</span>
-          <i class="fas fa-child"></i> <span>{{ request.GET.ninos|default:"0" }}</span>
+    <!-- Habitaciones chip (abre modal) -->
+    <div class="flex items-center">
+      <button type="button" id="openModalBtn"
+              class="field-chip rounded-full border border-blue-600 text-blue-600 flex items-center justify-center px-3 py-2 text-sm gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+        <span class="inline-flex items-center gap-2">
+          <i class="fas fa-bed"></i><span id="chipHabitaciones">{{ request.GET.habitaciones|default:"1" }}</span>
+          <i class="fas fa-user ml-2"></i><span id="chipAdultos">{{ request.GET.adultos|default:"2" }}</span>
+          <i class="fas fa-child ml-2"></i><span id="chipNinos">{{ request.GET.ninos|default:"0" }}</span>
         </span>
-
-      </div>
+      </button>
     </div>
 
     <!-- Botón búsqueda -->
-    <button type="submit" class="bg-blue-600 text-white rounded-full py-2 px-6 text-sm font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">
+    <button type="submit"
+            class="bg-blue-600 text-white rounded-full py-2 px-6 text-sm font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">
       {% trans "Búsqueda" %}
     </button>
 
-    <!-- Inputs ocultos -->
+    <!-- Inputs ocultos (se sincronizan desde el modal) -->
     <input type="hidden" id="habitaciones_input" name="habitaciones" value="{{ request.GET.habitaciones|default:'1' }}">
     <input type="hidden" id="adultos_input" name="adultos" value="{{ request.GET.adultos|default:'2' }}">
     <input type="hidden" id="ninos_input" name="ninos" value="{{ request.GET.ninos|default:'0' }}">
-    <input type="hidden" id="infoHabitacionesInput" name="info_habitaciones" value="">
+    <input type="hidden" id="infoHabitacionesInput" name="info_habitaciones"
+           value="{{ request.GET.info_habitaciones|default:'' }}">
   </form>
 </div>
 
-
 <!-- Modal -->
-<div id="habitacionesModal" class="fixed inset-0 hidden bg-black bg-opacity-50 z-50 flex items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-lg w-full max-w-3xl p-6 relative">
+<div id="habitacionesModal"
+     class="fixed inset-0 hidden bg-black/50 z-50 flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-3xl p-6 relative">
     <!-- Título -->
     <div class="flex justify-between items-center mb-6">
       <h5 class="text-xl font-bold">{% trans "Seleccionar habitaciones y pasajeros" %}</h5>
-      <button id="closeModalBtn" class="text-gray-600 text-2xl hover:text-gray-800">&times;</button>
+      <button id="closeModalBtn" class="text-gray-600 dark:text-gray-300 text-2xl hover:text-gray-800">&times;</button>
     </div>
 
-    <!-- Cabecera -->
-    <div class="grid grid-cols-5 gap-2 mb-2 text-sm font-semibold text-gray-700">
-      <label>Habitaciones</label>
-      <label>Adultos</label>
-      <label>Niños</label>      
+    <!-- Cabecera columnas -->
+    <div class="grid grid-cols-5 gap-2 mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+      <span>Habitación</span>
+      <span>Adultos</span>
+      <span>Niños</span>
+      <span>Edad niño 1</span>
+      <span>Edad niño 2</span>
     </div>
 
-    <!-- Primera fila -->
+    <!-- Fila base (Hab 1) -->
     <div class="grid grid-cols-5 gap-2 mb-4 items-start">
+      <!-- Selector de # habitaciones (controla cuántas filas habrá) -->
       <div class="relative">
         <i class="fas fa-bed absolute left-3 top-2.5 text-gray-400"></i>
-        <select id="habitaciones" class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+        <label for="habitaciones" class="sr-only">Número de habitaciones</label>
+        <select id="habitaciones"
+                class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500">
           {% for i in "12345" %}
-            <option value="{{ i }}" {% if request.GET.habitaciones == i %}selected{% endif %}>{{ i }}</option>
+            <option value="{{ i }}" {% if request.GET.habitaciones == i %}selected{% endif %}>Hab {{ i }}</option>
           {% endfor %}
         </select>
       </div>
+
+      <!-- Adultos H1 -->
       <div class="relative">
         <i class="fas fa-user absolute left-3 top-2.5 text-gray-400"></i>
-        <select id="adultos1" class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500">
+        <label for="adultos1" class="sr-only">Adultos hab 1</label>
+        <select id="adultos1"
+                class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500">
           <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
         </select>
       </div>
+
+      <!-- Niños H1 -->
       <div class="relative">
         <i class="fas fa-child absolute left-3 top-2.5 text-gray-400"></i>
-        <select id="ninos1" class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 ninos-select" data-habitacion="1">
+        <label for="ninos1" class="sr-only">Niños hab 1</label>
+        <select id="ninos1"
+                class="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 ninos-select"
+                data-habitacion="1">
           <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option>
         </select>
       </div>
+
+      <!-- Edad niño 1 H1 -->
       <div id="edad1_1" class="w-full"></div>
+      <!-- Edad niño 2 H1 -->
       <div id="edad1_2" class="w-full"></div>
     </div>
 
-    <!-- Contenedor dinámico -->
+    <!-- Contenedor dinámico para Hab 2..N -->
     <div id="habitacionesContainer" class="space-y-4"></div>
 
     <!-- Footer -->
-    <div class="flex justify-end mt-6 pt-4 border-t space-x-3">
-      <button id="cancelarHabitaciones" class="px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-100 text-sm text-gray-700">
+    <div class="flex justify-end mt-6 pt-4 border-t dark:border-gray-700 gap-3">
+      <button id="cancelarHabitaciones"
+              class="px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200">
         {% trans "Cancelar" %}
       </button>
-      <button id="guardarHabitaciones" class="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm">
+      <button id="guardarHabitaciones"
+              class="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 text-sm">
         {% trans "OK" %}
       </button>
     </div>
   </div>
 </div>
 
-
-
 {% block extra_js %}
 <script>
-  $(document).ready(function () {
-    $('#destino').select2({ placeholder: "¿A dónde vas?", allowClear: true, width: 'resolve' });
-    $('#fechas_viaje').daterangepicker({ startDate: moment(), endDate: moment().add(1, 'days'), locale: { format: 'YYYY-MM-DD' } });
-    $('#openModalBtn').on('click', () => $('#habitacionesModal').removeClass('hidden'));
-    $('#closeModalBtn, #cancelarHabitaciones').on('click', () => $('#habitacionesModal').addClass('hidden'));
+  (function(){
+    // ===== Helpers
+    function buildEdadSelect(id){
+      return `
+        <div class="relative w-full">
+          <i class="fas fa-hourglass-half absolute left-3 top-2.5 text-gray-400"></i>
+          <select id="${id}"
+                  class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500">
+            <option value="">-</option>
+            ${Array.from({length:13},(_,k)=>`<option value="${k+1}">${k+1}</option>`).join('')}
+          </select>
+        </div>`;
+    }
 
-    function actualizarHabitaciones() {
-      const numH = parseInt($('#habitaciones').val());
-      const cont = $('#habitacionesContainer');
-      cont.empty();
-      for (let i = 2; i <= numH; i++) {
-        cont.append(`
-          <div class="grid grid-cols-5 gap-2 mb-2 items-start">
+    function actualizarCamposEdadNinos(hab){
+      const numNinos = parseInt(document.getElementById('ninos'+hab)?.value || '0');
+      const cont1 = document.getElementById('edad'+hab+'_1');
+      const cont2 = document.getElementById('edad'+hab+'_2');
+      if(!cont1 || !cont2) return;
+      cont1.innerHTML = '';
+      cont2.innerHTML = '';
+      if (numNinos >= 1) cont1.insertAdjacentHTML('beforeend', buildEdadSelect('edadNino'+hab+'_1'));
+      if (numNinos >= 2) cont2.insertAdjacentHTML('beforeend', buildEdadSelect('edadNino'+hab+'_2'));
+    }
 
-            <!-- Adultos -->
-            <div class="relative">
-              <i class="fas fa-bed absolute left-3 top-2.5 text-gray-400"></i>
-              
-            </div>
+    function actualizarHabitaciones(){
+      const numH = parseInt(document.getElementById('habitaciones').value || '1');
+      const cont = document.getElementById('habitacionesContainer');
+      cont.innerHTML = '';
+      for (let i=2;i<=numH;i++){
+        cont.insertAdjacentHTML('beforeend', `
+          <div class="grid grid-cols-5 gap-2 items-start">
+            <div class="px-2 py-2 text-sm text-gray-600 dark:text-gray-300">Hab ${i}</div>
 
-            <!-- Adultos -->
             <div class="relative">
               <i class="fas fa-user absolute left-3 top-2.5 text-gray-400"></i>
-              <select id="adultos${i}" class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 bg-gray-100 focus:ring-2 focus:ring-blue-500">
-                <option value="1">1</option>
-                <option value="2" selected>2</option>
-                <option value="3">3</option>
+              <select id="adultos${i}"
+                      class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500">
+                <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option>
               </select>
             </div>
 
-            <!-- Niños -->
             <div class="relative">
               <i class="fas fa-child absolute left-3 top-2.5 text-gray-400"></i>
-              <select id="ninos${i}" class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 bg-gray-100 focus:ring-2 focus:ring-blue-500 ninos-select" data-habitacion="${i}">
-                <option value="0" selected>0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
+              <select id="ninos${i}" data-habitacion="${i}"
+                      class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 ninos-select">
+                <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option>
               </select>
             </div>
 
-            <!-- Edad Niño 1 -->
-            <div class="relative w-full" id="edad${i}_1"></div>
-
-            <!-- Edad Niño 2 -->
-            <div class="relative w-full" id="edad${i}_2"></div>
+            <div id="edad${i}_1" class="w-full"></div>
+            <div id="edad${i}_2" class="w-full"></div>
           </div>
         `);
       }
     }
 
-    function actualizarCamposEdadNinos(hab) {
-      const numNinos = parseInt($(`#ninos${hab}`).val());
-      const cont1 = $(`#edad${hab}_1`);
-      const cont2 = $(`#edad${hab}_2`);
-      cont1.empty();
-      cont2.empty();
-
-      if (numNinos >= 1) {
-        cont1.append(`
-          <div class="relative w-full">
-            <i class="fas fa-hourglass-half absolute left-3 top-2.5 text-gray-400"></i>
-            <select id="edadNino${hab}_1" class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">-</option>
-              ${Array.from({ length: 13 }, (_, k) => `<option value="${k + 1}">${k + 1}</option>`).join('')}
-            </select>
-          </div>
-        `);
+    function guardarModal(){
+      const numH = parseInt(document.getElementById('habitaciones').value || '1');
+      let totalAdultos = 0, totalNinos = 0;
+      const datos = [];
+      for (let i=1;i<=numH;i++){
+        const ad = parseInt(document.getElementById('adultos'+i)?.value || '2');
+        const nn = parseInt(document.getElementById('ninos'+i)?.value || '0');
+        const edades = [];
+        if (nn>=1) edades.push(document.getElementById('edadNino'+i+'_1')?.value || '');
+        if (nn>=2) edades.push(document.getElementById('edadNino'+i+'_2')?.value || '');
+        totalAdultos += ad; totalNinos += nn;
+        datos.push({habitacion:i, adultos: ad, ninos: nn, edadesNinos: edades});
       }
 
-      if (numNinos === 2) {
-        cont2.append(`
-          <div class="relative w-full">
-            <i class="fas fa-hourglass-half absolute left-3 top-2.5 text-gray-400"></i>
-            <select id="edadNino${hab}_2" class="pl-10 pr-2 py-2 w-full rounded-lg border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">-</option>
-              ${Array.from({ length: 13 }, (_, k) => `<option value="${k + 1}">${k + 1}</option>`).join('')}
-            </select>
-          </div>
-        `);
-      }
+      // Set hidden inputs
+      document.getElementById('habitaciones_input').value = String(numH);
+      document.getElementById('adultos_input').value = String(totalAdultos);
+      document.getElementById('ninos_input').value = String(totalNinos);
+      document.getElementById('infoHabitacionesInput').value = JSON.stringify({
+        numHabitaciones: numH,
+        totalAdultos, totalNinos,
+        datosHabitaciones: datos
+      });
+
+      // Chips
+      document.getElementById('chipHabitaciones').textContent = String(numH);
+      document.getElementById('chipAdultos').textContent = String(totalAdultos);
+      document.getElementById('chipNinos').textContent = String(totalNinos);
+
+      // Cerrar
+      document.getElementById('habitacionesModal').classList.add('hidden');
     }
 
-    $(document).on('change', '#habitaciones', () => {
+    // ===== Eventos del modal
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelarHabitaciones');
+    const saveBtn = document.getElementById('guardarHabitaciones');
+
+    openBtn?.addEventListener('click', ()=> document.getElementById('habitacionesModal').classList.remove('hidden'));
+    [closeBtn, cancelBtn].forEach(b=> b?.addEventListener('click', ()=> document.getElementById('habitacionesModal').classList.add('hidden')));
+    saveBtn?.addEventListener('click', guardarModal);
+
+    document.getElementById('habitaciones')?.addEventListener('change', ()=>{
       actualizarHabitaciones();
       actualizarCamposEdadNinos(1);
     });
 
-    $(document).on('change', '.ninos-select', function () {
-      const h = $(this).data('habitacion');
-      actualizarCamposEdadNinos(h);
-    });
-
-    $('#guardarHabitaciones').on('click', function () {
-      const numH = parseInt($('#habitaciones').val());
-      let totalAdultos = 0, totalNinos = 0, datos = [];
-
-      for (let i = 1; i <= numH; i++) {
-        let ad = $(`#adultos${i}`).val() || 2;
-        let nn = $(`#ninos${i}`).val() || 0;
-        let edades = [];
-        for (let j = 1; j <= nn; j++) {
-          edades.push($(`#edadNino${i}_${j}`).val() || '');
-        }
-        totalAdultos += parseInt(ad);
-        totalNinos += parseInt(nn);
-        datos.push({ habitacion: i, adultos: ad, ninos: nn, edadesNinos: edades });
+    document.addEventListener('change', (e)=>{
+      const el = e.target;
+      if (el && el.classList && el.classList.contains('ninos-select')){
+        const hab = el.getAttribute('data-habitacion');
+        actualizarCamposEdadNinos(hab);
       }
-
-      $('#infoHabitacionesInput').val(JSON.stringify({
-        numHabitaciones: numH,
-        totalAdultos,
-        totalNinos,
-        datosHabitaciones: datos
-      }));
-      $('#habitaciones_input').val(numH);
-      $('#adultos_input').val(totalAdultos);
-      $('#ninos_input').val(totalNinos);
-
-      $('#openModalBtn').html(`
-        <i class="fas fa-bed mr-1"></i>${numH}
-        <i class="fas fa-user ml-3 mr-1"></i>${totalAdultos}
-        <i class="fas fa-child ml-3 mr-1"></i>${totalNinos}
-      `);
-      $('#habitacionesModal').addClass('hidden');
     });
 
-    $('#habitaciones').trigger('change');
-    actualizarCamposEdadNinos(1);
-  });
-</script>
+    // ===== Plugins opcionales (solo si existen)
+    if (window.jQuery) {
+      if ($.fn.select2) {
+        $('#destino').select2({ placeholder: '¿A dónde vas?', allowClear: true, width: 'resolve' });
+      }
+      if ($.fn.daterangepicker && window.moment) {
+        const initial = $('#fechas_viaje').val();
+        const cfg = { locale: { format: 'YYYY-MM-DD', separator: ' - ' } };
+        if (initial && initial.includes(' - ')) {
+          const [a,b] = initial.split(' - ');
+          $('#fechas_viaje').daterangepicker({ ...cfg, startDate: a, endDate: b });
+        } else {
+          $('#fechas_viaje').daterangepicker({ ...cfg, startDate: moment(), endDate: moment().add(1,'days') });
+        }
+      }
+    }
 
+    // ===== Inicialización
+    // Si viene info_habitaciones de GET, reconstruir modal/chips
+    try {
+      const prev = JSON.parse(document.getElementById('infoHabitacionesInput').value || 'null');
+      if (prev && prev.numHabitaciones){
+        document.getElementById('habitaciones').value = prev.numHabitaciones;
+        actualizarHabitaciones();
+        prev.datosHabitaciones?.forEach(d=>{
+          const i = d.habitacion;
+          const a = document.getElementById('adultos'+i); if (a) a.value = d.adultos;
+          const n = document.getElementById('ninos'+i);   if (n) n.value = d.ninos;
+          actualizarCamposEdadNinos(i);
+          (d.edadesNinos||[]).forEach((edad,idx)=>{
+            const s = document.getElementById('edadNino'+i+'_'+(idx+1));
+            if (s) s.value = edad;
+          });
+        });
+        // Chips
+        document.getElementById('chipHabitaciones').textContent = String(prev.numHabitaciones);
+        document.getElementById('chipAdultos').textContent = String(prev.totalAdultos||'');
+        document.getElementById('chipNinos').textContent = String(prev.totalNinos||'');
+        // Hidden (por si no estaban)
+        document.getElementById('habitaciones_input').value = String(prev.numHabitaciones);
+        if (prev.totalAdultos) document.getElementById('adultos_input').value = String(prev.totalAdultos);
+        if (prev.totalNinos)   document.getElementById('ninos_input').value   = String(prev.totalNinos);
+      } else {
+        // Si no hay prev, al menos preparar edades de H1
+        actualizarCamposEdadNinos(1);
+      }
+    } catch (e) {
+      actualizarCamposEdadNinos(1);
+    }
+  })();
+</script>
 {% endblock %}
 
 {% block hotel_content %}{% endblock %}
 {% endblock %}
-

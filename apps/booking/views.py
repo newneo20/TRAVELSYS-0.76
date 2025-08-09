@@ -65,6 +65,8 @@ from apps.backoffice.models import (
     Traslado,
     Ubicacion,
     Vehiculo,
+    Remitente,
+    Oferta,
 )
 from apps.backoffice.funciones_externas import (
     ChequearIntervalos,
@@ -345,15 +347,115 @@ def perfil_cliente(request):
     # GET
     return render(request, 'booking/perfil_cliente.html', {'user': usuario})
 
-# Vista para el dashboard de hoteles
+# apps/booking/views.py
+from pathlib import Path
+from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles import finders
+from django.templatetags.static import static
+from django.utils.text import slugify
+from django.shortcuts import render
+
+SEARCH_DIR = "backoffice/fotos_hoteles"
+DEFAULT_IMAGE = f"{SEARCH_DIR}/gran_memories_santa_maria.jpeg"
+EXTS = (".jpeg", ".jpg", ".png")
+
+def _find_image_url_by_name(name: str, hint: str | None = None) -> str:
+    """
+    Busca la imagen en static/backoffice/fotos_hoteles:
+      1) Usa 'hint' si existe (puede ser 'packard.jpeg' o ruta relativa 'backoffice/fotos_hoteles/packard.jpeg')
+      2) Prueba slug del nombre con .jpeg/.jpg/.png
+      3) Busca coincidencias laxas en el directorio (slug in filename)
+      4) Fallback por defecto
+    Devuelve URL lista para <img src="..."> con static()
+    """
+    # 1) Hint directo
+    if hint:
+        rel_hint = hint if "/" in hint else f"{SEARCH_DIR}/{hint}"
+        if finders.find(rel_hint):
+            return static(rel_hint)
+
+    # 2) Slug exacto con extensiones
+    base = slugify(name or "")
+    if base:
+        for ext in EXTS:
+            rel_try = f"{SEARCH_DIR}/{base}{ext}"
+            if finders.find(rel_try):
+                return static(rel_try)
+
+        # 3) Coincidencia laxa en el directorio
+        dir_abs = finders.find(SEARCH_DIR)
+        if dir_abs:
+            p = Path(dir_abs)
+            if p.is_dir():
+                for f in p.iterdir():
+                    if f.is_file() and f.suffix.lower() in EXTS:
+                        fslug = slugify(f.stem)
+                        if base in fslug or fslug in base:
+                            return static(f"{SEARCH_DIR}/{f.name}")
+
+    # 4) Fallback
+    return static(DEFAULT_IMAGE)
+
 @login_required
 def hotel_dashboard(request):
-    destinos = PoloTuristico.objects.all()  # Obtener todos los destinos turísticos
+    destinos_qs = PoloTuristico.objects.all()
+
+    # Enriquecemos destinos con foto_url ya resuelta
+    destinos = []
+    for d in destinos_qs:
+        # Asumimos que el modelo puede tener 'foto' (opcional). Si no, remove el getattr.
+        foto_url = _find_image_url_by_name(getattr(d, "nombre", ""), getattr(d, "foto", None))
+        destinos.append({
+            "id": d.id,
+            "nombre": d.nombre,
+            "foto_url": foto_url,
+        })
+
+    # Creamos slides: toma hasta 3 destinos; si no hay, usa fallback estático
+    slides = []
+    for d in destinos[:3]:
+        slides.append({
+            "image": d["foto_url"],
+            "title": d["nombre"],
+            "caption": "Descubre ofertas y disponibilidad en este destino",
+            "alt": f"Foto de {d['nombre']}",
+            "badge": d["nombre"],
+            "cta": "#",
+        })
+
+    if not slides:
+        slides = [
+            {
+                "image": static(f"{SEARCH_DIR}/iberostar_grand_packard.jpeg"),
+                "title": "Iberostar Packard",
+                "caption": "Lujo y confort en el corazón de La Habana",
+                "alt": "Fachada del hotel Iberostar Packard de noche",
+                "badge": "La Habana",
+                "cta": "#",
+            },
+            {
+                "image": static(f"{SEARCH_DIR}/memories_miramar_habana.jpeg"),
+                "title": "Memories Miramar Habana",
+                "caption": "Experiencias inolvidables con vistas al mar",
+                "alt": "Piscina del hotel con vista al mar",
+                "badge": "Miramar",
+                "cta": "#",
+            },
+            {
+                "image": static(f"{SEARCH_DIR}/gran_memories_santa_maria.jpeg"),
+                "title": "Gran Memories Santa Maria",
+                "caption": "Paraíso tropical para unas vacaciones perfectas",
+                "alt": "Playa y palmeras en Cayo Santa María",
+                "badge": "Cayo Santa María",
+                "cta": "#",
+            },
+        ]
 
     context = {
-        'destinos': destinos,
-    }    
-    return render(request, 'booking/hotel/dashboard.html', context)
+        "destinos": destinos,
+        "slides": slides,  # lo inyectamos al template
+    }
+    return render(request, "booking/hotel/dashboard.html", context)
 
 # ================================================================================================== #
 # ---------------------------------------- Sección: Hotel Búsqueda --------------------------------- #
