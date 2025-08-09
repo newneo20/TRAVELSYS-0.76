@@ -4,223 +4,242 @@
 
 {% block content %}
 
-<!-- ESTRUCTURA PRO-MAX INICIO -->
-<div 
-  x-data="{ isDark: false, profileDropdown: false }" 
-  x-init="document.documentElement.classList.remove('dark')" 
-  class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6"
->
+<div class="min-h-screen py-6 bg-gray-50 dark:bg-gray-900">
 
-  <!-- Contenedor central ancho máximo -->
-  <div class="mx-auto max-w-[1800px] px-6">
+  <div class="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
 
-    <!-- Top Header -->
-    <div class="flex flex-col md:flex-row justify-between items-center border-b border-gray-300 pb-4 mb-6">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2 md:mb-0">Panel de Control</h1>
-        <p class="text-sm text-gray-500">TravelSYS - Resumen administrativo</p>
-      </div>
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Panel de Control
+          </h1>
+          <p class="text-sm text-gray-600 dark:text-gray-300">TravelSYS – Resumen administrativo</p>
+        </div>
 
-      <!-- Dropdown PRO del rango de fechas -->
-      <div class="relative" x-data="{ open: false }">
-        <button 
-          @click="open = !open"
-          class="inline-flex items-center px-4 py-2 text-sm font-semibold bg-white border border-gray-300 text-gray-700 rounded-lg shadow hover:bg-gray-50 transition"
-        >
-          <i class="far fa-calendar-alt mr-2"></i>
-          {{ selected_range|default:"Este mes" }}
-          <i class="fas fa-chevron-down ml-2"></i>
-        </button>
+        <!-- Selector de rango -->
+        <div x-data="{ open:false }" class="relative">
+          <button
+            type="button"
+            @click="open=!open"
+            class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-haspopup="true"
+            :aria-expanded="open"
+          >
+            <i class="far fa-calendar-alt"></i>
+            <span>{{ selected_range|default:"Este mes" }}</span>
+            <i class="fas fa-chevron-down text-xs"></i>
+          </button>
 
-        <div 
-          class="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow z-50"
-          x-show="open"
-          @click.away="open = false"
-          x-transition
-        >
-          <ul class="py-1 text-sm text-gray-700">
-            <li><a class="block px-4 py-2 hover:bg-gray-100" href="?range=hoy">Hoy</a></li>
-            <li><a class="block px-4 py-2 hover:bg-gray-100" href="?range=7_dias">Últimos 7 días</a></li>
-            <li><a class="block px-4 py-2 hover:bg-gray-100" href="?range=30_dias">Últimos 30 días</a></li>
-            <li><a class="block px-4 py-2 hover:bg-gray-100" href="?range=mes">Este mes</a></li>
-            <li><a class="block px-4 py-2 hover:bg-gray-100" href="?range=ano">Este año</a></li>
-          </ul>
+          <div
+            x-cloak
+            x-show="open"
+            @click.outside="open=false"
+            x-transition
+            class="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl z-20"
+            role="menu"
+          >
+            <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+              <li><a class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg" href="?range=hoy">Hoy</a></li>
+              <li><a class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg" href="?range=7_dias">Últimos 7 días</a></li>
+              <li><a class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg" href="?range=30_dias">Últimos 30 días</a></li>
+              <li><a class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg" href="?range=mes">Este mes</a></li>
+              <li><a class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg" href="?range=ano">Este año</a></li>
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    
-    <!-- BLOQUE 2: TARJETAS DE RESUMEN PRO-MAX -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+    <!-- KPIs -->
+    <section class="mb-10">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- KPI -->
+        <a href="{% url 'backoffice:listar_reservas' %}" class="group rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+              <i class="fas fa-clipboard-list"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total reservas</p>
+              <p class="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">{{ total_reservas }}</p>
+            </div>
+          </div>
+        </a>
 
-      <!-- Total de Reservas -->
-      <a href="{% url 'backoffice:listar_reservas' %}" 
-        class="group flex items-center p-6 bg-gradient-to-r from-blue-500/90 to-blue-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
-        <i class="fas fa-clipboard-list text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-        <div class="text-white">
-          <h3 class="font-bold text-lg">Total Reservas</h3>
-          <p class="text-2xl font-extrabold tracking-wider">{{ total_reservas }}</p>
+        <div class="group rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
+              <i class="fas fa-dollar-sign"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Ingresos</p>
+              <p class="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">${{ ingresos_totales|floatformat:2 }}</p>
+            </div>
+          </div>
         </div>
-      </a>
 
-      <!-- Ingresos Totales -->
-      <div class="group flex items-center p-6 bg-gradient-to-r from-green-600/90 to-green-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
-        <i class="fas fa-dollar-sign text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-        <div class="text-white">
-          <h3 class="font-bold text-lg">Ingresos</h3>
-          <p class="text-2xl font-extrabold tracking-wider">${{ ingresos_totales|floatformat:2 }}</p>
+        <div class="group rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300">
+              <i class="fas fa-chart-line"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Gastos</p>
+              <p class="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">${{ gastos_totales|floatformat:2 }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="group rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+              <i class="fas fa-coins"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Ganancia total</p>
+              <p class="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">${{ ganancia_total|floatformat:2 }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="group rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300">
+              <i class="fas fa-user-check"></i>
+            </span>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Usuarios activos</p>
+              <p class="mt-1 text-2xl font-extrabold text-gray-900 dark:text-white">{{ usuarios_activos }}</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- Gastos Totales -->
-      <div class="group flex items-center p-6 bg-gradient-to-r from-red-600/90 to-red-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
-        <i class="fas fa-chart-line text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-        <div class="text-white">
-          <h3 class="font-bold text-lg">Gastos</h3>
-          <p class="text-2xl font-extrabold tracking-wider">${{ gastos_totales|floatformat:2 }}</p>
-        </div>
-      </div>
-
-      <!-- Ganancia Total -->
-      <div class="group flex items-center p-6 bg-gradient-to-r from-yellow-500/90 to-yellow-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
-        <i class="fas fa-coins text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-        <div class="text-white">
-          <h3 class="font-bold text-lg">Ganancia Total</h3>
-          <p class="text-2xl font-extrabold tracking-wider">${{ ganancia_total|floatformat:2 }}</p>
-        </div>
-      </div>
-
-      <!-- Usuarios Activos -->
-      <div class="group flex items-center p-6 bg-gradient-to-r from-purple-600/90 to-purple-400/90 rounded-3xl shadow-xl hover:scale-105 transition-transform duration-300">
-        <i class="fas fa-user-check text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-        <div class="text-white">
-          <h3 class="font-bold text-lg">Usuarios Activos</h3>
-          <p class="text-2xl font-extrabold tracking-wider">{{ usuarios_activos }}</p>
-        </div>
-      </div>
-
     </section>
 
-    <!-- BLOQUE 3: ACCIONES RÁPIDAS PRO-MAX -->
+    <!-- Acciones rápidas -->
     <section class="mb-12">
-      <h2 class="text-xl font-bold text-gray-700 mb-6">Acciones Rápidas</h2>
+      <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Acciones rápidas</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-
-        <!-- Crear Hotel -->
-        <a href="{% url 'backoffice:crear_hotel' %}" class="group flex items-center p-4 bg-gradient-to-r from-cyan-500/90 to-cyan-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-hotel text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Nuevo Hotel</h3>
-            <p class="text-sm">Agregar hotel</p>
+        <a href="{% url 'backoffice:crear_hotel' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300"><i class="fas fa-hotel"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Nuevo hotel</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Agregar hotel</p>
+            </div>
           </div>
         </a>
 
-        <!-- Crear Usuario -->
-        <a href="{% url 'crear_usuario' %}" class="group flex items-center p-4 bg-gradient-to-r from-blue-600/90 to-blue-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-user-plus text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Nuevo Usuario</h3>
-            <p class="text-sm">Registrar usuario</p>
+        <a href="{% url 'crear_usuario' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"><i class="fas fa-user-plus"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Nuevo usuario</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Registrar usuario</p>
+            </div>
           </div>
         </a>
 
-        <!-- Generar Reporte -->
-        <a href="#" class="group flex items-center p-4 bg-gradient-to-r from-green-600/90 to-green-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-file-invoice-dollar text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Generar Reporte</h3>
-            <p class="text-sm">Ver informes</p>
+        <a href="#" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><i class="fas fa-file-invoice-dollar"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Generar reporte</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Ver informes</p>
+            </div>
           </div>
         </a>
 
-        <!-- Configuración -->
-        <a href="#" class="group flex items-center p-4 bg-gradient-to-r from-indigo-600/90 to-indigo-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-cogs text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Configuración</h3>
-            <p class="text-sm">Parámetros del sistema</p>
+        <a href="#" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><i class="fas fa-cogs"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Configuración</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Parámetros del sistema</p>
+            </div>
           </div>
         </a>
       </div>
     </section>
 
-    <!-- BLOQUE CONTABLE PRO-MAX -->
+    <!-- Panel financiero -->
     <section class="mb-12">
-      <h2 class="text-xl font-bold text-gray-700 mb-6">Panel Financiero</h2>
+      <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Panel financiero</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-
-        <a href="{% url 'backoffice:listar_tasas_cambio' %}" class="group flex items-center p-4 bg-gradient-to-r from-yellow-500/90 to-yellow-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-exchange-alt text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Tasas de Cambio</h3>
-            <p class="text-sm">Gestión de divisas</p>
+        <a href="{% url 'backoffice:listar_tasas_cambio' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300"><i class="fas fa-exchange-alt"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Tasas de cambio</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Gestión de divisas</p>
+            </div>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_certificados' %}" class="group flex items-center p-4 bg-gradient-to-r from-pink-500/90 to-pink-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-certificate text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Certificados</h3>
-            <p class="text-sm">Reservas prepago</p>
+        <a href="{% url 'backoffice:listar_certificados' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-300"><i class="fas fa-certificate"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Certificados</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Reservas prepago</p>
+            </div>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_proveedores' %}" class="group flex items-center p-4 bg-gradient-to-r from-indigo-500/90 to-indigo-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-truck text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Proveedores</h3>
-            <p class="text-sm">Control de gastos</p>
+        <a href="{% url 'backoffice:listar_proveedores' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"><i class="fas fa-truck"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Proveedores</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Control de gastos</p>
+            </div>
           </div>
         </a>
 
-        <a href="{% url 'backoffice:listar_clientes' %}" class="group flex items-center p-4 bg-gradient-to-r from-green-500/90 to-green-400/90 rounded-2xl shadow-lg hover:scale-105 transition">
-          <i class="fas fa-users text-white text-4xl mr-4 group-hover:animate-bounce"></i>
-          <div class="text-white">
-            <h3 class="font-semibold text-lg">Clientes</h3>
-            <p class="text-sm">Cuentas y créditos</p>
+        <a href="{% url 'backoffice:listar_clientes' %}" class="group rounded-2xl p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"><i class="fas fa-users"></i></span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">Clientes</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Cuentas y créditos</p>
+            </div>
           </div>
         </a>
       </div>
     </section>
 
-
-    <!-- BLOQUE 4: MÉTRICAS GRÁFICAS DE RENDIMIENTO -->
+    <!-- Métricas (Charts) -->
     <section class="mb-12">
-      <h2 class="text-xl font-bold text-gray-700 mb-6">Métricas de Desempeño</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        <!-- Gráfico de Reservas Mensuales -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-chart-line text-blue-500 mr-2"></i> Reservas Mensuales
+      <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Métricas de desempeño</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-line text-blue-500"></i> Reservas mensuales
           </h3>
-          <canvas id="reservasMensualesChart"></canvas>
+          <canvas id="reservasMensualesChart" height="140"></canvas>
         </div>
-
-        <!-- Gráfico de Ingresos vs Gastos -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-chart-bar text-green-500 mr-2"></i> Ingresos & Gastos
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-bar text-emerald-500"></i> Ingresos & Gastos
           </h3>
-          <canvas id="ingresosGastosChart"></canvas>
+          <canvas id="ingresosGastosChart" height="140"></canvas>
         </div>
-
       </div>
     </section>
 
-    <!-- BLOQUE 5: TOP AGENCIAS Y HOTELES -->
+    <!-- Tablas: Top -->
     <section class="mb-12">
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-        <!-- Top 5 Agencias -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-building text-indigo-500 mr-2"></i> Top 5 Agencias
+        <!-- Top agencias -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-building text-indigo-500"></i> Top 5 Agencias
           </h3>
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
-              <thead class="bg-gray-100">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200 sticky top-0">
                 <tr>
                   <th class="py-2">Agencia</th>
                   <th>Reservas</th>
@@ -228,17 +247,17 @@
                   <th>% Total</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 {% for agencia in top_agencias %}
-                  <tr>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                     <td class="py-2">{{ agencia.agencia }}</td>
                     <td>{{ agencia.total_reservas }}</td>
                     <td>${{ agencia.ingresos|default:"0.00"|floatformat:2 }}</td>
                     <td>
-                      <div class="w-full bg-gray-200 rounded h-4 relative">
-                        <div class="absolute top-0 left-0 h-4 bg-blue-600 rounded" style="width: {{ agencia.porcentaje|default:"0" }}%;"></div>
+                      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-2">
+                        <div class="h-2 bg-blue-600 rounded" style="width: {{ agencia.porcentaje|default:'0' }}%"></div>
                       </div>
-                      <span class="text-xs font-medium">{{ agencia.porcentaje|default:"0"|floatformat:1 }}%</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400">{{ agencia.porcentaje|default:"0"|floatformat:1 }}%</span>
                     </td>
                   </tr>
                 {% empty %}
@@ -249,14 +268,14 @@
           </div>
         </div>
 
-        <!-- Top 5 Hoteles -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center">
-            <i class="fas fa-hotel text-purple-500 mr-2"></i> Top 5 Hoteles
+        <!-- Top hoteles -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <i class="fas fa-hotel text-purple-500"></i> Top 5 Hoteles
           </h3>
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
-              <thead class="bg-gray-100">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200 sticky top-0">
                 <tr>
                   <th class="py-2">Hotel</th>
                   <th>Reservas</th>
@@ -264,9 +283,9 @@
                   <th>Ocupación</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200">
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 {% for hotel in top_hoteles %}
-                  <tr>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                     <td class="py-2">{{ hotel.hotel_nombre }}</td>
                     <td>{{ hotel.num_reservas }}</td>
                     <td>
@@ -281,10 +300,10 @@
                       </div>
                     </td>
                     <td>
-                      <div class="w-full bg-gray-200 rounded h-4 relative">
-                        <div class="absolute top-0 left-0 h-4 bg-green-500 rounded" style="width: {{ hotel.ocupacion }}%;"></div>
+                      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded h-2">
+                        <div class="h-2 bg-emerald-500 rounded" style="width: {{ hotel.ocupacion }}%"></div>
                       </div>
-                      <span class="text-xs font-medium">{{ hotel.ocupacion }}%</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400">{{ hotel.ocupacion }}%</span>
                     </td>
                   </tr>
                 {% empty %}
@@ -298,21 +317,18 @@
       </div>
     </section>
 
-    <!-- BLOQUE 6: ALERTAS DE PAGO Y COBRO -->
+    <!-- Alertas -->
     <section class="mb-12">
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-        <!-- Alerta de Pago -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center text-red-600">
-            <i class="fas fa-exclamation-circle mr-2"></i> Alerta de Pago ({{ total_alerta_pago }})
+        <!-- Pago -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-rose-600 dark:text-rose-400 mb-4 flex items-center gap-2">
+            <i class="fas fa-exclamation-circle"></i> Alerta de pago ({{ total_alerta_pago }})
           </h3>
-          <!-- Tabla responsiva para mostrar reservas con alerta de pago -->
+
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
-              
-              <!-- Encabezado de la tabla -->
-              <thead class="bg-gray-100">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200">
                 <tr>
                   <th class="py-2">Hotel</th>
                   <th>Cliente</th>
@@ -320,73 +336,65 @@
                   <th>Estado</th>
                 </tr>
               </thead>
-
-              <!-- Cuerpo de la tabla -->
-              <tbody class="divide-y divide-gray-200">
-
-                <!-- Iteración sobre las reservas con alerta de pago -->
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 {% for reserva in reservas_alerta_pago %}
-                  <tr>
-                    <!-- Mostrar el nombre del hotel (local o importado desde API Distal) -->
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                     <td class="py-2">
                       {% if reserva.hotel %}
                         {{ reserva.hotel.hotel_nombre }}
                       {% elif reserva.hotel_importado %}
                         {{ reserva.hotel_importado.hotel_name }}
                       {% else %}
-                        <!-- En caso de que no exista ninguno -->
                         <span class="text-gray-400 italic">Sin hotel</span>
                       {% endif %}
                     </td>
-
-                    <!-- Mostrar nombre de usuario o cliente -->
                     <td>{{ reserva.nombre_usuario }}</td>
-
-                    <!-- Mostrar la fecha de check-in (se corta para mostrar solo YYYY-MM-DD) -->
                     <td>{{ reserva.habitaciones_reserva.first.fechas_viaje|slice:":10" }}</td>
-
-                    <!-- Mostrar estatus de la reserva -->
-                    <td>{{ reserva.estatus }}</td>
+                    <td>
+                      <span class="inline-flex px-2 py-0.5 rounded-full text-xs border
+                                   {% if reserva.estatus == 'PENDIENTE' %}
+                                     bg-amber-50 text-amber-700 border-amber-200
+                                   {% elif reserva.estatus == 'PAGADA' %}
+                                     bg-emerald-50 text-emerald-700 border-emerald-200
+                                   {% else %}
+                                     bg-gray-50 text-gray-700 border-gray-200
+                                   {% endif %}">
+                        {{ reserva.estatus }}
+                      </span>
+                    </td>
                   </tr>
-
-                <!-- Si no hay reservas en la lista -->
                 {% empty %}
-                  <tr>
-                    <td colspan="4" class="py-4 text-gray-400">Sin registros.</td>
-                  </tr>
+                  <tr><td colspan="4" class="py-4 text-gray-400">Sin registros.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
 
-
-          <!-- Paginador Pago -->
+          <!-- Paginación -->
           <div class="flex justify-center mt-4">
-            <nav class="inline-flex rounded-lg border bg-white shadow">
+            <nav class="inline-flex rounded-lg border bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm overflow-hidden">
               {% if reservas_alerta_pago.has_previous %}
-                <a href="?pago_page=1" class="px-3 py-1 border-r hover:bg-gray-100">&laquo;&laquo;</a>
-                <a href="?pago_page={{ reservas_alerta_pago.previous_page_number }}" class="px-3 py-1 border-r hover:bg-gray-100">&laquo;</a>
+                <a href="?pago_page=1" class="px-3 py-1 border-r dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&laquo;&laquo;</a>
+                <a href="?pago_page={{ reservas_alerta_pago.previous_page_number }}" class="px-3 py-1 border-r dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&laquo;</a>
               {% endif %}
               <span class="px-3 py-1 font-bold bg-indigo-600 text-white">{{ reservas_alerta_pago.number }}</span>
               {% if reservas_alerta_pago.has_next %}
-                <a href="?pago_page={{ reservas_alerta_pago.next_page_number }}" class="px-3 py-1 border-l hover:bg-gray-100">&raquo;</a>
-                <a href="?pago_page={{ reservas_alerta_pago.paginator.num_pages }}" class="px-3 py-1 border-l hover:bg-gray-100">&raquo;&raquo;</a>
+                <a href="?pago_page={{ reservas_alerta_pago.next_page_number }}" class="px-3 py-1 border-l dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&raquo;</a>
+                <a href="?pago_page={{ reservas_alerta_pago.paginator.num_pages }}" class="px-3 py-1 border-l dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&raquo;&raquo;</a>
               {% endif %}
             </nav>
           </div>
         </div>
 
-        <!-- Alerta de Cobro -->
-        <div class="bg-white rounded-xl shadow p-6">
-          <h3 class="font-semibold text-lg mb-4 flex items-center text-yellow-600">
-            <i class="fas fa-exclamation-triangle mr-2"></i> Alerta de Cobro ({{ total_alerta_cobro }})
+        <!-- Cobro -->
+        <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h3 class="font-semibold text-amber-600 dark:text-amber-400 mb-4 flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i> Alerta de cobro ({{ total_alerta_cobro }})
           </h3>
-          <!-- Tabla responsiva para mostrar reservas con alerta de cobro -->
+
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-center">
-              
-              <!-- Encabezado de la tabla -->
-              <thead class="bg-gray-100">
+              <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200">
                 <tr>
                   <th class="py-2">Hotel</th>
                   <th>Cliente</th>
@@ -394,96 +402,84 @@
                   <th>Estado</th>
                 </tr>
               </thead>
-
-              <!-- Cuerpo de la tabla -->
-              <tbody class="divide-y divide-gray-200">
-
-                <!-- Iteración sobre las reservas con alerta de cobro -->
+              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                 {% for reserva in reservas_alerta_cobro %}
-                  <tr>
-                    <!-- Mostrar el nombre del hotel (local o importado desde API Distal) -->
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                     <td class="py-2">
                       {% if reserva.hotel %}
                         {{ reserva.hotel.hotel_nombre }}
                       {% elif reserva.hotel_importado %}
                         {{ reserva.hotel_importado.hotel_name }}
                       {% else %}
-                        <!-- En caso de que no exista ninguno -->
                         <span class="text-gray-400 italic">Sin hotel</span>
                       {% endif %}
                     </td>
-
-                    <!-- Mostrar nombre de usuario o cliente -->
                     <td>{{ reserva.nombre_usuario }}</td>
-
-                    <!-- Mostrar la fecha de check-in (se corta para mostrar solo YYYY-MM-DD) -->
                     <td>{{ reserva.habitaciones_reserva.first.fechas_viaje|slice:":10" }}</td>
-
-                    <!-- Mostrar estatus de la reserva -->
-                    <td>{{ reserva.estatus }}</td>
+                    <td>
+                      <span class="inline-flex px-2 py-0.5 rounded-full text-xs border
+                                   {% if reserva.estatus == 'PENDIENTE' %}
+                                     bg-amber-50 text-amber-700 border-amber-200
+                                   {% elif reserva.estatus == 'COBRADA' %}
+                                     bg-emerald-50 text-emerald-700 border-emerald-200
+                                   {% else %}
+                                     bg-gray-50 text-gray-700 border-gray-200
+                                   {% endif %}">
+                        {{ reserva.estatus }}
+                      </span>
+                    </td>
                   </tr>
-
-                <!-- Si no hay reservas en la lista -->
                 {% empty %}
-                  <tr>
-                    <td colspan="4" class="py-4 text-gray-400">Sin registros.</td>
-                  </tr>
+                  <tr><td colspan="4" class="py-4 text-gray-400">Sin registros.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
 
-
-          <!-- Paginador Cobro -->
+          <!-- Paginación -->
           <div class="flex justify-center mt-4">
-            <nav class="inline-flex rounded-lg border bg-white shadow">
+            <nav class="inline-flex rounded-lg border bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm overflow-hidden">
               {% if reservas_alerta_cobro.has_previous %}
-                <a href="?cobro_page=1" class="px-3 py-1 border-r hover:bg-gray-100">&laquo;&laquo;</a>
-                <a href="?cobro_page={{ reservas_alerta_cobro.previous_page_number }}" class="px-3 py-1 border-r hover:bg-gray-100">&laquo;</a>
+                <a href="?cobro_page=1" class="px-3 py-1 border-r dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&laquo;&laquo;</a>
+                <a href="?cobro_page={{ reservas_alerta_cobro.previous_page_number }}" class="px-3 py-1 border-r dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&laquo;</a>
               {% endif %}
               <span class="px-3 py-1 font-bold bg-indigo-600 text-white">{{ reservas_alerta_cobro.number }}</span>
               {% if reservas_alerta_cobro.has_next %}
-                <a href="?cobro_page={{ reservas_alerta_cobro.next_page_number }}" class="px-3 py-1 border-l hover:bg-gray-100">&raquo;</a>
-                <a href="?cobro_page={{ reservas_alerta_cobro.paginator.num_pages }}" class="px-3 py-1 border-l hover:bg-gray-100">&raquo;&raquo;</a>
+                <a href="?cobro_page={{ reservas_alerta_cobro.next_page_number }}" class="px-3 py-1 border-l dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&raquo;</a>
+                <a href="?cobro_page={{ reservas_alerta_cobro.paginator.num_pages }}" class="px-3 py-1 border-l dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">&raquo;&raquo;</a>
               {% endif %}
             </nav>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- BLOQUE 7: NUEVOS USUARIOS RECIENTES -->
-    <section class="mb-12">
-      <h2 class="text-xl font-bold text-gray-700 mb-6">Nuevos Usuarios Registrados</h2>
-
-      <div class="bg-white rounded-xl shadow p-6 overflow-x-auto">
+    <!-- Nuevos usuarios -->
+    <section class="mb-6">
+      <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Nuevos usuarios registrados</h2>
+      <div class="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto">
         <table class="min-w-full text-sm text-center">
-          <thead class="bg-gray-100">
+          <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200">
             <tr>
               <th class="py-2">Nombre</th>
               <th>Email</th>
-              <th>Fecha Registro</th>
+              <th>Fecha registro</th>
               <th>Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
             {% for usuario in ultimos_usuarios %}
-              <tr>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/40">
                 <td class="py-2">{{ usuario.agencia }}</td>
                 <td>{{ usuario.email }}</td>
                 <td>{{ usuario.date_joined|date:"d/m/Y H:i" }}</td>
-                <td>
-                  <a href="{% url 'editar_usuario' usuario_id=usuario.id %}" 
-                    class="inline-flex items-center px-2 py-1 border border-gray-300 text-blue-500 hover:bg-blue-50 rounded mr-1" 
-                    title="Editar">
-                    <i class="fas fa-user-edit"></i>
-                  </a>
-                  <a href="#" 
-                    class="inline-flex items-center px-2 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded"
-                    title="Enviar Mensaje (Próximamente)">
-                    <i class="fas fa-envelope"></i>
-                  </a>
+                <td class="space-x-1">
+                  <a href="{% url 'editar_usuario' usuario_id=usuario.id %}"
+                     class="inline-flex items-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700"
+                     title="Editar"><i class="fas fa-user-edit"></i></a>
+                  <button type="button"
+                     class="inline-flex items-center px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                     title="Enviar mensaje" disabled><i class="fas fa-envelope"></i></button>
                 </td>
               </tr>
             {% empty %}
@@ -493,9 +489,10 @@
         </table>
       </div>
     </section>
+
   </div>
 
-  <!-- BLOQUE 8: CARGA DE GRÁFICOS CHART.JS -->
+  <!-- Charts -->
   {{ labels_meses|json_script:"labels-data" }}
   {{ datos_reservas_mensuales|json_script:"reservas-data" }}
   {{ datos_ingresos|json_script:"ingresos-data" }}
@@ -504,72 +501,69 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1) Parseamos los JSON
-      const labels   = JSON.parse(document.getElementById('labels-data').textContent);
-      const reservas = JSON.parse(document.getElementById('reservas-data').textContent);
-      const ingresos = JSON.parse(document.getElementById('ingresos-data').textContent);
-      const gastos   = JSON.parse(document.getElementById('gastos-data').textContent);
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      // Gráfico Reservas Mensuales
-      const ctxR = document.getElementById('reservasMensualesChart').getContext('2d');
-      new Chart(ctxR, {
+      // Data
+      const labels   = JSON.parse(document.getElementById('labels-data').textContent || '[]');
+      const reservas = JSON.parse(document.getElementById('reservas-data').textContent || '[]');
+      const ingresos = JSON.parse(document.getElementById('ingresos-data').textContent || '[]');
+      const gastos   = JSON.parse(document.getElementById('gastos-data').textContent || '[]');
+
+      // Theme-aware grid color
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+      const ticksColor = isDark ? '#e5e7eb' : '#374151';
+
+      // Reservas line
+      new Chart(document.getElementById('reservasMensualesChart').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labels,
+          labels,
           datasets: [{
             label: 'Reservas',
             data: reservas,
             backgroundColor: 'rgba(59,130,246,0.1)',
             borderColor: 'rgba(59,130,246,1)',
             fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
+            tension: prefersReduced ? 0 : 0.35,
+            pointRadius: 3,
+            pointHoverRadius: 5
           }]
         },
         options: {
           responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: { label: ctx => `Reservas: ${ctx.parsed.y}` }
-            }
-          },
-          scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+          animation: prefersReduced ? false : { duration: 600 },
+          plugins: { legend: { display:false }, tooltip: { callbacks: { label: c => `Reservas: ${c.parsed.y}` } } },
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
+            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: ticksColor } }
+          }
         }
       });
 
-      // Gráfico Ingresos y Gastos
-      const ctxIG = document.getElementById('ingresosGastosChart').getContext('2d');
-      new Chart(ctxIG, {
+      // Ingresos vs Gastos
+      new Chart(document.getElementById('ingresosGastosChart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: labels,
+          labels,
           datasets: [
             { label: 'Ingresos', data: ingresos, backgroundColor: 'rgba(16,185,129,0.7)', borderColor: 'rgba(5,150,105,1)', borderWidth: 1 },
-            { label: 'Gastos',   data: gastos,   backgroundColor: 'rgba(239,68,68,0.7)', borderColor: 'rgba(220,38,38,1)',  borderWidth: 1 }
+            { label: 'Gastos',   data: gastos,   backgroundColor: 'rgba(239,68,68,0.7)',  borderColor: 'rgba(220,38,38,1)',  borderWidth: 1 }
           ]
         },
         options: {
           responsive: true,
+          animation: prefersReduced ? false : { duration: 600 },
           plugins: {
-            legend: { position: 'bottom' },
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const v = ctx.parsed.y;
-                  return `${ctx.dataset.label}: $${v.toLocaleString()}`;
-                }
-              }
-            }
+            legend: { position: 'bottom', labels: { color: ticksColor } },
+            tooltip: { callbacks: { label: c => `${c.dataset.label}: $${(c.parsed.y||0).toLocaleString()}` } }
           },
           scales: {
-            x: { stacked: false },
+            x: { grid: { color: gridColor }, ticks: { color: ticksColor } },
             y: {
               beginAtZero: true,
-              ticks: {
-                callback: v => `$${v.toLocaleString()}`
-              }
+              grid: { color: gridColor },
+              ticks: { color: ticksColor, callback: v => `$${v.toLocaleString()}` }
             }
           }
         }
@@ -577,95 +571,12 @@
     });
   </script>
 
-  <!-- BLOQUE 10: AJUSTES PRO-MAX FINALES -->
+  <!-- Micro-estilos no intrusivos -->
   <style>
-    /* Mejora global para los scrolls */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #bbb;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f5f5f5;
-    }
-
-    /* Transiciones generales suaves */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    /* Sombras uniformes para tarjetas */
-    .shadow-pro {
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
-
-    /* Animación para que el dashboard cargue suave */
-    .fade-enter {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .fade-enter-active {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  </style>
-
-  <script>
-    // Animación al cargar página
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.fade-enter').forEach(el => {
-        setTimeout(() => el.classList.add('fade-enter-active'), 50);
-      });
-    });
-  </script>
-
-  <style>
-    /* Scrollbar personalizado */
-    .custom-scrollbar::-webkit-scrollbar {
-      height: 6px;
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: #bbb;
-      border-radius: 9999px;
-    }
-    
-    /* Animaciones PRO-MAX */
-    @keyframes fadeInUp {
-      0% { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up {
-      animation: fadeInUp 0.6s ease-out both;
-    }
-    
-    /* Tarjetas animadas */
-    .animated-card {
-      opacity: 0;
-      animation: fadeInUp 0.5s ease forwards;
-    }
-    .animated-card:nth-child(1) { animation-delay: 0.1s; }
-    .animated-card:nth-child(2) { animation-delay: 0.2s; }
-    .animated-card:nth-child(3) { animation-delay: 0.3s; }
-    .animated-card:nth-child(4) { animation-delay: 0.4s; }
-    .animated-card:nth-child(5) { animation-delay: 0.5s; }
-    
-    /* Loader giratorio */
-    .loader {
-      border-top-color: #3498db;
-      animation: spinner 1s linear infinite;
-    }
-    @keyframes spinner {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    [x-cloak]{display:none!important}
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px}
+    .dark ::-webkit-scrollbar-thumb{background:#475569}
   </style>
 </div>
 
