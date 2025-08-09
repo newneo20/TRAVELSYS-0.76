@@ -8,6 +8,7 @@ import json
 import logging
 import time
 import requests
+import re
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from random import randint
@@ -30,6 +31,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist  # type: 
 from django.core.files.storage import default_storage  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.db import transaction  # type: ignore
+from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
 
 # ===============================
 # Imports locales
@@ -48,6 +51,10 @@ from .forms import (
 )
 from .funciones_externas import leer_datos_hoteles
 from apps.booking.xml_builders_1way2italy import enviar_booking_api
+
+logger = logging.getLogger(__name__)
+
+BOOKING_WINDOW_RE = re.compile(r"^\d{4}-\d{2}-\d{2}\s*-\s*\d{4}-\d{2}-\d{2}$")
 
 @login_required
 def logout_view(request):
@@ -504,23 +511,23 @@ def editar_hotel(request, hotel_id):
     }
     return render(request, 'backoffice/hoteles/hotel_management.html', context)
 
-@manager_required
-@login_required
-def listar_habitaciones(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    habitaciones = Habitacion.objects.filter(hotel=hotel)
-    data = {
-        'habitaciones': [
-            {
-                'id': habitacion.id,
-                'tipo_habitacion': habitacion.tipo,
-                'descripcion': habitacion.descripcion,
-                'capacidad_habitacion': habitacion.max_capacidad,
-            }
-            for habitacion in habitaciones
-        ]
-    }
-    return JsonResponse(data)
+#@manager_required
+#@login_required
+#def listar_habitaciones(request, hotel_id):
+#    hotel = get_object_or_404(Hotel, id=hotel_id)
+#    habitaciones = Habitacion.objects.filter(hotel=hotel)
+#    data = {
+#        'habitaciones': [
+#            {
+#                'id': habitacion.id,
+#                'tipo_habitacion': habitacion.tipo,
+#                'descripcion': habitacion.descripcion,
+#                'capacidad_habitacion': habitacion.max_capacidad,
+#            }
+#            for habitacion in habitaciones
+#        ]
+#    }
+#    return JsonResponse(data)
 
 # Vista para guardar una nueva habitación
 @manager_required
@@ -578,99 +585,195 @@ def guardar_habitacion(request, hotel_id):
 # Vista para obtener los datos de una habitación específica
 @login_required
 def obtener_habitacion_test(request, habitacion_id):
-    try:
-        habitacion = Habitacion.objects.get(id=habitacion_id)
-        data = {
-            'habitacion': {
-                'id': habitacion.id,
-                'tipo': habitacion.tipo,
-                'descripcion': habitacion.descripcion,
-                'max_capacidad': habitacion.max_capacidad,
-                'min_capacidad': habitacion.min_capacidad,
-                'adultos': habitacion.adultos,
-                'ninos': habitacion.ninos,
-                'descripcion_capacidad': habitacion.descripcion_capacidad,
-                'admite_3_con_1': habitacion.admite_3_con_1,
-                'solo_adultos': habitacion.solo_adultos,
-            }
+    # Validar que solo se permita GET
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    # Obtener la habitación o devolver 404
+    habitacion = get_object_or_404(Habitacion, pk=habitacion_id)
+
+    # Construir respuesta
+    data = {
+        'habitacion': {
+            'id': habitacion.id,
+            'tipo': habitacion.tipo,
+            'descripcion': habitacion.descripcion,
+            'max_capacidad': habitacion.max_capacidad,
+            'min_capacidad': habitacion.min_capacidad,
+            'adultos': habitacion.adultos,
+            'ninos': habitacion.ninos,
+            'descripcion_capacidad': habitacion.descripcion_capacidad,
+            'admite_3_con_1': habitacion.admite_3_con_1,
+            'solo_adultos': habitacion.solo_adultos,
         }
-        return JsonResponse(data)
-    except Habitacion.DoesNotExist:
-        return JsonResponse({'error': 'Habitación no encontrada'}, status=404)
+    }
+    return JsonResponse(data)
 
 @login_required
 def editar_oferta(request, oferta_id):
     return JsonResponse({'oferta_id': oferta_id})
 
-@csrf_exempt
-def crear_editar_oferta(request):
-    if request.method != "POST":
-        return JsonResponse({"status": "error", "message": "Método no permitido"}, status=405)
+def _to_bool(value, default=False):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in ("1", "true", "t", "yes", "y", "si", "sí"):
+            return True
+        if v in ("0", "false", "f", "no", "n"):
+            return False
+    return default
 
+def _to_int(value, default=None):
     try:
-        data = json.loads(request.body)
-        print(">>> DATA RECIBIDA:", data)
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
-        # 1) Ajuste para coger bien el id
-        oferta_id = data.get('oferta_id') or data.get('id')
-        hotel_id  = data.get('hotel_id')
+def _to_decimal(value, default=None):
+    try:
+        if value in (None, ""):
+            return default
+        return Decimal(str(value))
+    except Exception:
+        return default
 
-        if not hotel_id:
-            return JsonResponse({"status": "error", "message": "Debe especificar hotel_id en la solicitud"}, status=400)
+@login_required
+@require_POST
+@transaction.atomic
+def crear_editar_oferta(request):
+    """
+    Crea o actualiza una Oferta asociada a un Hotel.
+    - Espera JSON en el body.
+    - Valida hotel_id obligatorio.
+    - Si viene oferta_id (o id) actualiza, si no, crea.
+    - Valida formato booking_window: 'YYYY-MM-DD - YYYY-MM-DD'
+    - Maneja bool/int/decimal en campos comunes.
+    - Devuelve JSON con id de la oferta y mensaje.
+    """
+    # 1) Parseo seguro del JSON
+    try:
+        raw_body = request.body.decode("utf-8") if request.body else "{}"
+        data = json.loads(raw_body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"status": "error", "message": "JSON inválido en el cuerpo de la solicitud."},
+            status=400
+        )
 
-        # 2) Obtener o crear la oferta
-        if oferta_id:
-            oferta = Oferta.objects.get(id=oferta_id)
-            mensaje = "Oferta actualizada exitosamente."
-        else:
-            oferta = Oferta()
-            mensaje = "Oferta creada exitosamente."
+    logger.debug("crear_editar_oferta | DATA RECIBIDA: %s", data)
 
-        # Asociar el hotel (foreign key)
-        try:
-            oferta.hotel = Hotel.objects.get(id=hotel_id)
-        except Hotel.DoesNotExist:
-            return JsonResponse({"status": "error", "message": f"Hotel con id {hotel_id} no existe"}, status=400)
+    # 2) Validaciones básicas
+    oferta_id = data.get("oferta_id") or data.get("id")
+    hotel_id = data.get("hotel_id")
+    if not hotel_id:
+        return JsonResponse(
+            {"status": "error", "message": "Debe especificar 'hotel_id'."},
+            status=400
+        )
 
-        # PRINT COMPLETO ANTES
-        print(">>> OFERTA ANTES DE ASIGNAR:", model_to_dict(oferta))
+    # 3) Obtener hotel y oferta (cuando aplique)
+    hotel = get_object_or_404(Hotel, pk=hotel_id)
 
-        # Asignamos todos los campos...
-        oferta.disponible                 = data.get('disponible', False)
-        oferta.codigo                     = data.get('codigo', '')
-        oferta.tipo_habitacion            = data.get('tipo_habitacion', '')
-        oferta.temporada                  = data.get('temporada', '')
-        oferta.booking_window             = data.get('booking_window', '')
-        oferta.sencilla                   = data.get('sencilla', '')
-        oferta.doble                      = data.get('doble', '')
-        oferta.triple                     = data.get('triple', '')
-        oferta.primer_nino                = data.get('primer_nino', '')
-        oferta.segundo_nino               = data.get('segundo_nino', '')
-        oferta.un_adulto_con_ninos        = data.get('un_adulto_con_ninos', '')
-        oferta.primer_nino_con_un_adulto  = data.get('primer_nino_con_un_adulto', '')
-        oferta.segundo_nino_con_un_adulto = data.get('segundo_nino_con_un_adulto', '')
-        oferta.edad_nino                  = data.get('edad_nino', '')
-        oferta.edad_infante               = data.get('edad_infante', '')
-        oferta.noches_minimas             = data.get('noches_minimas', '')
-        oferta.cantidad_habitaciones      = data.get('cantidad_habitaciones', 1)
-        oferta.tipo_fee                   = data.get('tipo_fee', '')
-        oferta.fee_doble                  = data.get('fee_doble', '')
-        oferta.fee_triple                 = data.get('fee_triple', '')
-        oferta.fee_sencilla               = data.get('fee_sencilla', '')
-        oferta.fee_primer_nino            = data.get('fee_primer_nino', '')
-        oferta.fee_segundo_nino           = data.get('fee_segundo_nino', '')
+    if oferta_id:
+        oferta = get_object_or_404(Oferta, pk=oferta_id)
+        creando = False
+        mensaje = "Oferta actualizada exitosamente."
+    else:
+        oferta = Oferta(hotel=hotel)
+        creando = True
+        mensaje = "Oferta creada exitosamente."
 
-        # PRINT COMPLETO DESPUÉS
-        print(">>> OFERTA DESPUÉS DE ASIGNAR:", model_to_dict(oferta))
+    # Si actualizas, garantiza la asociación correcta con el hotel indicado
+    oferta.hotel = hotel
 
+    # 4) Whitelist de campos permitidos a asignar desde el JSON
+    #    (Ajusta esta lista a tu modelo real)
+    FIELD_MAP = {
+        # booleanos
+        "disponible": ("bool", "disponible"),
+
+        # strings
+        "codigo": ("str", "codigo"),
+        "tipo_habitacion": ("str", "tipo_habitacion"),
+        "temporada": ("str", "temporada"),
+        "booking_window": ("str", "booking_window"),
+        "sencilla": ("str", "sencilla"),
+        "doble": ("str", "doble"),
+        "triple": ("str", "triple"),
+        "primer_nino": ("str", "primer_nino"),
+        "segundo_nino": ("str", "segundo_nino"),
+        "un_adulto_con_ninos": ("str", "un_adulto_con_ninos"),
+        "primer_nino_con_un_adulto": ("str", "primer_nino_con_un_adulto"),
+        "segundo_nino_con_un_adulto": ("str", "segundo_nino_con_un_adulto"),
+        "edad_nino": ("str", "edad_nino"),
+        "edad_infante": ("str", "edad_infante"),
+        "tipo_fee": ("str", "tipo_fee"),
+
+        # enteros
+        "noches_minimas": ("int", "noches_minimas"),
+        "cantidad_habitaciones": ("int", "cantidad_habitaciones"),
+
+        # decimales (si en tu modelo son CharField, cámbialos a "str")
+        "fee_doble": ("dec", "fee_doble"),
+        "fee_triple": ("dec", "fee_triple"),
+        "fee_sencilla": ("dec", "fee_sencilla"),
+        "fee_primer_nino": ("dec", "fee_primer_nino"),
+        "fee_segundo_nino": ("dec", "fee_segundo_nino"),
+    }
+
+    # 5) Asignación con casting básico
+    for incoming_key, (kind, model_field) in FIELD_MAP.items():
+        if incoming_key not in data:
+            continue  # no lo envió → no tocar
+        val = data[incoming_key]
+
+        if kind == "bool":
+            setattr(oferta, model_field, _to_bool(val, default=False))
+        elif kind == "int":
+            setattr(oferta, model_field, _to_int(val, default=None))
+        elif kind == "dec":
+            setattr(oferta, model_field, _to_decimal(val, default=None))
+        else:  # "str"
+            setattr(oferta, model_field, (val or "").strip())
+
+    # 6) Validación específica de booking_window si vino
+    if "booking_window" in data:
+        bw = (data.get("booking_window") or "").strip()
+        if bw and not BOOKING_WINDOW_RE.match(bw):
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Formato inválido de 'booking_window'. Use 'YYYY-MM-DD - YYYY-MM-DD'."
+                },
+                status=400
+            )
+
+    # Log antes de guardar (opcional)
+    logger.debug("crear_editar_oferta | OFERTA ANTES DE GUARDAR: %s", model_to_dict(oferta))
+
+    # 7) Guardar
+    try:
+        oferta.full_clean()  # valida el Model antes de persistir
         oferta.save()
-        return JsonResponse({"status": "success", "message": mensaje})
-
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)})
+        logger.exception("Error guardando Oferta:")
+        return JsonResponse(
+            {"status": "error", "message": f"Error al guardar la oferta: {e}"},
+            status=400
+        )
 
-
-
+    # 8) Respuesta
+    payload = {
+        "status": "success",
+        "message": mensaje,
+        "data": {
+            "id": oferta.id,
+            "hotel_id": oferta.hotel_id,
+        }
+    }
+    status_code = 201 if creando else 200
+    return JsonResponse(payload, status=status_code)
 
 # Vista para editar una habitación existente
 @manager_required
@@ -696,12 +799,12 @@ def editar_habitacion(request, habitacion_id):
     return JsonResponse({'success': False})
 
 # Vista para eliminar una habitación
-@manager_required
-@login_required
-def eliminar_habitacion(request, habitacion_id):
-    habitacion = get_object_or_404(Habitacion, id=habitacion_id)
-    habitacion.delete()
-    return JsonResponse({'success': True})
+#@manager_required
+#@login_required
+#def eliminar_habitacion(request, habitacion_id):
+#    habitacion = get_object_or_404(Habitacion, id=habitacion_id)
+#    habitacion.delete()
+#    return JsonResponse({'success': True})
 
 @manager_required
 @login_required
@@ -720,23 +823,23 @@ def hotel_settings(request, hotel_id):
     }
     return render(request, 'backoffice/hotel_settings.html', context)
 
-@csrf_exempt
-@login_required
-def guardar_configuracion_hotel(request, hotel_id):
-    if request.method == 'POST':
-        hotel = get_object_or_404(Hotel, id=hotel_id)
-        setting, created = HotelSetting.objects.get_or_create(hotel=hotel)
-
-        try:
-            setting.edad_limite_nino = int(request.POST.get('edadLimite_nino', 0))
-            setting.edad_limite_infante = int(request.POST.get('edadLimite_infante', 0))
-            setting.cantidad_noches = int(request.POST.get('cantidad_noches', 0))
-            setting.save()
-            return JsonResponse({'status': 'success'})
-        except ValueError as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+#@csrf_exempt
+#@login_required
+#def guardar_configuracion_hotel(request, hotel_id):
+#    if request.method == 'POST':
+#        hotel = get_object_or_404(Hotel, id=hotel_id)
+#        setting, created = HotelSetting.objects.get_or_create(hotel=hotel)
+#
+#        try:
+#            setting.edad_limite_nino = int(request.POST.get('edadLimite_nino', 0))
+#            setting.edad_limite_infante = int(request.POST.get('edadLimite_infante', 0))
+#            setting.cantidad_noches = int(request.POST.get('cantidad_noches', 0))
+#            setting.save()
+#            return JsonResponse({'status': 'success'})
+#        except ValueError as e:
+#            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+#
+#    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 @manager_required
 @login_required
@@ -1280,7 +1383,6 @@ def guardar_instalaciones_hotel(request, hotel_id):
 
     return JsonResponse({'status': 'fail'}, status=400)
 
-@manager_required
 @login_required
 def guardar_configuracion_hotel(request, hotel_id):
     if request.method == 'POST':
@@ -1477,37 +1579,142 @@ def listar_reservas(request, estado=None):
     return render(request, 'backoffice/reservas/listar_reservas.html', context)
 
 
-@manager_required
-@login_required
-def detalles_reserva(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
 
-    # Construimos la respuesta según el tipo
-    data = {
-        "tipo": reserva.tipo,
-        "usuario": reserva.nombre_usuario,
-        "fecha": reserva.fecha_reserva.strftime("%Y-%m-%d %H:%M"),
-        "estatus": reserva.estatus,
+
+def _safe_get(obj, path, default=None):
+    """
+    Accede a atributos anidados de forma segura.
+    Ej: _safe_get(reserva, "envio.destinatario.primer_nombre")
+    """
+    try:
+        for part in path.split("."):
+            obj = getattr(obj, part)
+            if obj is None:
+                return default
+        return obj
+    except Exception:
+        return default
+
+
+def _full_name(*parts):
+    return " ".join([str(p).strip() for p in parts if p]).strip() or "N/A"
+
+
+@manager_required           # ← debe ir por encima para envolver al inner (login_required)
+@login_required             # ← inner: primero obliga a autenticarse, luego valida rol
+@require_GET
+def detalles_reserva(request, reserva_id):
+    """
+    Devuelve detalles resumidos de una reserva en JSON.
+    Solo accesible para MANAGERS autenticados.
+    """
+    reserva = get_object_or_404(Reserva, pk=reserva_id)
+
+    # (Opcional) Filtro adicional: si quieres limitar por agencia/tenant añade tu lógica aquí.
+    # if not usuario_puede_ver_reserva(request.user, reserva):
+    #     return HttpResponseForbidden(JsonResponse({"error": "No autorizado"}))
+
+    # Datos base comunes
+    base = {
+        "id": reserva.id,
+        "tipo": reserva.tipo or "N/A",
+        "usuario": reserva.nombre_usuario or "N/A",
+        "fecha": reserva.fecha_reserva.strftime("%Y-%m-%d %H:%M") if reserva.fecha_reserva else "N/A",
+        "estatus": reserva.estatus or "N/A",
     }
 
-    # Detalle por tipo:
-    if reserva.tipo == 'hoteles':
-        if reserva.hotel_importado:
-            data["hotel"] = reserva.hotel_importado.hotel_name
-        elif reserva.hotel:
-            data["hotel"] = reserva.hotel.hotel_nombre
-        else:
-            data["hotel"] = "N/A"
-    elif reserva.tipo == 'envio':
-        if reserva.envio:
-            data["envio"] = {
-                "remitente": reserva.envio.remitente.nombre_apellido,
-                "destinatario": f"{reserva.envio.destinatario.primer_nombre} {reserva.envio.destinatario.primer_apellido}",
-                "descripcion": reserva.envio.descripcion
-            }
-    # Puedes ir ampliando esto con los otros tipos...
+    detalle = {}
 
-    return JsonResponse(data)
+    # ---- Detalle por tipo ----
+    if reserva.tipo == "hoteles":
+        # Hotel local o importado (Distal)
+        if reserva.hotel_importado:
+            detalle["hotel"] = {
+                "origen": "importado",
+                "nombre": _safe_get(reserva, "hotel_importado.hotel_name", "N/A"),
+                "city_code": _safe_get(reserva, "hotel_importado.hotel_city_code", "N/A"),
+                "hotel_code": _safe_get(reserva, "hotel_importado.hotel_code", "N/A"),
+            }
+        elif reserva.hotel:
+            detalle["hotel"] = {
+                "origen": "local",
+                "nombre": _safe_get(reserva, "hotel.hotel_nombre", "N/A"),
+                "polo": _safe_get(reserva, "hotel.polo_turistico.nombre", "N/A"),
+                "cadena": _safe_get(reserva, "hotel.cadena_hotelera.nombre", "N/A"),
+            }
+        else:
+            detalle["hotel"] = {"origen": "N/A", "nombre": "N/A"}
+
+        # (Opcional) Si guardas booking_code/plan/estancia, puedes añadirlos:
+        detalle["resumen_estadia"] = {
+            "checkin": getattr(reserva, "checkin", None) or "N/A",
+            "checkout": getattr(reserva, "checkout", None) or "N/A",
+            "noches": getattr(reserva, "noches", None) or "N/A",
+            "plan": getattr(reserva, "plan", None) or "N/A",
+            "booking_code": getattr(reserva, "booking_code", None) or "N/A",
+        }
+
+    elif reserva.tipo == "envio":
+        # Envío (remitente/destinatario + descripción)
+        remitente_nombre = _safe_get(reserva, "envio.remitente.nombre_apellido", "N/A")
+        dest_nombre = _full_name(
+            _safe_get(reserva, "envio.destinatario.primer_nombre"),
+            _safe_get(reserva, "envio.destinatario.segundo_nombre"),
+            _safe_get(reserva, "envio.destinatario.primer_apellido"),
+            _safe_get(reserva, "envio.destinatario.segundo_apellido"),
+        )
+        detalle["envio"] = {
+            "remitente": remitente_nombre,
+            "destinatario": dest_nombre,
+            "descripcion": _safe_get(reserva, "envio.descripcion", "N/A"),
+            "cantidad_items": _safe_get(reserva, "envio.cantidad_items", "N/A"),
+            "peso_total": _safe_get(reserva, "envio.peso_total", "N/A"),
+            "tipo_envio": _safe_get(reserva, "envio.tipo_envio", "N/A"),  # aéreo/marítimo si lo manejas
+        }
+
+    elif reserva.tipo == "remesa":
+        # Remesa (remitente/destinatario + monto/monedas)
+        remitente = _safe_get(reserva, "remesa.remitente.nombre_apellido", "N/A")
+        destinatario = _safe_get(reserva, "remesa.destinatario.nombre_apellido", "N/A")
+        detalle["remesa"] = {
+            "remitente": remitente,
+            "destinatario": destinatario,
+            "monto": _safe_get(reserva, "remesa.monto", "N/A"),
+            "moneda_envio": _safe_get(reserva, "remesa.moneda_envio", "N/A"),
+            "moneda_recepcion": _safe_get(reserva, "remesa.moneda_recepcion", "N/A"),
+            "tasa_cambio": _safe_get(reserva, "remesa.tasa_cambio", "N/A"),
+            "monto_estimado": _safe_get(reserva, "remesa.monto_estimado", "N/A"),
+        }
+
+    elif reserva.tipo == "traslados":
+        # Traslados (origen/destino, fecha/hora, vehículo)
+        detalle["traslado"] = {
+            "origen": _safe_get(reserva, "traslado.origen.nombre", "N/A"),
+            "destino": _safe_get(reserva, "traslado.destino.nombre", "N/A"),
+            "fecha": _safe_get(reserva, "traslado.fecha", "N/A"),
+            "hora": _safe_get(reserva, "traslado.hora", "N/A"),
+            "vehiculo": _safe_get(reserva, "traslado.vehiculo.nombre", "N/A"),
+            "transportista": _safe_get(reserva, "traslado.transportista.nombre", "N/A"),
+        }
+
+    elif reserva.tipo == "certificados":
+        # Certificados de vacaciones (si tu modelo lo maneja)
+        detalle["certificado"] = {
+            "nombre": _safe_get(reserva, "certificado.nombre", "N/A"),
+            "solo_adultos": _safe_get(reserva, "certificado.solo_adultos", False),
+            "precio": _safe_get(reserva, "certificado.precio", "N/A"),
+            "costo": _safe_get(reserva, "certificado.costo", "N/A"),
+            "pasajero": _safe_get(reserva, "pasajero.nombre_apellido", "N/A"),
+        }
+
+    else:
+        # Tipo no mapeado aún
+        detalle["info"] = "Tipo de reserva no mapeado aún para detalle."
+
+    # Respuesta final
+    data = {**base, "detalle": detalle}
+    return JsonResponse(data, safe=True, status=200)
+
 
 @manager_required
 @login_required
@@ -1555,7 +1762,7 @@ def edit_reserva_load(request, reserva_id):
         'tipos_habitacion': tipos_habitacion,
     })
 
-@csrf_exempt
+
 @login_required
 def actualizar_reserva_principal(request, reserva):
     """
@@ -1580,109 +1787,109 @@ def actualizar_reserva_principal(request, reserva):
     except Exception as e:
         print(f'Error al guardar la reserva {reserva.id}: {e}')
 
-@csrf_exempt
-@login_required
-def actualizar_traslado_y_pasajeros(request, reserva):
-    """
-    Actualiza los detalles específicos de un traslado y sus pasajeros.
-    Se espera que la reserva tenga un objeto 'traslado' asociado.
-    """
-    # Importar modelos necesarios (si no están importados globalmente)
-    from backoffice.models import Transportista, Ubicacion, Vehiculo
-
-    traslado = reserva.traslado
-
-    # Actualizar campos del traslado
-    transportista_name = request.POST.get('transportista')
-    origen_name = request.POST.get('origen')
-    destino_name = request.POST.get('destino')
-    vehiculo_tipo = request.POST.get('vehiculo')
-    costo_traslado = request.POST.get('costo_traslado')
-
-    try:
-        costo_traslado = float(costo_traslado)
-    except (TypeError, ValueError):
-        costo_traslado = traslado.costo  # O dejar el costo anterior si hay error
-
-    try:
-        traslado.transportista = Transportista.objects.get(nombre=transportista_name)
-    except Transportista.DoesNotExist:
-        print(f"No se encontró el transportista '{transportista_name}'.")
-    try:
-        traslado.origen = Ubicacion.objects.get(nombre=origen_name)
-    except Ubicacion.DoesNotExist:
-        print(f"No se encontró el origen '{origen_name}'.")
-    try:
-        traslado.destino = Ubicacion.objects.get(nombre=destino_name)
-    except Ubicacion.DoesNotExist:
-        print(f"No se encontró el destino '{destino_name}'.")
-    try:
-        traslado.vehiculo = Vehiculo.objects.get(tipo=vehiculo_tipo)
-    except Vehiculo.DoesNotExist:
-        print(f"No se encontró el vehículo '{vehiculo_tipo}'.")
-    
-    traslado.costo = costo_traslado
-    traslado.save()
-
-    # Actualizar pasajeros existentes asociados al traslado
-    for pasajero in traslado.pasajeros.all():
-        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
-        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
-        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
-        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
-        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
-        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
-        
-        if fecha_nacimiento:
-            try:
-                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                fecha_nacimiento = pasajero.fecha_nacimiento
-        if caducidad_pasaporte:
-            try:
-                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                caducidad_pasaporte = pasajero.caducidad_pasaporte
-
-        pasajero.nombre = nombre
-        pasajero.fecha_nacimiento = fecha_nacimiento
-        pasajero.pasaporte = pasaporte
-        pasajero.caducidad_pasaporte = caducidad_pasaporte
-        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
-        pasajero.tipo = tipo
-        pasajero.save()
-
-    # Agregar nuevos pasajeros para el traslado
-    for key in request.POST:
-        if key.startswith('traslado_pasajero_nombre_'):
-            new_id = key.split('_')[-1]
-            nombre = request.POST.get(f'traslado_pasajero_nombre_{new_id}')
-            fecha_nacimiento = request.POST.get(f'traslado_pasajero_fecha_nacimiento_{new_id}')
-            pasaporte = request.POST.get(f'traslado_pasajero_pasaporte_{new_id}')
-            caducidad_pasaporte = request.POST.get(f'traslado_pasajero_caducidad_pasaporte_{new_id}')
-            pais_emision_pasaporte = request.POST.get(f'traslado_pasajero_pais_emision_pasaporte_{new_id}')
-            tipo = request.POST.get(f'traslado_pasajero_tipo_{new_id}')
-            
-            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-                print(f"Datos incompletos para pasajero nuevo en traslado: {nombre}")
-                continue
-            
-            try:
-                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                print(f"Error al convertir fechas para pasajero nuevo: {nombre}")
-                continue
-            
-            Pasajero.objects.create(
-                traslado=traslado,
-                nombre=nombre,
-                fecha_nacimiento=fecha_nacimiento,
-                pasaporte=pasaporte,
-                caducidad_pasaporte=caducidad_pasaporte,
-                pais_emision_pasaporte=pais_emision_pasaporte,
-                tipo=tipo
-            )
+#@csrf_exempt
+#@login_required
+#def actualizar_traslado_y_pasajeros(request, reserva):
+#    """
+#    Actualiza los detalles específicos de un traslado y sus pasajeros.
+#    Se espera que la reserva tenga un objeto 'traslado' asociado.
+#    """
+#    # Importar modelos necesarios (si no están importados globalmente)
+#    from backoffice.models import Transportista, Ubicacion, Vehiculo
+#
+#    traslado = reserva.traslado
+#
+#    # Actualizar campos del traslado
+#    transportista_name = request.POST.get('transportista')
+#    origen_name = request.POST.get('origen')
+#    destino_name = request.POST.get('destino')
+#    vehiculo_tipo = request.POST.get('vehiculo')
+#    costo_traslado = request.POST.get('costo_traslado')
+#
+#    try:
+#        costo_traslado = float(costo_traslado)
+#    except (TypeError, ValueError):
+#        costo_traslado = traslado.costo  # O dejar el costo anterior si hay error
+#
+#    try:
+#        traslado.transportista = Transportista.objects.get(nombre=transportista_name)
+#    except Transportista.DoesNotExist:
+#        print(f"No se encontró el transportista '{transportista_name}'.")
+#    try:
+#        traslado.origen = Ubicacion.objects.get(nombre=origen_name)
+#    except Ubicacion.DoesNotExist:
+#        print(f"No se encontró el origen '{origen_name}'.")
+#    try:
+#        traslado.destino = Ubicacion.objects.get(nombre=destino_name)
+#    except Ubicacion.DoesNotExist:
+#        print(f"No se encontró el destino '{destino_name}'.")
+#    try:
+#        traslado.vehiculo = Vehiculo.objects.get(tipo=vehiculo_tipo)
+#    except Vehiculo.DoesNotExist:
+#        print(f"No se encontró el vehículo '{vehiculo_tipo}'.")
+#    
+#    traslado.costo = costo_traslado
+#    traslado.save()
+#
+#    # Actualizar pasajeros existentes asociados al traslado
+#    for pasajero in traslado.pasajeros.all():
+#        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
+#        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
+#        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
+#        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
+#        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
+#        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
+#        
+#        if fecha_nacimiento:
+#            try:
+#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                fecha_nacimiento = pasajero.fecha_nacimiento
+#        if caducidad_pasaporte:
+#            try:
+#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                caducidad_pasaporte = pasajero.caducidad_pasaporte
+#
+#        pasajero.nombre = nombre
+#        pasajero.fecha_nacimiento = fecha_nacimiento
+#        pasajero.pasaporte = pasaporte
+#        pasajero.caducidad_pasaporte = caducidad_pasaporte
+#        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
+#        pasajero.tipo = tipo
+#        pasajero.save()
+#
+#    # Agregar nuevos pasajeros para el traslado
+#    for key in request.POST:
+#        if key.startswith('traslado_pasajero_nombre_'):
+#            new_id = key.split('_')[-1]
+#            nombre = request.POST.get(f'traslado_pasajero_nombre_{new_id}')
+#            fecha_nacimiento = request.POST.get(f'traslado_pasajero_fecha_nacimiento_{new_id}')
+#            pasaporte = request.POST.get(f'traslado_pasajero_pasaporte_{new_id}')
+#            caducidad_pasaporte = request.POST.get(f'traslado_pasajero_caducidad_pasaporte_{new_id}')
+#            pais_emision_pasaporte = request.POST.get(f'traslado_pasajero_pais_emision_pasaporte_{new_id}')
+#            tipo = request.POST.get(f'traslado_pasajero_tipo_{new_id}')
+#            
+#            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
+#                print(f"Datos incompletos para pasajero nuevo en traslado: {nombre}")
+#                continue
+#            
+#            try:
+#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
+#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                print(f"Error al convertir fechas para pasajero nuevo: {nombre}")
+#                continue
+#            
+#            Pasajero.objects.create(
+#                traslado=traslado,
+#                nombre=nombre,
+#                fecha_nacimiento=fecha_nacimiento,
+#                pasaporte=pasaporte,
+#                caducidad_pasaporte=caducidad_pasaporte,
+#                pais_emision_pasaporte=pais_emision_pasaporte,
+#                tipo=tipo
+#            )
 
 @csrf_exempt
 @login_required
@@ -1699,100 +1906,100 @@ def actualizar_habitaciones_y_pasajeros(request, reserva):
     
     recalcular_precio_y_costo(reserva)
 
-@csrf_exempt
-@login_required
-def actualizar_habitacion(request, habitacion):
-    habitacion_nombre = request.POST.get(f'habitacion_nombre_{habitacion.id}')
-    adultos = request.POST.get(f'adultos_{habitacion.id}')
-    ninos = request.POST.get(f'ninos_{habitacion.id}')
-    fechas_viaje = request.POST.get(f'fechas_viaje_{habitacion.id}')
-    
-    if fechas_viaje and fechas_viaje != 'Invalid date':
-        try:
-            fechas_viaje = datetime.strptime(fechas_viaje, '%Y/%m/%d').strftime('%Y-%m-%d')
-        except ValueError:
-            fechas_viaje = habitacion.fechas_viaje
-    habitacion.habitacion_nombre = habitacion_nombre
-    habitacion.adultos = adultos
-    habitacion.ninos = ninos
-    habitacion.fechas_viaje = fechas_viaje
-    habitacion.save()
-
-@csrf_exempt
-@login_required
-def actualizar_pasajeros_existentes(request, habitacion):
-    for pasajero in habitacion.pasajeros.all():
-        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
-        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
-        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
-        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
-        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
-        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
-        
-        if fecha_nacimiento and fecha_nacimiento != 'Invalid date':
-            try:
-                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                fecha_nacimiento = pasajero.fecha_nacimiento
-        if caducidad_pasaporte and caducidad_pasaporte != 'Invalid date':
-            try:
-                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                caducidad_pasaporte = pasajero.caducidad_pasaporte
-        
-        pasajero.nombre = nombre
-        pasajero.fecha_nacimiento = fecha_nacimiento
-        pasajero.pasaporte = pasaporte
-        pasajero.caducidad_pasaporte = caducidad_pasaporte
-        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
-        pasajero.tipo = tipo
-        pasajero.save()
-
-@csrf_exempt
-@login_required
-def agregar_nuevos_pasajeros(request, habitacion):
-    total_adultos = int(habitacion.adultos) if habitacion.adultos else 0
-    total_ninos = int(habitacion.ninos) if habitacion.ninos else 0
-
-    for key in request.POST:
-        if key.startswith(f'habitacion_{habitacion.id}_pasajero_nombre_'):
-            new_passenger_id = key.split('_')[-1]
-            nombre = request.POST.get(f'habitacion_{habitacion.id}_pasajero_nombre_{new_passenger_id}')
-            fecha_nacimiento = request.POST.get(f'habitacion_{habitacion.id}_pasajero_fecha_nacimiento_{new_passenger_id}')
-            pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pasaporte_{new_passenger_id}')
-            caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_caducidad_pasaporte_{new_passenger_id}')
-            pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pais_emision_pasaporte_{new_passenger_id}')
-            tipo = request.POST.get(f'habitacion_{habitacion.id}_pasajero_tipo_{new_passenger_id}')
-
-            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-                print(f"Error: Faltan datos obligatorios para el pasajero {nombre}. No se guardará.")
-                continue
-
-            try:
-                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-            except ValueError:
-                print(f"Error al convertir fechas para el pasajero {nombre}.")
-                continue
-
-            if not Pasajero.objects.filter(habitacion=habitacion, nombre=nombre, pasaporte=pasaporte).exists():
-                nuevo_pasajero = Pasajero.objects.create(
-                    habitacion=habitacion,
-                    nombre=nombre,
-                    fecha_nacimiento=fecha_nacimiento,
-                    pasaporte=pasaporte,
-                    caducidad_pasaporte=caducidad_pasaporte,
-                    pais_emision_pasaporte=pais_emision_pasaporte,
-                    tipo=tipo
-                )
-                if tipo == 'adulto':
-                    total_adultos += 1
-                else:
-                    total_ninos += 1
-
-    habitacion.adultos = total_adultos
-    habitacion.ninos = total_ninos
-    habitacion.save()
+#@csrf_exempt
+#@login_required
+#def actualizar_habitacion(request, habitacion):
+#    habitacion_nombre = request.POST.get(f'habitacion_nombre_{habitacion.id}')
+#    adultos = request.POST.get(f'adultos_{habitacion.id}')
+#    ninos = request.POST.get(f'ninos_{habitacion.id}')
+#    fechas_viaje = request.POST.get(f'fechas_viaje_{habitacion.id}')
+#    
+#    if fechas_viaje and fechas_viaje != 'Invalid date':
+#        try:
+#            fechas_viaje = datetime.strptime(fechas_viaje, '%Y/%m/%d').strftime('%Y-%m-%d')
+#        except ValueError:
+#            fechas_viaje = habitacion.fechas_viaje
+#    habitacion.habitacion_nombre = habitacion_nombre
+#    habitacion.adultos = adultos
+#    habitacion.ninos = ninos
+#    habitacion.fechas_viaje = fechas_viaje
+#    habitacion.save()
+#
+#@csrf_exempt
+#@login_required
+#def actualizar_pasajeros_existentes(request, habitacion):
+#    for pasajero in habitacion.pasajeros.all():
+#        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
+#        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
+#        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
+#        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
+#        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
+#        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
+#        
+#        if fecha_nacimiento and fecha_nacimiento != 'Invalid date':
+#            try:
+#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                fecha_nacimiento = pasajero.fecha_nacimiento
+#        if caducidad_pasaporte and caducidad_pasaporte != 'Invalid date':
+#            try:
+#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                caducidad_pasaporte = pasajero.caducidad_pasaporte
+#        
+#        pasajero.nombre = nombre
+#        pasajero.fecha_nacimiento = fecha_nacimiento
+#        pasajero.pasaporte = pasaporte
+#        pasajero.caducidad_pasaporte = caducidad_pasaporte
+#        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
+#        pasajero.tipo = tipo
+#        pasajero.save()
+#
+#@csrf_exempt
+#@login_required
+#def agregar_nuevos_pasajeros(request, habitacion):
+#    total_adultos = int(habitacion.adultos) if habitacion.adultos else 0
+#    total_ninos = int(habitacion.ninos) if habitacion.ninos else 0
+#
+#    for key in request.POST:
+#        if key.startswith(f'habitacion_{habitacion.id}_pasajero_nombre_'):
+#            new_passenger_id = key.split('_')[-1]
+#            nombre = request.POST.get(f'habitacion_{habitacion.id}_pasajero_nombre_{new_passenger_id}')
+#            fecha_nacimiento = request.POST.get(f'habitacion_{habitacion.id}_pasajero_fecha_nacimiento_{new_passenger_id}')
+#            pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pasaporte_{new_passenger_id}')
+#            caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_caducidad_pasaporte_{new_passenger_id}')
+#            pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pais_emision_pasaporte_{new_passenger_id}')
+#            tipo = request.POST.get(f'habitacion_{habitacion.id}_pasajero_tipo_{new_passenger_id}')
+#
+#            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
+#                print(f"Error: Faltan datos obligatorios para el pasajero {nombre}. No se guardará.")
+#                continue
+#
+#            try:
+#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
+#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            except ValueError:
+#                print(f"Error al convertir fechas para el pasajero {nombre}.")
+#                continue
+#
+#            if not Pasajero.objects.filter(habitacion=habitacion, nombre=nombre, pasaporte=pasaporte).exists():
+#                nuevo_pasajero = Pasajero.objects.create(
+#                    habitacion=habitacion,
+#                    nombre=nombre,
+#                    fecha_nacimiento=fecha_nacimiento,
+#                    pasaporte=pasaporte,
+#                    caducidad_pasaporte=caducidad_pasaporte,
+#                    pais_emision_pasaporte=pais_emision_pasaporte,
+#                    tipo=tipo
+#                )
+#                if tipo == 'adulto':
+#                    total_adultos += 1
+#                else:
+#                    total_ninos += 1
+#
+#    habitacion.adultos = total_adultos
+#    habitacion.ninos = total_ninos
+#    habitacion.save()
 
 @csrf_exempt
 @login_required
@@ -1827,72 +2034,72 @@ def agregar_nuevas_habitaciones(request, reserva):
         agregar_nuevos_pasajeros_a_habitacion_nueva(request, nueva_habitacion, habitacion_counter)
         habitacion_counter += 1
 
-@csrf_exempt
-@login_required
-def agregar_nuevos_pasajeros_a_habitacion_nueva(request, habitacion, habitacion_counter):
-    pasajero_counter = 1
-    while True:
-        nombre = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_nombre')
-        if not nombre:
-            break
-        fecha_nacimiento = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_fecha_nacimiento')
-        pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pasaporte')
-        caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_caducidad_pasaporte')
-        pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pais_emision_pasaporte')
-        tipo = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_tipo')
-
-        if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-            break
-
-        try:
-            fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-            caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-        except ValueError:
-            break
-
-        Pasajero.objects.create(
-            habitacion=habitacion,
-            nombre=nombre,
-            fecha_nacimiento=fecha_nacimiento,
-            pasaporte=pasaporte,
-            caducidad_pasaporte=caducidad_pasaporte,
-            pais_emision_pasaporte=pais_emision_pasaporte,
-            tipo=tipo
-        )
-        pasajero_counter += 1
-
-@login_required
-def correo_confirmada(reserva):
-    """
-    Envía el correo de confirmación (para reservas de hoteles, por ahora).
-    """
-    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
-    habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
-    encabezado = "{% trans 'Muchas gracias por reservar con RUTA MULTISERVICE, su solicitud ha sido confirmada:' %}"
-    #enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
-
-@login_required
-def recalcular_precio_y_costo(reserva):
-    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
-    precio_total = 0
-    for habitacion_reserva in habitaciones_reserva:
-        cant_adultos = habitacion_reserva.adultos
-        habitacion_nombre = habitacion_reserva.habitacion_nombre
-        fecha_viaje = habitacion_reserva.fechas_viaje
-        nombre_hotel = reserva.hotel.hotel_nombre
-        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
-        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
-        if habitacion_reserva.ninos == 1:
-            nino1 = 1; nino2 = 0
-        elif habitacion_reserva.ninos == 2:
-            nino1 = 1; nino2 = 1
-        else:
-            nino1 = 0; nino2 = 0
-        if habitacion and ofertas:
-            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
-            for result in dias_oferta:
-                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
-    return precio_total
+#@csrf_exempt
+#@login_required
+#def agregar_nuevos_pasajeros_a_habitacion_nueva(request, habitacion, habitacion_counter):
+#    pasajero_counter = 1
+#    while True:
+#        nombre = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_nombre')
+#        if not nombre:
+#            break
+#        fecha_nacimiento = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_fecha_nacimiento')
+#        pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pasaporte')
+#        caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_caducidad_pasaporte')
+#        pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pais_emision_pasaporte')
+#        tipo = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_tipo')
+#
+#        if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
+#            break
+#
+#        try:
+#            fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
+#            caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
+#        except ValueError:
+#            break
+#
+#        Pasajero.objects.create(
+#            habitacion=habitacion,
+#            nombre=nombre,
+#            fecha_nacimiento=fecha_nacimiento,
+#            pasaporte=pasaporte,
+#            caducidad_pasaporte=caducidad_pasaporte,
+#            pais_emision_pasaporte=pais_emision_pasaporte,
+#            tipo=tipo
+#        )
+#        pasajero_counter += 1
+#
+#@login_required
+#def correo_confirmada(reserva):
+#    """
+#    Envía el correo de confirmación (para reservas de hoteles, por ahora).
+#    """
+#    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
+#    habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
+#    encabezado = "{% trans 'Muchas gracias por reservar con RUTA MULTISERVICE, su solicitud ha sido confirmada:' %}"
+#    #enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
+#
+#@login_required
+#def recalcular_precio_y_costo(reserva):
+#    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
+#    precio_total = 0
+#    for habitacion_reserva in habitaciones_reserva:
+#        cant_adultos = habitacion_reserva.adultos
+#        habitacion_nombre = habitacion_reserva.habitacion_nombre
+#        fecha_viaje = habitacion_reserva.fechas_viaje
+#        nombre_hotel = reserva.hotel.hotel_nombre
+#        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
+#        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
+#        if habitacion_reserva.ninos == 1:
+#            nino1 = 1; nino2 = 0
+#        elif habitacion_reserva.ninos == 2:
+#            nino1 = 1; nino2 = 1
+#        else:
+#            nino1 = 0; nino2 = 0
+#        if habitacion and ofertas:
+#            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
+#            for result in dias_oferta:
+#                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
+#    return precio_total
 
 @csrf_exempt
 @login_required
@@ -2028,85 +2235,85 @@ def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
     # Esta función se mantiene sin cambios.
     pass  # Usa tu implementación actual aquí
 
-@login_required
-def calcular_dias_por_oferta(ofertas, fecha_viaje):
-    try:
-        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
-    except ValueError as e:
-        print(f"Error al parsear fechas de viaje: {e}")
-        raise
-    resultado = []
-    for oferta in ofertas:
-        try:
-            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
-        except ValueError as e:
-            print(f"Error al parsear fechas de la oferta {oferta}: {e}")
-            continue
-        inicio_solapamiento = max(fecha_inicio_viaje, fecha_inicio_oferta)
-        fin_solapamiento = min(fecha_fin_viaje, fecha_fin_oferta)
-        if inicio_solapamiento <= fin_solapamiento:
-            dias_en_oferta = (fin_solapamiento - inicio_solapamiento).days + 1
-            resultado.append({
-                "oferta": oferta,
-                "dias_en_oferta": dias_en_oferta
-            })
-    return resultado
-
-@login_required
-def obtener_habitacion(nombre_hotel, nombre_habitacion):
-    try:
-        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
-        habitacion = Habitacion.objects.get(hotel=hotel, tipo=nombre_habitacion)
-        return habitacion
-    except ObjectDoesNotExist:
-        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{nombre_habitacion}'.")
-        return None
-
-@login_required
-def obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre):
-    try:
-        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
-        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
-        ofertas = Oferta.objects.filter(
-            hotel=hotel,
-            tipo_habitacion=habitacion_nombre,
-            disponible=True
-        )
-        ofertas_validas = []
-        for oferta in ofertas:
-            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
-            if fecha_inicio_viaje <= fecha_fin_oferta and fecha_fin_viaje >= fecha_inicio_oferta:
-                ofertas_validas.append(oferta)
-        return ofertas_validas
-    except ObjectDoesNotExist:
-        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{habitacion_nombre}'.")
-        return []
-    except ValueError as e:
-        print(f"Error al parsear las fechas: {e}")
-        return []
-
-@login_required
-def recalcular_precio_y_costo(reserva):
-    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
-    precio_total = 0
-    for habitacion_reserva in habitaciones_reserva:
-        cant_adultos = habitacion_reserva.adultos
-        habitacion_nombre = habitacion_reserva.habitacion_nombre
-        fecha_viaje = habitacion_reserva.fechas_viaje
-        nombre_hotel = reserva.hotel.hotel_nombre
-        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
-        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
-        if habitacion_reserva.ninos == 1:
-            nino1 = 1; nino2 = 0
-        elif habitacion_reserva.ninos == 2:
-            nino1 = 1; nino2 = 1
-        else:
-            nino1 = 0; nino2 = 0
-        if habitacion and ofertas:
-            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
-            for result in dias_oferta:
-                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
-    return precio_total
+#@login_required
+#def calcular_dias_por_oferta(ofertas, fecha_viaje):
+#    try:
+#        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
+#    except ValueError as e:
+#        print(f"Error al parsear fechas de viaje: {e}")
+#        raise
+#    resultado = []
+#    for oferta in ofertas:
+#        try:
+#            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
+#        except ValueError as e:
+#            print(f"Error al parsear fechas de la oferta {oferta}: {e}")
+#            continue
+#        inicio_solapamiento = max(fecha_inicio_viaje, fecha_inicio_oferta)
+#        fin_solapamiento = min(fecha_fin_viaje, fecha_fin_oferta)
+#        if inicio_solapamiento <= fin_solapamiento:
+#            dias_en_oferta = (fin_solapamiento - inicio_solapamiento).days + 1
+#            resultado.append({
+#                "oferta": oferta,
+#                "dias_en_oferta": dias_en_oferta
+#            })
+#    return resultado
+#
+#@login_required
+#def obtener_habitacion(nombre_hotel, nombre_habitacion):
+#    try:
+#        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
+#        habitacion = Habitacion.objects.get(hotel=hotel, tipo=nombre_habitacion)
+#        return habitacion
+#    except ObjectDoesNotExist:
+#        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{nombre_habitacion}'.")
+#        return None
+#
+#@login_required
+#def obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre):
+#    try:
+#        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
+#        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
+#        ofertas = Oferta.objects.filter(
+#            hotel=hotel,
+#            tipo_habitacion=habitacion_nombre,
+#            disponible=True
+#        )
+#        ofertas_validas = []
+#        for oferta in ofertas:
+#            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
+#            if fecha_inicio_viaje <= fecha_fin_oferta and fecha_fin_viaje >= fecha_inicio_oferta:
+#                ofertas_validas.append(oferta)
+#        return ofertas_validas
+#    except ObjectDoesNotExist:
+#        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{habitacion_nombre}'.")
+#        return []
+#    except ValueError as e:
+#        print(f"Error al parsear las fechas: {e}")
+#        return []
+#
+#@login_required
+#def recalcular_precio_y_costo(reserva):
+#    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
+#    precio_total = 0
+#    for habitacion_reserva in habitaciones_reserva:
+#        cant_adultos = habitacion_reserva.adultos
+#        habitacion_nombre = habitacion_reserva.habitacion_nombre
+#        fecha_viaje = habitacion_reserva.fechas_viaje
+#        nombre_hotel = reserva.hotel.hotel_nombre
+#        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
+#        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
+#        if habitacion_reserva.ninos == 1:
+#            nino1 = 1; nino2 = 0
+#        elif habitacion_reserva.ninos == 2:
+#            nino1 = 1; nino2 = 1
+#        else:
+#            nino1 = 0; nino2 = 0
+#        if habitacion and ofertas:
+#            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
+#            for result in dias_oferta:
+#                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
+#    return precio_total
 
 @login_required
 def actualizar_traslado_y_pasajeros(request, reserva):
@@ -2201,11 +2408,11 @@ def actualizar_traslado_y_pasajeros(request, reserva):
             )
 
 
-# Las siguientes funciones se mantienen o se implementan según tu lógica actual:
-@login_required
-def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
-    # Lógica actual para calcular el precio en reservas de hoteles
-    pass
+## Las siguientes funciones se mantienen o se implementan según tu lógica actual:
+#@login_required
+#def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
+#    # Lógica actual para calcular el precio en reservas de hoteles
+#    pass
 
 @login_required
 def calcular_dias_por_oferta(ofertas, fecha_viaje):

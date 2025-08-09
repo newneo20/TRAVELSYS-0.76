@@ -29,16 +29,14 @@ urlpatterns = [
     # ================== #
     # ... otras URLs ... #
     # ================== #
-    path('listar_habitaciones/<int:hotel_id>/', views.listar_habitaciones, name='listar_habitaciones'),
+    
     path('guardar_habitacion/<int:hotel_id>/', views.guardar_habitacion, name='guardar_habitacion'),
     path('obtener_habitacion/<int:habitacion_id>/', views.obtener_habitacion, name='obtener_habitacion'),
-    path('obtener_habitacion_test/<int:habitacion_id>/', views.obtener_habitacion_test, name='obtener_habitacion_test'),
-    path('eliminar_habitacion/<int:habitacion_id>/', views.eliminar_habitacion, name='eliminar_habitacion'),
+    path('obtener_habitacion_test/<int:habitacion_id>/', views.obtener_habitacion_test, name='obtener_habitacion_test'),    
     path('hotel_content/', views.hotel_content, name='hotel_content'),
     path('hotel_rooms/', views.hotel_rooms, name='hotel_rooms'), 
-    path('hotel_settings/<int:hotel_id>/', views.hotel_settings, name='hotel_settings'),
-    path('hotel_offers/<int:hotel_id>/', views.hotel_offers, name='hotel_offers'),  
-    path('guardar-configuracion-hotel/<int:hotel_id>/', views.guardar_configuracion_hotel, name='guardar_configuracion_hotel'),
+    path('hotel_settings/<int:hotel_id>/', views.hotel_settings, name='hotel_settings'),    
+    path('guardar_configuracion_hotel/<int:hotel_id>/', views.guardar_configuracion_hotel, name='guardar_configuracion_hotel'),
     path('cargar-datos-hoteles/<int:hotel_id>/', views.cargar_datos_hoteles, name='cargar_datos_hoteles'),
     path('guardar_todas_ofertas/<int:hotel_id>/', views.guardar_todas_ofertas, name='guardar_todas_ofertas'),
     path('eliminar_oferta/<int:hotel_id>/', views.eliminar_oferta, name='eliminar_oferta'),
