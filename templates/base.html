@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}TravelSYS – Dashboard{% endblock %}</title>
 
-  <!-- Google Fonts + Tailwind -->
+  <!-- Fonts + Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -16,13 +16,13 @@
   <!-- FontAwesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- Alpine.js -->
+  <!-- Alpine (opcional, por si lo usan hijos) -->
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
-  <!-- Theme color para móviles -->
+  <!-- Theme color -->
   <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 
@@ -31,14 +31,19 @@
 
 <body class="bg-gray-100 font-sans text-gray-900 dark:bg-gray-900 dark:text-gray-100">
 
-<!-- NAVBAR -->
-<nav class="fixed top-0 w-full bg-white border-b z-50 dark:bg-gray-800 dark:border-gray-700" role="navigation" aria-label="{% trans 'Barra superior' %}">
-  <div class="flex justify-between items-center px-4 py-3">
-    <div class="flex items-center space-x-3">
-      <!-- Botón hamburguesa (solo móvil) -->
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] bg-blue-600 text-white rounded px-3 py-2">
+  {% trans "Saltar al contenido" %}
+</a>
+
+<!-- NAVBAR (glass, no cambia IDs) -->
+<nav class="fixed top-0 w-full z-50 border-b border-gray-200/70 dark:border-gray-700/60
+            bg-white/80 dark:bg-gray-800/70 backdrop-blur-md" role="navigation" aria-label="{% trans 'Barra superior' %}">
+  <div class="flex items-center justify-between px-4 py-3">
+    <div class="flex items-center gap-3">
+      <!-- Hamburguesa móvil -->
       <button
         type="button"
-        class="sm:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+        class="sm:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         data-drawer-toggle="logo-sidebar"
         aria-controls="logo-sidebar"
         aria-expanded="false"
@@ -46,59 +51,63 @@
         <i class="fas fa-bars text-xl"></i>
       </button>
 
-      <a href="{% url 'dashboard' %}" class="flex items-center">
-        <img src="{% static 'images/TRAVELSYS LOGO.jpeg' %}" class="h-8 mr-2" alt="TravelSYS Logo">
-        <span class="text-xl font-semibold"><span class="text-blue-500">Travel</span>SYS</span>
+      <a href="{% url 'dashboard' %}" class="group flex items-center gap-2">
+        <img src="{% static 'images/TRAVELSYS LOGO.jpeg' %}" class="h-8 rounded-md shadow-sm" alt="TravelSYS Logo">
+        <span class="text-xl font-semibold tracking-tight">
+          <span class="text-blue-600 group-hover:text-blue-700 transition">Travel</span>SYS
+        </span>
       </a>
     </div>
 
-    <div class="flex items-center space-x-4">
-      <!-- Toggle dark mode -->
-      <button id="theme-toggle" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="{% trans 'Cambiar tema' %}">
+    <div class="flex items-center gap-3">
+      <!-- Tema -->
+      <button id="theme-toggle"
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              aria-label="{% trans 'Cambiar tema' %}">
         <i class="fas fa-moon" id="theme-toggle-dark-icon" aria-hidden="true"></i>
         <i class="fas fa-sun hidden" id="theme-toggle-light-icon" aria-hidden="true"></i>
       </button>
 
       {% if user.is_authenticated %}
-      <!-- Dropdown usuario -->
+      <!-- Usuario -->
       <div class="relative">
-        <button id="user-menu-btn" class="rounded-full bg-gray-800 p-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" aria-haspopup="true" aria-expanded="false" aria-label="{% trans 'Abrir menú de usuario' %}">
+        <button id="user-menu-btn"
+                class="rounded-full bg-gray-800 p-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                aria-haspopup="true" aria-expanded="false" aria-label="{% trans 'Abrir menú de usuario' %}">
           {% if user.logo %}
-            <img class="w-8 h-8 rounded-full object-cover" src="{{ user.logo.url }}" alt="{% trans 'Avatar' %}">
+            <img class="w-9 h-9 rounded-full object-cover ring-2 ring-white/50 dark:ring-gray-700" src="{{ user.logo.url }}" alt="{% trans 'Avatar' %}">
           {% else %}
-            <img class="w-8 h-8 rounded-full object-cover" src="{% static 'images/default_avatar.png' %}" alt="{% trans 'Avatar por defecto' %}">
+            <img class="w-9 h-9 rounded-full object-cover ring-2 ring-white/50 dark:ring-gray-700" src="{% static 'images/default_avatar.png' %}" alt="{% trans 'Avatar por defecto' %}">
           {% endif %}
         </button>
-        <div id="dropdown-user" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-700 rounded shadow-lg border border-gray-100 dark:border-gray-600 overflow-hidden">
-          <div class="p-3 border-b dark:border-gray-600">
-            <p class="font-medium truncate">{{ user.get_full_name|default:user.username }}</p>
+        <div id="dropdown-user"
+             class="hidden absolute right-0 mt-3 w-64 rounded-xl overflow-hidden shadow-xl
+                    bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <div class="p-4 border-b dark:border-gray-700">
+            <p class="font-semibold truncate">{{ user.get_full_name|default:user.username }}</p>
             <p class="text-sm text-gray-500 dark:text-gray-300 truncate">{{ user.email }}</p>
           </div>
-          <ul class="divide-y dark:divide-gray-600" role="menu" aria-label="{% trans 'Menú de usuario' %}">
+          <ul class="divide-y dark:divide-gray-700" role="menu" aria-label="{% trans 'Menú de usuario' %}">
             <li role="none">
               {% if user.is_manager %}
-                <!-- Admin: lleva a editar_usuario del propio user -->
-                <a href="{% url 'editar_usuario' user.id %}"
-                   class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-                   role="menuitem">
-                   {% trans "Perfil" %}
-                </a>
+              <a href="{% url 'editar_usuario' user.id %}" class="block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-user-gear mr-2 text-blue-500"></i>{% trans "Perfil" %}
+              </a>
               {% else %}
-                <!-- Usuario normal: perfil del booking -->
-                <a href="{% url 'booking:perfil_cliente' %}"
-                   class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-                   role="menuitem">
-                   {% trans "Perfil" %}
-                </a>
+              <a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-user-circle mr-2 text-blue-500"></i>{% trans "Perfil" %}
+              </a>
               {% endif %}
             </li>
             <li role="none">
-              <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">{% trans "Ajustes" %}</a>
+              <a href="#" class="block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem">
+                <i class="fas fa-sliders mr-2 text-emerald-500"></i>{% trans "Ajustes" %}
+              </a>
             </li>
             <li role="none">
               <form method="post" action="{% url 'logout' %}" role="none">{% csrf_token %}
-                <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600" role="menuitem">
-                  {% trans "Cerrar sesión" %}
+                <button type="submit" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem">
+                  <i class="fas fa-arrow-right-from-bracket mr-2 text-red-500"></i>{% trans "Cerrar sesión" %}
                 </button>
               </form>
             </li>
@@ -106,39 +115,44 @@
         </div>
       </div>
       {% else %}
-      <a href="{% url 'login' %}" class="text-gray-600 hover:text-blue-600">{% trans "Iniciar sesión" %}</a>
+      <a href="{% url 'login' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">{% trans "Iniciar sesión" %}</a>
       {% endif %}
     </div>
   </div>
 </nav>
 
-<!-- SIDEBAR -->
-<aside
-  id="logo-sidebar"
-  class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 bg-gradient-to-b from-[#111827] via-[#1f2937] to-[#374151] rounded-r-3xl shadow-xl transition-transform duration-300
-         -translate-x-full sm:translate-x-0"
-  aria-label="{% trans 'Barra lateral' %}">
-  <div class="h-full px-4 pb-6 overflow-y-auto text-white">
-    <ul class="space-y-2 font-semibold text-sm">
-      <!-- Panel de Control -->
+<!-- SIDEBAR (mismos IDs/atributos) -->
+<aside id="logo-sidebar"
+       class="fixed top-0 left-0 z-40 w-64 h-screen pt-20
+              bg-gradient-to-b from-[#111827] via-[#1f2937] to-[#374151]
+              text-white rounded-r-3xl shadow-2xl border-r border-white/10
+              transition-transform duration-300 -translate-x-full sm:translate-x-0"
+       aria-label="{% trans 'Barra lateral' %}">
+  <div class="h-full px-4 pb-6 overflow-y-auto">
+    <ul class="space-y-2 font-medium text-sm">
+
+      <!-- Panel -->
       <li>
-        <a href="{% url 'dashboard' %}" class="flex items-center w-full p-3 rounded-lg hover:bg-blue-600 transition-all">
-          <i class="fas fa-chart-pie w-6 h-6 text-blue-400 mr-3" aria-hidden="true"></i>
-          <span>Panel de Control</span>
+        <a href="{% url 'dashboard' %}"
+           class="flex items-center w-full p-3 rounded-xl hover:bg-white/10 focus:bg-white/10 transition">
+          <i class="fas fa-chart-pie w-6 h-6 text-blue-400 mr-3"></i>
+          <span>{% trans "Panel de Control" %}</span>
         </a>
       </li>
 
       <!-- Finanzas -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-emerald-600" data-collapse-toggle="finanzas-menu" aria-controls="finanzas-menu" aria-expanded="false">
-          <i class="fas fa-hand-holding-usd w-6 h-6 text-emerald-400 mr-3" aria-hidden="true"></i>
-          <span>Finanzas</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="finanzas-menu" aria-controls="finanzas-menu" aria-expanded="false">
+          <i class="fas fa-hand-holding-usd w-6 h-6 text-emerald-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Finanzas" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="finanzas-menu" class="hidden pl-6 space-y-2 mt-2">
+        <ul id="finanzas-menu" class="hidden pl-6 space-y-1 mt-2">
           <li>
-            <a href="{% url 'listar_reservas_finanzas' %}" class="flex items-center p-2 rounded hover:bg-emerald-600">
-              <i class="fas fa-file-invoice-dollar w-5 h-5 mr-2" aria-hidden="true"></i> Reservas
+            <a href="{% url 'listar_reservas_finanzas' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10">
+              <i class="fas fa-file-invoice-dollar w-5 h-5 mr-2"></i> {% trans "Reservas" %}
             </a>
           </li>
         </ul>
@@ -146,130 +160,147 @@
 
       <!-- Booking -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-cyan-600" data-collapse-toggle="booking-menu" aria-controls="booking-menu" aria-expanded="false">
-          <i class="fas fa-book w-6 h-6 text-cyan-400 mr-3" aria-hidden="true"></i>
-          <span>Booking</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="booking-menu" aria-controls="booking-menu" aria-expanded="false">
+          <i class="fas fa-book w-6 h-6 text-cyan-400 mr-3"></i>
+          <span class="flex-1 text-left">Booking</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="booking-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'booking:user_dashboard' %}" class="flex items-center p-2 rounded hover:bg-cyan-600"><i class="fas fa-user-circle w-5 h-5 mr-2" aria-hidden="true"></i> Dashboard Usuarios</a></li>
-          <li><a href="{% url 'booking:hotel_dashboard' %}" class="flex items-center p-2 rounded hover:bg-cyan-600"><i class="fas fa-hotel w-5 h-5 mr-2" aria-hidden="true"></i> Buscar Hoteles</a></li>
+        <ul id="booking-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'booking:user_dashboard' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-user-circle w-5 h-5 mr-2"></i> {% trans "Dashboard Usuarios" %}</a></li>
+          <li><a href="{% url 'booking:hotel_dashboard' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-hotel w-5 h-5 mr-2"></i> {% trans "Buscar Hoteles" %}</a></li>
         </ul>
       </li>
 
       <!-- Backoffice -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-green-600" data-collapse-toggle="reservas-menu" aria-controls="reservas-menu" aria-expanded="false">
-          <i class="fas fa-cogs w-6 h-6 text-green-400 mr-3" aria-hidden="true"></i>
-          <span>Backoffice</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="reservas-menu" aria-controls="reservas-menu" aria-expanded="false">
+          <i class="fas fa-cogs w-6 h-6 text-green-400 mr-3"></i>
+          <span class="flex-1 text-left">Backoffice</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="reservas-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_reservas' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-calendar-check w-5 h-5 mr-2" aria-hidden="true"></i> Reservas</a></li>
-          <li><a href="{% url 'listar_usuarios' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-users w-5 h-5 mr-2" aria-hidden="true"></i> Usuarios</a></li>
-          <li><a href="{% url 'backoffice:listar_ofertas_especiales' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-gift w-5 h-5 mr-2" aria-hidden="true"></i> Ofertas</a></li>
-          <li><a href="{% url 'backoffice:listar_proveedores' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-truck w-5 h-5 mr-2" aria-hidden="true"></i> Proveedores</a></li>
-          <li><a href="{% url 'backoffice:listar_clientes' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-user-friends w-5 h-5 mr-2" aria-hidden="true"></i> Clientes</a></li>
-          <li><a href="{% url 'backoffice:listar_tasas_cambio' %}" class="flex items-center p-2 rounded hover:bg-green-600"><i class="fas fa-exchange-alt w-5 h-5 mr-2" aria-hidden="true"></i> Tasa de Cambio</a></li>
+        <ul id="reservas-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_reservas' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-calendar-check w-5 h-5 mr-2"></i> {% trans "Reservas" %}</a></li>
+          <li><a href="{% url 'listar_usuarios' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-users w-5 h-5 mr-2"></i> {% trans "Usuarios" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_ofertas_especiales' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-gift w-5 h-5 mr-2"></i> {% trans "Ofertas" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_proveedores' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-truck w-5 h-5 mr-2"></i> {% trans "Proveedores" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_clientes' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-user-friends w-5 h-5 mr-2"></i> {% trans "Clientes" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_tasas_cambio' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-exchange-alt w-5 h-5 mr-2"></i> {% trans "Tasa de Cambio" %}</a></li>
         </ul>
       </li>
 
       <!-- Hoteles -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-purple-600" data-collapse-toggle="hoteles-menu" aria-controls="hoteles-menu" aria-expanded="false">
-          <i class="fas fa-hotel w-6 h-6 text-purple-400 mr-3" aria-hidden="true"></i>
-          <span>Hoteles</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="hoteles-menu" aria-controls="hoteles-menu" aria-expanded="false">
+          <i class="fas fa-hotel w-6 h-6 text-purple-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Hoteles" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="hoteles-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_hoteles' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas fa-bed w-5 h-5 mr-2" aria-hidden="true"></i> Listado</a></li>
-          <li><a href="{% url 'backoffice:listar_polos' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas fa-globe w-5 h-5 mr-2" aria-hidden="true"></i> Polos</a></li>
-          <li><a href="{% url 'backoffice:listar_cadenas_hoteleras' %}" class="flex items-center p-2 rounded hover:bg-purple-600"><i class="fas a-building w-5 h-5 mr-2" aria-hidden="true"></i> Cadenas</a></li>
+        <ul id="hoteles-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_hoteles' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-bed w-5 h-5 mr-2"></i> {% trans "Listado" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_polos' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-globe w-5 h-5 mr-2"></i> {% trans "Polos" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_cadenas_hoteleras' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-building w-5 h-5 mr-2"></i> {% trans "Cadenas" %}</a></li>
         </ul>
       </li>
 
       <!-- Carros -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-yellow-400" data-collapse-toggle="carros-menu" aria-controls="carros-menu" aria-expanded="false">
-          <i class="fas fa-car w-6 h-6 text-yellow-400 mr-3" aria-hidden="true"></i>
-          <span>Carros</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="carros-menu" aria-controls="carros-menu" aria-expanded="false">
+          <i class="fas fa-car w-6 h-6 text-yellow-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Carros" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="carros-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_rentadoras' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-building w-5 h-5 mr-2" aria-hidden="true"></i> Rentadoras</a></li>
-          <li><a href="{% url 'backoffice:listar_categorias' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-tags w-5 h-5 mr-2" aria-hidden="true"></i> Categorías</a></li>
-          <li><a href="{% url 'backoffice:listar_modelos_autos' %}" class="flex items-center p-2 rounded hover:bg-yellow-400"><i class="fas fa-car w-5 h-5 mr-2" aria-hidden="true"></i> Modelos Autos</a></li>
+        <ul id="carros-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_rentadoras' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-building w-5 h-5 mr-2"></i> {% trans "Rentadoras" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_categorias' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-tags w-5 h-5 mr-2"></i> {% trans "Categorías" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_modelos_autos' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-car w-5 h-5 mr-2"></i> {% trans "Modelos Autos" %}</a></li>
         </ul>
       </li>
 
       <!-- Traslados -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-pink-600" data-collapse-toggle="traslados-menu" aria-controls="traslados-menu" aria-expanded="false">
-          <i class="fas fa-shuttle-van w-6 h-6 text-pink-400 mr-3" aria-hidden="true"></i>
-          <span>Traslados</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="traslados-menu" aria-controls="traslados-menu" aria-expanded="false">
+          <i class="fas fa-van-shuttle w-6 h-6 text-pink-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Traslados" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="traslados-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_traslados' %}" class="flex items-center p-2 rounded hover:bg-pink-600"><i class="fas fa-list w-5 h-5 mr-2" aria-hidden="true"></i> Listado</a></li>
-          <li><a href="{% url 'backoffice:listar_transportistas' %}" class="flex items-center p-2 rounded hover:bg-pink-600"><i class="fas fa-truck-moving w-5 h-5 mr-2" aria-hidden="true"></i> Transportistas</a></li>
+        <ul id="traslados-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_traslados' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-list w-5 h-5 mr-2"></i> {% trans "Listado" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_transportistas' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-truck-moving w-5 h-5 mr-2"></i> {% trans "Transportistas" %}</a></li>
         </ul>
       </li>
 
       <!-- Certificados -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-amber-500" data-collapse-toggle="certificados-menu" aria-controls="certificados-menu" aria-expanded="false">
-          <i class="fas fa-certificate w-6 h-6 text-amber-400 mr-3" aria-hidden="true"></i>
-          <span>Certificados</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="certificados-menu" aria-controls="certificados-menu" aria-expanded="false">
+          <i class="fas fa-certificate w-6 h-6 text-amber-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Certificados" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="certificados-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_certificados' %}" class="flex items-center p-2 rounded hover:bg-amber-500"><i class="fas fa-file-alt w-5 h-5 mr-2" aria-hidden="true"></i> Certificados</a></li>
-          <li><a href="{% url 'backoffice:listar_opciones_certificado' %}" class="flex items-center p-2 rounded hover:bg-amber-500"><i class="fas fa-star w-5 h-5 mr-2" aria-hidden="true"></i> Opciones</a></li>
+        <ul id="certificados-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_certificados' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-file-alt w-5 h-5 mr-2"></i> {% trans "Certificados" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_opciones_certificado' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-star w-5 h-5 mr-2"></i> {% trans "Opciones" %}</a></li>
         </ul>
       </li>
 
       <!-- Envíos -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-fuchsia-600" data-collapse-toggle="envios-menu" aria-controls="envios-menu" aria-expanded="false">
-          <i class="fas fa-box-open w-6 h-6 text-fuchsia-400 mr-3" aria-hidden="true"></i>
-          <span>Envíos</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="envios-menu" aria-controls="envios-menu" aria-expanded="false">
+          <i class="fas fa-box-open w-6 h-6 text-fuchsia-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Envíos" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="envios-menu" class="hidden pl-6 space-y-2 mt-2">
-          <li><a href="{% url 'backoffice:listar_remitentes' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-user-tie w-5 h-5 mr-2" aria-hidden="true"></i> Remitentes</a></li>
-          <li><a href="{% url 'backoffice:listar_destinatarios' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-user-tag w-5 h-5 mr-2" aria-hidden="true"></i> Destinatarios</a></li>
-          <li><a href="{% url 'backoffice:listar_envios' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-truck-loading w-5 h-5 mr-2" aria-hidden="true"></i> Envíos</a></li>
-          <li><a href="{% url 'backoffice:listar_items_envio' %}" class="flex items-center p-2 rounded hover:bg-fuchsia-600"><i class="fas fa-boxes w-5 h-5 mr-2" aria-hidden="true"></i> Ítems</a></li>
+        <ul id="envios-menu" class="hidden pl-6 space-y-1 mt-2">
+          <li><a href="{% url 'backoffice:listar_remitentes' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-user-tie w-5 h-5 mr-2"></i> {% trans "Remitentes" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_destinatarios' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-user-tag w-5 h-5 mr-2"></i> {% trans "Destinatarios" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_envios' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-truck-loading w-5 h-5 mr-2"></i> {% trans "Envíos" %}</a></li>
+          <li><a href="{% url 'backoffice:listar_items_envio' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10"><i class="fas fa-boxes w-5 h-5 mr-2"></i> {% trans "Ítems" %}</a></li>
         </ul>
       </li>
 
       <!-- Remesas -->
       <li>
-        <button type="button" class="flex items-center w-full p-3 rounded-lg hover:bg-green-600" data-collapse-toggle="remesas-menu" aria-controls="remesas-menu" aria-expanded="false">
-          <i class="fas fa-money-bill-wave w-6 h-6 text-green-400 mr-3" aria-hidden="true"></i>
-          <span>Remesas</span>
-          <i class="fas fa-chevron-down ml-auto" aria-hidden="true"></i>
+        <button type="button"
+                class="collapser flex items-center w-full p-3 rounded-xl hover:bg-white/10 transition"
+                data-collapse-toggle="remesas-menu" aria-controls="remesas-menu" aria-expanded="false">
+          <i class="fas fa-money-bill-wave w-6 h-6 text-green-400 mr-3"></i>
+          <span class="flex-1 text-left">{% trans "Remesas" %}</span>
+          <i class="fas fa-chevron-down ml-auto transition-transform duration-200" data-chevron></i>
         </button>
-        <ul id="remesas-menu" class="hidden pl-6 space-y-2 mt-2">
+        <ul id="remesas-menu" class="hidden pl-6 space-y-1 mt-2">
           <li>
-            <a href="{% url 'backoffice:listar_remesas' %}" class="flex items-center p-2 rounded hover:bg-green-600">
-              <i class="fas fa-list-alt w-5 h-5 mr-2" aria-hidden="true"></i> Listar Remesas
+            <a href="{% url 'backoffice:listar_remesas' %}" class="flex items-center p-2 rounded-lg hover:bg-white/10">
+              <i class="fas fa-list-alt w-5 h-5 mr-2"></i> {% trans "Listar Remesas" %}
             </a>
           </li>
         </ul>
       </li>
+
     </ul>
   </div>
 </aside>
 
 <!-- MAIN -->
-<main class="sm:ml-64 pt-20 p-4 min-h-screen">
+<main id="main-content" class="sm:ml-64 pt-20 p-4 min-h-screen">
   {% block content %}{% endblock %}
 </main>
 
 {% block extra_scripts %}
 <script>
-  // Drawer toggle (móvil): abre/cierra y actualiza aria-expanded
+  // Drawer móvil
   document.querySelectorAll("[data-drawer-toggle]").forEach(btn => {
     const targetId = btn.getAttribute("data-drawer-toggle");
     const panel = document.getElementById(targetId);
@@ -297,7 +328,6 @@
     lightIcon.classList.add('hidden');
     localStorage.setItem('theme', 'light');
   }
-  // Estado inicial coherente con iconos
   if (localStorage.getItem('theme') === 'dark' ||
      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     enableDark();
@@ -308,27 +338,48 @@
     document.documentElement.classList.contains('dark') ? disableDark() : enableDark();
   });
 
-  // Sidebar: recordar último submenú abierto
+  // Sidebar: recordar último submenú + rotación chevron
   document.addEventListener("DOMContentLoaded", () => {
     const buttons = document.querySelectorAll("[data-collapse-toggle]");
     const savedMenuId = localStorage.getItem("sidebarOpen");
+
     buttons.forEach(btn => {
       const menuId = btn.getAttribute("data-collapse-toggle");
       const menu = document.getElementById(menuId);
+      const chev = btn.querySelector("[data-chevron]");
       if (!menu) return;
-      if (menuId === savedMenuId) menu.classList.remove("hidden");
+
+      if (menuId === savedMenuId) {
+        menu.classList.remove("hidden");
+        chev?.classList.add("rotate-180");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
       btn.addEventListener("click", () => {
         const isOpen = !menu.classList.contains("hidden");
-        document.querySelectorAll("ul[id$='-menu']").forEach(m => m.classList.add("hidden"));
+        // Cierra otros
+        document.querySelectorAll("ul[id$='-menu']").forEach(m => {
+          if (m !== menu) m.classList.add("hidden");
+        });
+        document.querySelectorAll(".collapser [data-chevron]").forEach(c => {
+          if (c !== chev) c.classList.remove("rotate-180");
+        });
+
         if (!isOpen) {
           menu.classList.remove("hidden");
+          chev?.classList.add("rotate-180");
+          btn.setAttribute("aria-expanded", "true");
           localStorage.setItem("sidebarOpen", menuId);
         } else {
           menu.classList.add("hidden");
+          chev?.classList.remove("rotate-180");
+          btn.setAttribute("aria-expanded", "false");
           localStorage.removeItem("sidebarOpen");
         }
       });
     });
+
+    // Guardar último menú al hacer click en enlaces
     document.querySelectorAll("ul[id$='-menu'] a").forEach(link => {
       link.addEventListener("click", () => {
         const parentMenu = link.closest("ul[id]");
@@ -356,6 +407,5 @@
   }
 </script>
 {% endblock %}
-
 </body>
 </html>
