@@ -4,45 +4,58 @@ venv/
 .env.local
 .env.*.local
 .python-version
+# ¡Versiona un .env.example con valores ficticios!
+!.env.example
 
-# Sugerencia: sí comitear un .env.example con valores ficticios
-# .env.example
+# ─── Archivos de base de datos y runtime ──────────────────────────
+*.sqlite3
+celerydb.sqlite
+dump.rdb
+*.rdb
 
-# ─── Python compilado y caché ────────────────────────────────────
+# ─── Archivos compilados de Python ────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 
-# ─── Artefactos de empaquetado Python ────────────────────────────
+# ─── Artefactos de build Python ───────────────────────────────────
 build/
 dist/
 *.egg-info/
 
-# ─── Sistema operativo ───────────────────────────────────────────
+# ─── Archivos estáticos y media generados ─────────────────────────
+media/
+staticfiles/
+# Si tu STATIC_ROOT es distinto, ajusta aquí:
+# static_root/
+# collected_static/
+**/output.css
+**/output.css.map
+
+# ─── Archivos de sistema ──────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# ─── Bases de datos y logs ───────────────────────────────────────
-*.sqlite3
-db.sqlite3
+# ─── IDEs y editores ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ─── Frameworks front-end ─────────────────────────────────────────
+node_modules/
+public/build/
+
+# ─── Logs, backups y temporales ───────────────────────────────────
 *.log
 logs/
 backup/
-
-# ─── Celery / Redis (runtime) ────────────────────────────────────
-celerydb.sqlite
-celerybeat-schedule
-dump.rdb
-*.rdb
-
-# ─── Backups y ediciones temporales ─────────────────────────────
 *.bak
 *.swp
 *.swo
 *.tmp
 tmp/
 
-# ─── Configuraciones locales o secretas ─────────────────────────
+# ─── Configuración y llaves privadas ──────────────────────────────
 *.local
 *.secret
 *.pem
@@ -50,50 +63,7 @@ tmp/
 *.crt
 *.p12
 
-# ─── Media y estáticos generados ────────────────────────────────
-media/
-
-# IMPORTANTE: deja solo el STATIC_ROOT que uses realmente en settings.py
-# Si usas 'staticfiles' como STATIC_ROOT:
-staticfiles/
-# Si usas 'static_root' como STATIC_ROOT:
-# static_root/
-# Si usas 'collected_static' como STATIC_ROOT:
-# collected_static/
-
-# Opcional: ignorar salidas compiladas de Tailwind/PostCSS si las generas
-# (ajusta las rutas a tu proyecto)
-**/static/**/output.css
-**/static/**/output.css.map
-
-# ─── Frameworks front-end ────────────────────────────────────────
-node_modules/
-public/build/
-# Otras caches de bundlers opcionales:
-# .parcel-cache/
-# .next/
-# .vite/
-
-# ─── IDEs y editores ─────────────────────────────────────────────
-.vscode/
-.idea/
-*.code-workspace
-
-# ─── Scripts propios y exportaciones ────────────────────────────
-# Mantén ignorados CSV sensibles o masivos en rutas específicas, no globales
-z_mis_script/000/HotelImportado*.csv
-exports/
-documentos/
-
-# ─── Archivos de pruebas temporales (scope por carpetas) ────────
-# Evita ignorar globalmente XML/CSV/XLS; limítalo a carpetas temporales.
-# Si necesitas ignorarlos en tmp/ o exports/, ya están arriba:
-# tmp/*.xml
-# tmp/*.csv
-# tmp/*.xls
-# tmp/*.xlsx
-
-# ─── Caches y reportes de linters/tests ──────────────────────────
+# ─── Caches y reportes de tests/linter ────────────────────────────
 .pytest_cache/
 .coverage
 .coverage.*
@@ -101,8 +71,10 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# ─── Jupyter/Notebooks ───────────────────────────────────────────
-.ipynb_checkpoints/
+# ─── Archivos temporales de scripts o exportaciones ───────────────
+z_mis_script/000/HotelImportado*.csv
+exports/
+documentos/
 
-# ─── Otros archivos sueltos que no deberían versionarse ─────────
+# ─── Otros ────────────────────────────────────────────────────────
 get-pip.py
