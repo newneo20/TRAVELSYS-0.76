@@ -154,102 +154,83 @@ def cargar_reservas_recientes(request):
     return JsonResponse({'html': html})
 
 
+# views.py
+from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Sum as DjangoSum, Count, Q, F
+from django.shortcuts import render, redirect
+
 @login_required
 def user_dashboard(request):
-    usuario = request.user
+    user = request.user
 
-    # 1) Seguridad: si agencia es None, lo convertimos a string vacío
-    agencia_raw = usuario.agencia or ''
-    agencia = agencia_raw.strip()
-
-    # 2) Comprobamos tras el strip
+    agencia = (user.agencia or '').strip()
     if not agencia:
         messages.error(request, "El nombre de usuario no está definido.")
         return redirect('home')
 
-    # 3) Usamos 'agencia' saneada en las consultas
-    
-    reservas = Reserva.objects.filter(agencia=usuario.agencia)
+    # Base queryset
+    reservas_qs = (Reserva.objects
+                   .select_related('proveedor')
+                   .filter(agencia=user.agencia))
+
+    # KPIs y estados
+    total_reservations = reservas_qs.count()
+    estados = ('solicitada','pendiente','confirmada','modificada','ejecutada','cancelada','reembolsada')
+    estados_reservas = {st: reservas_qs.filter(estatus=st).count() for st in estados}
+
+    reservas_por_cobrar = reservas_qs.filter(cobrada=False).count()
+    reservas_por_pagar  = reservas_qs.filter(pagada=False).count()
+    reservas_recientes  = reservas_qs.order_by('-fecha_reserva')[:8]
+
+    # Métricas agregadas
+    ganancias_totales = float(reservas_qs.aggregate(total=DjangoSum('precio_total'))['total'] or 0)
+
+    # Series 12 meses (labels, reservas, ingresos, deudas)
+    today = datetime.now()
+    labels, reservas_data, ingresos_data, deudas_data = [], [], [], []
+    for i in range(12):
+        month = (today.month - i - 1) % 12 + 1
+        year  = today.year if month <= today.month else today.year - 1
+        labels.insert(0, datetime(year, month, 1).strftime('%b'))
+
+        rmes = reservas_qs.filter(fecha_reserva__year=year, fecha_reserva__month=month)
+        reservas_data.insert(0, rmes.count())
+        ingresos_data.insert(0, float(rmes.aggregate(total=DjangoSum('precio_total'))['total'] or 0))
+        deudas_data.insert(0, float(rmes.filter(cobrada=False).aggregate(total=DjangoSum('precio_total'))['total'] or 0))
+
+    # Otros contadores
+    total_hotels = Hotel.objects.count()
+    total_rooms  = Habitacion.objects.count()
+    recent_hotels = Hotel.objects.order_by('-id')[:5]
+    cant_usuarios = CustomUser.objects.count()
+    ofertas_especiales = OfertasEspeciales.objects.filter(disponible=True)[:12]
+
+    # (Opcional) Remesas si las usas en cards
     remesas = Remesa.objects.filter(
         reserva__nombre_usuario__iexact=agencia,
         reserva__tipo='remesas'
+    )[:5]
+
+    context = dict(
+        total_reservations=total_reservations,
+        estados_reservas=estados_reservas,
+        reservas_por_cobrar=reservas_por_cobrar,
+        reservas_por_pagar=reservas_por_pagar,
+        reservas_recientes=reservas_recientes,
+        ganancias_totales=ganancias_totales,
+        labels=labels,
+        reservas_data=reservas_data,
+        ingresos_data=ingresos_data,
+        deudas_data=deudas_data,
+        total_hotels=total_hotels,
+        total_rooms=total_rooms,
+        recent_hotels=recent_hotels,
+        cant_usuarios=cant_usuarios,
+        ofertas_especiales=ofertas_especiales,
+        user=user,
     )
-
-    # resto de tu lógica...
-    ofertas_especiales = OfertasEspeciales.objects.filter(disponible=True)
-    total_hotels = Hotel.objects.count()
-    total_rooms = Habitacion.objects.count()
-    recent_hotels = Hotel.objects.order_by('-id')[:5]
-    cant_usuarios = CustomUser.objects.count()
-
-    total_reservations = reservas.count()
-    estados_reservas = {
-        status: reservas.filter(estatus=status).count()
-        for status in (
-            'solicitada','pendiente','confirmada',
-            'modificada','ejecutada','cancelada','reembolsada'
-        )
-    }
-
-    reservas_por_cobrar = reservas.filter(cobrada=False).count()
-    reservas_por_pagar = reservas.filter(pagada=False).count()
-    reservas_recientes = reservas.order_by('-fecha_reserva')[:5]
-
-    
-    ganancias_totales = sum(float(r.precio_total) for r in reservas)
-
-    precio_total_por_mes = calcular_precio_total_por_mes(reservas)
-    cant_reservas_por_mes = contar_reservas_por_mes(reservas)
-
-    # Datos para el gráfico de 12 meses
-    today = datetime.now()
-    labels = []
-    reservas_data = []
-    ingresos_data = []
-    deudas_data = []
-
-    for i in range(12):
-        month = (today.month - i - 1) % 12 + 1
-        year = today.year if month <= today.month else today.year - 1
-
-        labels.insert(0, datetime(year, month, 1).strftime('%b'))
-        reservas_mes = reservas.filter(
-            fecha_reserva__year=year,
-            fecha_reserva__month=month
-        )
-
-        reservas_data.insert(0, reservas_mes.count())
-        ingresos = reservas_mes.aggregate(
-            total=DjangoSum('precio_total')
-        )['total'] or 0
-        deudas = reservas_mes.filter(cobrada=False).aggregate(
-            total=DjangoSum('precio_total')
-        )['total'] or 0
-
-        ingresos_data.insert(0, float(ingresos))
-        deudas_data.insert(0, float(deudas))
-
-    context = {
-        'total_reservations': total_reservations,
-        'estados_reservas': estados_reservas,
-        'reservas_por_cobrar': reservas_por_cobrar,
-        'reservas_por_pagar': reservas_por_pagar,
-        'reservas_recientes': reservas_recientes,
-        'ganancias_totales': ganancias_totales,
-        'precio_total_por_mes': precio_total_por_mes,
-        'cant_reservas_por_mes': cant_reservas_por_mes,
-        'total_hotels': total_hotels,
-        'total_rooms': total_rooms,
-        'recent_hotels': recent_hotels,
-        'cant_usuarios': cant_usuarios,
-        'ofertas_especiales': ofertas_especiales,
-        'labels': labels,
-        'reservas_data': reservas_data,
-        'ingresos_data': ingresos_data,
-        'deudas_data': deudas_data,
-        'user': usuario,
-    }
-
     return render(request, 'booking/user_dashboard.html', context)
 
 

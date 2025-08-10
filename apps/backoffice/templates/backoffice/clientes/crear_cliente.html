@@ -1,278 +1,248 @@
-{% extends 'base.html' %}
-{% load static %}
+{# backoffice/templates/backoffice/clientes/crear_cliente.html #}
+{% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-6 max-w-screen-lg">
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="ClienteForm()">
 
-    <h1 class="text-2xl font-bold mb-6">Crear Cliente</h1>
-    
-    <!-- FORMULARIO DE CREACIÓN DEL CLIENTE -->
-    <form method="POST" action="" class="bg-white p-4 shadow-md rounded">
-        {% csrf_token %}
+  <!-- HEADER -->
+  <section class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Cliente" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Captura de datos con validación en vivo y accesible." %}</p>
+    </div>
 
-        <!-- DATOS PERSONALES -->
-        <h2 class="text-lg font-semibold mb-2">Datos Personales</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-            <!-- Nombre -->
-            <div>
-                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
-                <input 
-                    type="text"
-                    id="nombre"
-                    name="nombre"
-                    placeholder="Ej: Juan"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ nombre|default_if_none:'' }}"
-                >
-            </div>
-            <!-- Apellidos -->
-            <div>
-                <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
-                <input 
-                    type="text"
-                    id="apellidos"
-                    name="apellidos"
-                    placeholder="Ej: Pérez Díaz"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none 
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ apellidos|default_if_none:'' }}"
-                >
-            </div>
-        </div>
+    <!-- Barra de acciones sticky -->
+    <div class="sticky md:static top-2 z-40">
+      <div class="flex items-center gap-2 rounded-full bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 shadow px-2 py-2 backdrop-blur">
+        <a href="{% url 'backoffice:listar_clientes' %}"
+           class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+          <i class="fas fa-arrow-left"></i> {% trans "Volver" %}
+        </a>
+        <button form="form-cliente" :disabled="saving"
+                class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition">
+          <template x-if="!saving"><i class="fas fa-save"></i></template>
+          <template x-if="saving"><i class="fas fa-spinner fa-spin"></i></template>
+          <span>{% trans "Guardar" %}</span>
+        </button>
+      </div>
+    </div>
+  </section>
 
-        <!-- IDENTIFICACIÓN -->
-        <h2 class="text-lg font-semibold mb-2">Identificación</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-            <!-- Pasaporte -->
-            <div>
-                <label for="pasaporte" class="block text-sm font-medium text-gray-700">Pasaporte</label>
-                <input 
-                    type="text"
-                    id="pasaporte"
-                    name="pasaporte"
-                    placeholder="Ej: H1234567"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ pasaporte|default_if_none:'' }}"
-                >
-            </div>
-            <!-- Carnet de Identidad -->
-            <div>
-                <label for="carnet_identidad" class="block text-sm font-medium text-gray-700">Carnet de Identidad</label>
-                <input 
-                    type="text"
-                    id="carnet_identidad"
-                    name="carnet_identidad"
-                    placeholder="Ej: 90123456789"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ carnet_identidad|default_if_none:'' }}"
-                >
-            </div>
-            <!-- Licencia -->
-            <div>
-                <label for="licencia" class="block text-sm font-medium text-gray-700">Licencia</label>
-                <input 
-                    type="text"
-                    id="licencia"
-                    name="licencia"
-                    placeholder="Ej: B123456"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ licencia|default_if_none:'' }}"
-                >
-            </div>
-            <!-- Pasaporte / Licencia (campo extra) -->
-            <div>
-                <label for="pasaporte_licencia" class="block text-sm font-medium text-gray-700">
-                    Pasaporte/Licencia (Extra)
-                </label>
-                <input 
-                    type="text"
-                    id="pasaporte_licencia"
-                    name="pasaporte_licencia"
-                    placeholder="Ej: Info adicional"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ pasaporte_licencia|default_if_none:'' }}"
-                >
-            </div>
+  <!-- FORM -->
+  <form id="form-cliente" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-8"
+        @submit="onSubmit">
+    {% csrf_token %}
+
+    <!-- Sección: Identidad -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">{% trans "Identidad" %}</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
+          <input name="nombre" x-model="form.nombre" value="{{ data.nombre|default_if_none:'' }}" required
+                 @blur="titleCase('nombre')"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border"
+                 :class="errorClass('nombre')"
+                 
+                 aria-describedby="err-nombre">
+          {% if errors.nombre %}<p id="err-nombre" class="mt-1 text-xs text-rose-600">{{ errors.nombre }}</p>{% endif %}
         </div>
 
-        <!-- DATOS DE CONTACTO -->
-        <h2 class="text-lg font-semibold mb-2">Datos de Contacto</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-            <!-- Teléfono principal -->
-            <div>
-                <label for="telefono_principal" class="block text-sm font-medium text-gray-700">
-                    Teléfono Principal
-                </label>
-                <input 
-                    type="text"
-                    id="telefono_principal"
-                    name="telefono_principal"
-                    placeholder="Ej: +53 55555555"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ telefono_principal|default_if_none:'' }}"
-                >
-            </div>
-            <!-- Email -->
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input 
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="cliente@ejemplo.com"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ email|default_if_none:'' }}"
-                >
-            </div>
+        <!-- Apellidos -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Apellidos" %} *</label>
+          <input name="apellidos" x-model="form.apellidos" value="{{ data.apellidos|default_if_none:'' }}" required
+                 @blur="titleCase('apellidos')"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border"
+                 :class="errorClass('apellidos')"
+                 
+                 aria-describedby="err-apellidos">
+          {% if errors.apellidos %}<p id="err-apellidos" class="mt-1 text-xs text-rose-600">{{ errors.apellidos }}</p>{% endif %}
         </div>
 
-        <!-- DIRECCIÓN -->
-        <h2 class="text-lg font-semibold mb-2">Dirección</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-            <!-- direccio (o direccion) -->
-            <div>
-                <label for="direccio" class="block text-sm font-medium text-gray-700">
-                    Dirección
-                </label>
-                <input 
-                    type="text"
-                    id="direccio"
-                    name="direccio"
-                    placeholder="Ej: Calle 10 No. 50"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ direccio|default_if_none:'' }}"
-                >
-            </div>
-            <!-- ciudad -->
-            <div>
-                <label for="ciudad" class="block text-sm font-medium text-gray-700">Ciudad</label>
-                <input 
-                    type="text"
-                    id="ciudad"
-                    name="ciudad"
-                    placeholder="Ej: Miami"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ ciudad|default_if_none:'' }}"
-                >
-            </div>
-            <!-- estado -->
-            <div>
-                <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
-                <input 
-                    type="text"
-                    id="estado"
-                    name="estado"
-                    placeholder="Ej: Florida"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ estado|default_if_none:'' }}"
-                >
-            </div>
+        <!-- VIP -->
+        <div class="flex items-center gap-3 mt-6">
+          <input id="vip" name="es_vip" type="checkbox" {% if data.es_vip %}checked{% endif %}
+                 x-model="form.es_vip"
+                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+          <label for="vip" class="text-sm text-gray-700 dark:text-gray-300">{% trans "Cliente VIP" %}</label>
+          <span x-show="form.es_vip" class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+            {% trans "Requiere identificación" %}
+          </span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-            <!-- Pais -->
-            <div>
-                <label for="pais" class="block text-sm font-medium text-gray-700">País</label>
-                <input 
-                    type="text"
-                    id="pais"
-                    name="pais"
-                    placeholder="Ej: USA"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ pais|default_if_none:'' }}"
-                >
-            </div>
-            <!-- zip -->
-            <div>
-                <label for="zip" class="block text-sm font-medium text-gray-700">ZIP</label>
-                <input 
-                    type="text"
-                    id="zip"
-                    name="zip"
-                    placeholder="Ej: 33174"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ zip|default_if_none:'' }}"
-                >
-            </div>
+      </div>
+    </section>
+
+    <!-- Sección: Contacto -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">{% trans "Contacto" %}</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+          <div class="relative">
+            <input type="email" name="email" x-model.lazy="form.email"
+                   @change.debounce.300ms="checkEmail()"
+                   value="{{ data.email|default_if_none:'' }}"
+                   class="mt-1 w-full px-3 py-2 rounded-lg border pr-9"
+                   :class="errorClass('email')"
+                   aria-describedby="err-email">
+            <i class="fa-solid fa-circle-check text-emerald-500 absolute right-3 top-1/2 -translate-y-1/2"
+               x-show="valid.emailUnique"></i>
+          </div>
+          <p id="err-email" class="mt-1 text-xs" :class="errors.email ? 'text-rose-600' : 'text-gray-500 dark:text-gray-400'">
+            <span x-text="errors.email || 'Opcional. Se validará si es único.'"></span>
+          </p>
         </div>
 
-        <!-- OTROS -->
-        <h2 class="text-lg font-semibold mb-2">Otros</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-            <div>
-                <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">
-                    Fecha de Nacimiento
-                </label>
-                <input 
-                    type="date"
-                    id="fecha_nacimiento"
-                    name="fecha_nacimiento"
-                    class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                           focus:ring-1 focus:ring-indigo-500 text-sm"
-                    value="{{ fecha_nacimiento|default_if_none:'' }}"
-                >
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    ¿VIP?
-                </label>
-                <div class="flex items-center">
-                    <input 
-                        type="checkbox"
-                        id="es_vip"
-                        name="es_vip"
-                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        {% if es_vip == True or es_vip == 'on' %}checked{% endif %}
-                    >
-                    <label for="es_vip" class="ml-2 text-sm text-gray-700">
-                        Marcar como VIP
-                    </label>
-                </div>
-            </div>
-        </div>
-        <!-- Observaciones (a lo ancho) -->
-        <div class="mb-4">
-            <label for="observaciones" class="block text-sm font-medium text-gray-700">
-                Observaciones
-            </label>
-            <textarea
-                id="observaciones"
-                name="observaciones"
-                rows="3"
-                placeholder="Notas importantes..."
-                class="mt-1 p-1 w-full border border-gray-300 rounded focus:outline-none
-                       focus:ring-1 focus:ring-indigo-500 text-sm"
-            >{{ observaciones|default_if_none:'' }}</textarea>
+        <!-- Teléfono -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono principal" %}</label>
+          <input name="telefono_principal" x-model="form.telefono_principal"
+                 @input="maskPhone($event)"
+                 value="{{ data.telefono_principal|default_if_none:'' }}"
+                 placeholder="+53 5 123 4567"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border"
+                 :class="errorClass('telefono_principal')"
+                 aria-describedby="err-tel">
+          <p id="err-tel" class="mt-1 text-xs text-rose-600" x-text="errors.telefono_principal"></p>
         </div>
 
-        <!-- BOTONES -->
-        <div class="mt-2">
-            <button 
-                type="submit"
-                class="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-sm"
-            >
-                Guardar
-            </button>
-            <a 
-                href="{% url 'backoffice:listar_clientes' %}"
-                class="ml-2 px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm"
-            >
-                Cancelar
-            </a>
+        <div></div>
+      </div>
+    </section>
+
+    <!-- Sección: Identificaciones -->
+    <section>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">{% trans "Identificaciones" %}</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Carnet de Identidad" %}</label>
+          <input name="carnet_identidad" x-model="form.carnet_identidad"
+                 value="{{ data.carnet_identidad|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
-    </form>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Pasaporte" %}</label>
+          <input name="pasaporte" x-model="form.pasaporte"
+                 value="{{ data.pasaporte|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Licencia" %}</label>
+          <input name="licencia" x-model="form.licencia"
+                 value="{{ data.licencia|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Otra identificación / Notas" %}</label>
+          <input name="pasaporte_licencia" x-model="form.pasaporte_licencia"
+                 value="{{ data.pasaporte_licencia|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+      </div>
+
+      <!-- Aviso VIP dinámico -->
+      <div x-show="form.es_vip && !hasAnyId()" class="mt-3 text-xs rounded-lg px-3 py-2 bg-amber-50 text-amber-800 border border-amber-200">
+        {% trans "Para guardar como VIP debes completar al menos una identificación." %}
+      </div>
+    </section>
+
+    <!-- CTA inferior (por si llega al final) -->
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'backoffice:listar_clientes' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold transition">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold transition">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </form>
 </main>
+
+{# Alpine para micro‑interacciones. Si ya lo cargas en base.html, omite esto. #}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<script>
+function ClienteForm(){
+  return {
+    // estado
+    saving:false,
+    dirty:false,
+    valid:{ emailUnique:false },
+    errors:{
+      {% if errors.nombre %}nombre:"{{ errors.nombre }}",{% endif %}
+      {% if errors.apellidos %}apellidos:"{{ errors.apellidos }}",{% endif %}
+      {% if errors.email %}email:"{{ errors.email }}",{% endif %}
+      {% if errors.telefono_principal %}telefono_principal:"{{ errors.telefono_principal }}",{% endif %}
+    },
+    form:{
+      nombre: "{{ data.nombre|default_if_none:'' }}",
+      apellidos: "{{ data.apellidos|default_if_none:'' }}",
+      email: "{{ data.email|default_if_none:'' }}",
+      telefono_principal: "{{ data.telefono_principal|default_if_none:'' }}",
+      carnet_identidad: "{{ data.carnet_identidad|default_if_none:'' }}",
+      pasaporte: "{{ data.pasaporte|default_if_none:'' }}",
+      licencia: "{{ data.licencia|default_if_none:'' }}",
+      pasaporte_licencia: "{{ data.pasaporte_licencia|default_if_none:'' }}",
+      es_vip: {{ data.es_vip|yesno:"true,false"|default:"false" }},
+    },
+    // helpers
+    hasAnyId(){ return !!(this.form.carnet_identidad || this.form.pasaporte || this.form.licencia); },
+    titleCase(k){ if(!this.form[k]) return; this.form[k] = this.form[k].toLowerCase().replace(/\s+/g,' ').replace(/\b\p{L}/gu, m=>m.toUpperCase()); this.dirty=true; },
+    maskPhone(e){ this.dirty = true; },
+    errorClass(field){
+      const base = 'border rounded-lg w-full px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2';
+      return (this.errors[field])
+        ? base + ' border-rose-300 focus:ring-rose-500'
+        : base + ' border-gray-300 dark:border-gray-600 focus:ring-indigo-500';
+    },
+    async checkEmail(){
+      this.dirty = true;
+      this.valid.emailUnique = false;
+      this.errors.email = '';
+      const email = (this.form.email || '').trim();
+      if(!email){ return; }
+      try{
+        const qs = new URLSearchParams({email}).toString();
+        const res = await fetch(`/backoffice/clientes/validar_email_unico/?${qs}`);
+        if(!res.ok) throw new Error();
+        const j = await res.json();
+        this.valid.emailUnique = j.unique;
+        if(!j.unique) this.errors.email = "{{ _('Ya existe un cliente con este correo.') }}";
+      }catch{ /* silencio */ }
+    },
+    onSubmit(e){
+      // VIP rule en cliente
+      if(this.form.es_vip && !this.hasAnyId()){
+        e.preventDefault();
+        this.errors.__all__ = true;
+        alert("{{ _('Cliente VIP requiere al menos una identificación.') }}");
+        return;
+      }
+      this.saving = true;
+      // evita doble envío
+      setTimeout(()=>{ this.saving=false; }, 8000);
+    },
+    // UX: aviso de cambios y atajo Ctrl/Cmd+S
+    init(){
+      window.addEventListener('beforeunload', (ev)=>{
+        if(this.dirty && !this.saving){ ev.preventDefault(); ev.returnValue=''; }
+      });
+      window.addEventListener('keydown', (e)=>{
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){
+          e.preventDefault();
+          document.getElementById('form-cliente').requestSubmit();
+        }
+      });
+    }
+  }
+}
+</script>
 {% endblock %}
