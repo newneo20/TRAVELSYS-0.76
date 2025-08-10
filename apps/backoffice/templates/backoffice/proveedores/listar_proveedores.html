@@ -1,151 +1,292 @@
-{# backoffice/templates/ejemplo/listar_proveedores.html #}
 {% extends 'base.html' %}
 {% load static i18n %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-6">
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <!-- Encabezado + Botón Crear -->
-  <section class="flex flex-col md:flex-row justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold mb-4 md:mb-0">{% trans "Proveedores" %}</h1>
-    <a href="{% url 'backoffice:crear_proveedor' %}"
-       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-      <i class="fas fa-plus mr-2"></i> {% trans "Crear Proveedor" %}
-    </a>
+  <!-- TÍTULO + ACCIONES -->
+  <section class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Proveedores" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+        {% trans "Administra tus proveedores con filtros y acciones rápidas." %}
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{% url 'backoffice:listar_proveedores' %}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-rotate-right"></i> {% trans "Reset" %}
+      </a>
+      <a href="{% url 'backoffice:crear_proveedor' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold transition">
+        <i class="fas fa-plus"></i> {% trans "Crear Proveedor" %}
+      </a>
+    </div>
   </section>
 
-  <!-- Formulario de Búsqueda -->
-  <section class="mb-6">
-    <form method="GET" action="">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div class="md:col-span-10">
-          <input
-            type="text"
-            name="q"
-            value="{{ query }}"
-            placeholder="{% trans 'Buscar por: Nombre, Correo, Teléfono o Dirección' %}"
-            class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
+  <!-- FILTROS -->
+  <section class="mb-8">
+    <form method="GET" action="" class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="lg:col-span-3">
+          <label class="sr-only" for="q">{% trans "Buscar" %}</label>
+          <input id="q" type="text" name="q" value="{{ query }}"
+                 placeholder="{% trans 'Buscar por: Nombre, Correo, Teléfono o Dirección' %}"
+                 class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500" />
         </div>
-        <div class="md:col-span-2">
-          <button
-            type="submit"
-            class="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            {% trans "Buscar" %}
-          </button>
+        <div>
+          <label class="sr-only" for="tiene_correo">{% trans "Con correo" %}</label>
+          <select id="tiene_correo" name="tiene_correo"
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500">
+            <option value="">{% trans "Todos" %}</option>
+            <option value="1" {% if tiene_correo == '1' %}selected{% endif %}>{% trans "Con al menos un correo" %}</option>
+            <option value="0" {% if tiene_correo == '0' %}selected{% endif %}>{% trans "Sin correo" %}</option>
+          </select>
         </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold transition">
+          <i class="fas fa-filter"></i> {% trans "Filtrar" %}
+        </button>
+        <a href="{% url 'backoffice:listar_proveedores' %}"
+           class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold transition">
+          <i class="fas fa-times-circle"></i> {% trans "Limpiar" %}
+        </a>
       </div>
     </form>
   </section>
 
-  <!-- Tabla de Proveedores -->
-  <section class="overflow-x-auto bg-white shadow rounded">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Nombre" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Correo 1" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Correo 2" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Correo 3" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Teléfono" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Dirección" %}
-          </th>
-          <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {% trans "Acciones" %}
-          </th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        {% for proveedor in proveedores %}
-        <tr class="hover:bg-gray-100">
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.nombre }}</td>
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.correo1 }}</td>
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.correo2 }}</td>
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.correo3 }}</td>
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.telefono }}</td>
-          <td class="px-4 py-2 text-center text-sm text-gray-700">{{ proveedor.direccion }}</td>
-          <td class="px-4 py-2 text-center text-sm">
-            <div class="flex justify-center space-x-2">
-              <a href="{% url 'backoffice:editar_proveedor' proveedor.pk %}"
-                 class="px-2 py-1 text-yellow-600 bg-yellow-100 rounded hover:bg-yellow-200"
-                 title="{% trans 'Editar proveedor' %}">
-                <i class="fas fa-pencil-alt"></i>
-              </a>
-              <a href="{% url 'backoffice:eliminar_proveedor' proveedor.pk %}"
-                 class="px-2 py-1 text-red-600 bg-red-100 rounded hover:bg-red-200"
-                 title="{% trans 'Eliminar proveedor' %}"
-                 onclick="return confirm('{% trans '¿Estás seguro de que deseas eliminar este proveedor?' %}');">
-                <i class="fas fa-trash-alt"></i>
-              </a>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="px-4 py-4 text-center text-gray-500">
-            {% trans "No hay proveedores registrados." %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- TABLA -->
+  <section class="w-full">
+    <div class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-200 sticky top-0 z-10">
+          <tr>
+            <th class="p-3 text-left font-semibold">{% trans "Nombre" %}</th>
+            <th class="p-3 text-center font-semibold">{% trans "Correo 1" %}</th>
+            <th class="p-3 text-center font-semibold">{% trans "Correo 2" %}</th>
+            <th class="p-3 text-center font-semibold">{% trans "Correo 3" %}</th>
+            <th class="p-3 text-center font-semibold">{% trans "Teléfono" %}</th>
+            <th class="p-3 text-left font-semibold">{% trans "Dirección" %}</th>
+            <th class="p-3 text-center font-semibold">{% trans "Acciones" %}</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          {% for proveedor in proveedores %}
+          <tr class="hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition"
+              {% if proveedor.correo1 or proveedor.correo2 or proveedor.correo3 %}style="border-left:4px solid #10b981"
+              {% else %}style="border-left:4px solid #94a3b8"{% endif %}>
+
+            <!-- NOMBRE -->
+            <td class="p-3 text-left">
+              <div class="font-semibold text-gray-900 dark:text-gray-100">{{ proveedor.nombre|default:"—" }}</div>
+            </td>
+
+            <!-- CORREOS -->
+            <td class="p-3 text-center">
+              {% if proveedor.correo1 %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                  <i class="fas fa-envelope mr-1"></i> {{ proveedor.correo1 }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+            <td class="p-3 text-center">
+              {% if proveedor.correo2 %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                  <i class="fas fa-envelope mr-1"></i> {{ proveedor.correo2 }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+            <td class="p-3 text-center">
+              {% if proveedor.correo3 %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                  <i class="fas fa-envelope mr-1"></i> {{ proveedor.correo3 }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+
+            <!-- TELÉFONO -->
+            <td class="p-3 text-center">
+              {% if proveedor.telefono %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                  <i class="fas fa-phone mr-1"></i> {{ proveedor.telefono }}
+                </span>
+              {% else %}
+                <span class="text-gray-400 italic">—</span>
+              {% endif %}
+            </td>
+
+            <!-- DIRECCIÓN -->
+            <td class="p-3 text-left text-gray-800 dark:text-gray-200">
+              <span class="line-clamp-2">{{ proveedor.direccion|default:"—" }}</span>
+            </td>
+
+            <!-- ACCIONES -->
+            <td class="p-3">
+              <div class="flex justify-center gap-2">
+                <!-- Ver (modal) -->
+                <button type="button" title="{% trans 'Ver detalle' %}"
+                        class="p-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded text-blue-700 dark:text-blue-300 transition ver-detalle-btn"
+                        data-id="{{ proveedor.pk }}">
+                  <i class="fas fa-eye"></i>
+                </button>
+
+                <!-- Editar -->
+                <a title="{% trans 'Editar proveedor' %}"
+                   href="{% url 'backoffice:editar_proveedor' proveedor.pk %}"
+                   class="p-2 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 rounded text-amber-700 dark:text-amber-300 transition">
+                  <i class="fas fa-pencil-alt"></i>
+                </a>
+
+                <!-- Eliminar -->
+                <a title="{% trans 'Eliminar proveedor' %}"
+                   href="{% url 'backoffice:eliminar_proveedor' proveedor.pk %}"
+                   onclick="return confirm('{% trans '¿Estás seguro de que deseas eliminar este proveedor?' %}')"
+                   class="p-2 bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 rounded text-rose-700 dark:text-rose-300 transition">
+                  <i class="fas fa-trash-alt"></i>
+                </a>
+              </div>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="p-6 text-center text-gray-500 dark:text-gray-400">
+              {% trans "No hay proveedores registrados." %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
 
-  <!-- Paginación -->
-  <section class="mt-6">
-    <nav aria-label="{% trans 'Paginación' %}">
-      <ul class="inline-flex items-center -space-x-px">
-        {% if proveedores.has_previous %}
-        <li>
-          <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
-             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-l hover:bg-gray-100 hover:text-gray-700"
-             aria-label="{% trans 'Primera página' %}">&laquo;&laquo;</a>
-        </li>
-        <li>
-          <a href="?page={{ proveedores.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
-             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-             aria-label="{% trans 'Página anterior' %}">&laquo;</a>
-        </li>
-        {% endif %}
+  <!-- PAGINACIÓN -->
+  <section class="mt-8 flex justify-center">
+    <nav class="inline-flex rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+      {% if proveedores.has_previous %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1"
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-200 border-r dark:border-gray-700"
+           aria-label="{% trans 'Primera página' %}">
+           <i class="fas fa-angle-double-left"></i>
+        </a>
+        <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ proveedores.previous_page_number }}"
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-200 border-r dark:border-gray-700"
+           aria-label="{% trans 'Página anterior' %}">
+           <i class="fas fa-angle-left"></i>
+        </a>
+      {% endif %}
 
-        {% for num in proveedores.paginator.page_range %}
-          {% if proveedores.number == num %}
-          <li><span class="px-3 py-2 text-white bg-indigo-600 border border-gray-300">{{ num }}</span></li>
-          {% elif num > proveedores.number|add:'-5' and num < proveedores.number|add:'5' %}
-          <li>
-            <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
-               class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">{{ num }}</a>
-          </li>
-          {% endif %}
-        {% endfor %}
+      <span class="px-3 py-2 bg-indigo-600 text-white font-semibold">
+        {{ proveedores.number }}
+      </span>
 
-        {% if proveedores.has_next %}
-        <li>
-          <a href="?page={{ proveedores.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
-             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700"
-             aria-label="{% trans 'Página siguiente' %}">&raquo;</a>
-        </li>
-        <li>
-          <a href="?page={{ proveedores.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
-             class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-r hover:bg-gray-100 hover:text-gray-700"
-             aria-label="{% trans 'Última página' %}">&raquo;&raquo;</a>
-        </li>
-        {% endif %}
-      </ul>
+      {% if proveedores.has_next %}
+        <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ proveedores.next_page_number }}"
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-200 border-l dark:border-gray-700"
+           aria-label="{% trans 'Página siguiente' %}">
+           <i class="fas fa-angle-right"></i>
+        </a>
+        <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ proveedores.paginator.num_pages }}"
+           class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-200 border-l dark:border-gray-700"
+           aria-label="{% trans 'Última página' %}">
+           <i class="fas fa-angle-double-right"></i>
+        </a>
+      {% endif %}
     </nav>
   </section>
 
 </main>
+
+<!-- MODAL DETALLE -->
+<div id="modal-detalle" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="relative w-full max-w-3xl rounded-2xl bg-white dark:bg-gray-900 shadow-2xl p-6">
+    <button id="cerrar-modal" class="absolute top-3 right-3 text-gray-400 hover:text-red-600 text-2xl" aria-label="{% trans 'Cerrar' %}">&times;</button>
+    <h2 id="modal-title" class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <i class="fas fa-truck-field text-indigo-500"></i> {% trans "Detalles del Proveedor" %}
+    </h2>
+    <div id="contenido-detalle" class="text-gray-800 dark:text-gray-200 text-sm space-y-4">
+      <!-- contenido dinámico -->
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modal-detalle');
+    const contenido = document.getElementById('contenido-detalle');
+    const closeBtn = document.getElementById('cerrar-modal');
+
+    function openModal() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      closeBtn?.focus();
+      document.addEventListener('keydown', onEsc);
+      document.addEventListener('click', clickOutside);
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.removeEventListener('keydown', onEsc);
+      document.removeEventListener('click', clickOutside);
+    }
+    function onEsc(e) { if (e.key === 'Escape') closeModal(); }
+    function clickOutside(e) {
+      if (!modal.contains(e.target)) return;
+      const dialog = modal.querySelector('div[role!=none]');
+      if (dialog && !dialog.contains(e.target) && e.target === modal) closeModal();
+    }
+
+    document.querySelectorAll('.ver-detalle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+
+        contenido.innerHTML = `
+          <div class="flex flex-col items-center py-10 gap-3">
+            <i class="fas fa-spinner fa-spin text-3xl text-indigo-500"></i>
+            <p class="text-indigo-600 font-medium">{% trans "Cargando detalles..." %}</p>
+          </div>
+        `;
+
+        openModal();
+
+        // Ajusta esta URL a tu endpoint real
+        fetch(`/backoffice/proveedores/detalles_proveedor/${id}/`)
+          .then(res => {
+            if (!res.ok) throw new Error('bad response');
+            return res.json();
+          })
+          .then(data => {
+            contenido.innerHTML = `
+              <pre class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 overflow-auto text-xs leading-relaxed">
+${'${JSON.stringify(data, null, 2)}'}
+              </pre>
+            `;
+          })
+          .catch(() => {
+            contenido.innerHTML = `
+              <div class="text-center py-10">
+                <p class="text-red-600 font-semibold">{% trans "Error al cargar los detalles." %}</p>
+              </div>
+            `;
+          });
+      });
+    });
+
+    closeBtn?.addEventListener('click', closeModal);
+  });
+</script>
 {% endblock %}
