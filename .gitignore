@@ -1,19 +1,23 @@
-# ─── Entorno virtual y variables de entorno ───────────────────────
+# ─── Entornos / variables ─────────────────────────────────────────
 venv/
+.venv/
+env/
+.python-version
 .env
 .env.local
 .env.*.local
-.python-version
-# ¡Versiona un .env.example con valores ficticios!
 !.env.example
+.envrc
 
-# ─── Archivos de base de datos y runtime ──────────────────────────
+# ─── DB y runtime ─────────────────────────────────────────────────
 *.sqlite3
 celerydb.sqlite
+celerybeat-schedule
+celerybeat.pid
 dump.rdb
 *.rdb
 
-# ─── Archivos compilados de Python ────────────────────────────────
+# ─── Python compilados / caches ───────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,40 +26,47 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+pip-wheel-metadata/
 
-# ─── Archivos estáticos y media generados ─────────────────────────
+# ─── Django: migrations (solo deja __init__.py) ───────────────────
+**/migrations/**
+!**/migrations/
+!**/migrations/__init__.py
+**/migrations/__pycache__/
+
+# ─── Estáticos y media generados ──────────────────────────────────
 media/
 staticfiles/
-# Si tu STATIC_ROOT es distinto, ajusta aquí:
-# static_root/
-# collected_static/
 **/output.css
 **/output.css.map
 
-# ─── Archivos de sistema ──────────────────────────────────────────
+# ─── Sistema / OS ─────────────────────────────────────────────────
 .DS_Store
+._*
 Thumbs.db
 
-# ─── IDEs y editores ──────────────────────────────────────────────
+# ─── IDEs / Editores ──────────────────────────────────────────────
 .vscode/
 .idea/
 *.code-workspace
 
-# ─── Frameworks front-end ─────────────────────────────────────────
+# ─── Frontend ─────────────────────────────────────────────────────
 node_modules/
 public/build/
 
-# ─── Logs, backups y temporales ───────────────────────────────────
+# ─── Logs / backups / temporales ──────────────────────────────────
 *.log
 logs/
+log/
 backup/
+BACKUPS/
 *.bak
 *.swp
 *.swo
 *.tmp
 tmp/
 
-# ─── Configuración y llaves privadas ──────────────────────────────
+# ─── Llaves / credenciales ────────────────────────────────────────
 *.local
 *.secret
 *.pem
@@ -63,7 +74,7 @@ tmp/
 *.crt
 *.p12
 
-# ─── Caches y reportes de tests/linter ────────────────────────────
+# ─── Caches de tests / linters ────────────────────────────────────
 .pytest_cache/
 .coverage
 .coverage.*
@@ -71,7 +82,7 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# ─── Archivos temporales de scripts o exportaciones ───────────────
+# ─── Exportaciones / scripts temporales ───────────────────────────
 z_mis_script/000/HotelImportado*.csv
 exports/
 documentos/

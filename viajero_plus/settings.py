@@ -1,146 +1,173 @@
-import os
+# -*- coding: utf-8 -*-
 from pathlib import Path
+import os
 import environ
 
 # ──────────────────────────────────────────────────────────────────────────────
-# BASE_DIR y Entorno
+# BASE_DIR y entorno
 # ──────────────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Definición de variables esperadas y defaults
 env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, None),
-    DATABASE_URL=(str, f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-    DATABASE_READONLY_URL=(str, None),
+
+    # DB
+    DATABASE_URL=(str, ''),                   # Si no se define y DEBUG=True, usamos sqlite
+    DATABASE_READONLY_URL=(str, ''),          # Opcional
+
+    # Hosts / Idioma / Zona Horaria
     ALLOWED_HOSTS=(list, []),
-    LANGUAGE_CODE=(str, 'en-us'),
-    TIME_ZONE=(str, 'UTC'),
+    LANGUAGE_CODE=(str, 'es-es'),
+    TIME_ZONE=(str, 'America/New_York'),
+    USE_TZ=(bool, True),
+
+    # Sesión
     SESSION_COOKIE_AGE=(int, 1800),
     SESSION_EXPIRE_AT_BROWSER_CLOSE=(bool, True),
     SESSION_SAVE_EVERY_REQUEST=(bool, True),
+
+    # Celery / Redis
     CELERY_BROKER_URL=(str, 'redis://localhost:6379/0'),
     CELERY_RESULT_BACKEND=(str, 'redis://localhost:6379/0'),
+
+    # Email SMTP
     EMAIL_REMITENTE=(str, ''),
     EMAIL_HOST=(str, ''),
     EMAIL_PORT=(int, 587),
     EMAIL_HOST_USER=(str, ''),
     EMAIL_PASSWORD=(str, ''),
+    EMAIL_USE_TLS=(bool, True),
+
+    # CSRF / Proxy SSL
+    CSRF_TRUSTED_ORIGINS=(list, []),
+    FORCE_SSL=(bool, False),   # Si quieres forzar HTTPS aunque DEBUG=True (opcional)
+
+    # Static/Media (permite sobreescribir rutas en Docker)
+    STATIC_ROOT_PATH=(str, ''),  # ej: '/app/staticfiles/'
+    MEDIA_ROOT_PATH=(str, ''),   # ej: '/app/mediafiles/'
 )
-# Carga del .env en desarrollo
+
+# Carga .env si existe (desarrollo)
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Seguridad básica
+# Seguridad y modo
 # ──────────────────────────────────────────────────────────────────────────────
-SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
-ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+SECRET_KEY = env('SECRET_KEY') or ('dev-secret-key' if DEBUG else None)
+if not DEBUG and not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY es obligatorio en producción")
+
+# ALLOWED_HOSTS: si DEBUG, permite todo; si no, usa env
+ALLOWED_HOSTS = ['*'] if DEBUG else env('ALLOWED_HOSTS')
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Aplicaciones instaladas
+# Apps
 # ──────────────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
-    # Core de Django
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # Django core
+    'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
+    'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
 
     # Terceros
-    'django_celery_beat',
-    'dal',
-    'dal_select2',
-    'django_extensions',
+    'django_celery_beat', 'dal', 'dal_select2',
 
-    # Tus apps
-    'apps.usuarios',
-    'apps.backoffice',
-    'apps.renta_hoteles',
-    'apps.renta_autos',
-    'apps.vuelos',
-    'apps.gestion_economica',
-    'apps.booking',
-    'apps.finanzas',
+    # Project apps
+    'apps.usuarios', 'apps.backoffice', 'apps.renta_hoteles', 'apps.renta_autos',
+    'apps.vuelos', 'apps.gestion_economica', 'apps.booking', 'apps.finanzas',
     'apps.common',
     'viajero_plus',
 ]
 
+# Solo en desarrollo
+if DEBUG:
+    INSTALLED_APPS += ['django_extensions']
+
 # ──────────────────────────────────────────────────────────────────────────────
-# Middleware
+# Middleware / URL / WSGI
 # ──────────────────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # i18n antes de CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',    
-    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 ROOT_URLCONF = 'viajero_plus.urls'
 WSGI_APPLICATION = 'viajero_plus.wsgi.application'
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Templates
+# Templates / i18n
 # ──────────────────────────────────────────────────────────────────────────────
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.i18n',
-            ],
-        },
+TEMPLATES = [{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': [BASE_DIR / 'templates'],
+    'APP_DIRS': True,
+    'OPTIONS': {
+        'context_processors': [
+            'django.template.context_processors.debug',
+            'django.template.context_processors.request',
+            'django.contrib.auth.context_processors.auth',
+            'django.contrib.messages.context_processors.messages',
+            'django.template.context_processors.i18n',
+        ],
     },
-]
+}]
 LOCALE_PATHS = [BASE_DIR / 'locale']
+
+LANGUAGE_CODE = env('LANGUAGE_CODE')
+LANGUAGES = [('en', 'English'), ('es', 'Español')]
+TIME_ZONE = env('TIME_ZONE')
+USE_I18N = True
+USE_L10N = True
+USE_TZ = env('USE_TZ')
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Bases de datos
 # ──────────────────────────────────────────────────────────────────────────────
-DATABASES = {
-    'default': env.db_url('DATABASE_URL'),
-}
-if env('DATABASE_READONLY_URL'):
+db_url = env('DATABASE_URL')
+if db_url:
+    DATABASES = {'default': env.db_url('DATABASE_URL')}
+else:
+    # Fallback cómodo en DEV
+    if DEBUG:
+        DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+    else:
+        raise RuntimeError("En producción define DATABASE_URL")
+
+ro_url = env('DATABASE_READONLY_URL')
+if ro_url:
     DATABASES['readonly'] = env.db_url('DATABASE_READONLY_URL')
+    # DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']  # si usas router
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Autenticación
+# Auth / Login
 # ──────────────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'usuarios.CustomUser'
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/usuarios/dashboard/'
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Internacionalización
-# ──────────────────────────────────────────────────────────────────────────────
-LANGUAGE_CODE = env('LANGUAGE_CODE')
-LANGUAGES = [
-    ('en', 'English'),
-    ('es', 'Español'),
-]
-TIME_ZONE = env('TIME_ZONE')
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Archivos estáticos y media
+# Static & Media
 # ──────────────────────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# En dev: usar carpeta local del proyecto
+if DEBUG:
+    STATICFILES_DIRS = [BASE_DIR / 'static']
+    STATIC_ROOT = Path(env('STATIC_ROOT_PATH') or (BASE_DIR / 'staticfiles'))
+    MEDIA_ROOT = Path(env('MEDIA_ROOT_PATH') or (BASE_DIR / 'media'))
+else:
+    # En prod (Docker/Nginx): normalmente se sobreescriben por env
+    STATIC_ROOT = Path(env('STATIC_ROOT_PATH') or (BASE_DIR / 'staticfiles'))
+    MEDIA_ROOT = Path(env('MEDIA_ROOT_PATH') or (BASE_DIR / 'mediafiles'))
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Sesiones
@@ -165,64 +192,34 @@ EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_PASSWORD')
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 DEFAULT_FROM_EMAIL = env('EMAIL_REMITENTE')
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Configuraciones de seguridad adicionales
+# Seguridad extra
 # ──────────────────────────────────────────────────────────────────────────────
-if not DEBUG:
-    # Forzar HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS')
+
+# Forzar HTTPS cuando no es DEBUG o cuando FORCE_SSL=True
+if not DEBUG or env('FORCE_SSL'):
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    # Clickjacking, XSS y MIME sniffing
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    # SECURE_BROWSER_XSS_FILTER está deprecado; los navegadores modernos ya lo manejan
 
-    # HSTS
-    SECURE_HSTS_SECONDS = 3600            # 1 hora; en prod subir a 31536000
+    SECURE_HSTS_SECONDS = 3600 if DEBUG else 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-    # Referrer policy
-    SECURE_REFERRER_POLICY = 'same-origin'
 else:
-    # En desarrollo omitimos la redirección a HTTPS para que runserver funcione
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 
-
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'db_build',
-#        'USER': 'newneo20',
-#        'PASSWORD': '0123456789',
-#        'HOST': 'store.prod.travel-sys.loc',
-#        'PORT': '5432',
-#        'OPTIONS': {
-#            'sslmode': 'require',
-#        },
-#    },
-#    'readonly': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'db_build',
-#        'USER': 'newneo20',
-#        'PASSWORD': '0123456789',
-#        'HOST': 'store.prod.travel-sys.loc',
-#        'PORT': '5433',
-#        'OPTIONS': {
-#            'sslmode': 'require',
-#        },
-#    }
-#}
-
-# 🚦 Aquí se especifica el enrutador de bases de datos personalizado
-#DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']
-
-
+# ──────────────────────────────────────────────────────────────────────────────
+# Defaults Django
+# ──────────────────────────────────────────────────────────────────────────────
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
