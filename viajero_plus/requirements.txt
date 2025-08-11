@@ -14,7 +14,7 @@ billiard==4.2.0
 redis==6.1.0
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
-python-dotenv
+django-environ==0.11.2  # <- usamos esta en lugar de python-dotenv
 
 # ===============================
 # Formularios y autocompletado
@@ -81,4 +81,4 @@ wrapt==1.17.2
 # ===============================
 reportlab==4.4.2
 pillow==11.2.1
-weasyprint==61.2
+weasyprint==61.2  # <- corregido (sin punto extra)
