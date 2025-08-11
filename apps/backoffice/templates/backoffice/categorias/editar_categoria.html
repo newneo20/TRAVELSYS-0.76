@@ -1,82 +1,137 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load i18n %}
 
-{% block title %}Editar Categoría{% endblock %}
+{% block title %}{% trans "Editar Categoría" %}{% endblock %}
 
 {% block content %}
-  <!-- Incluir el archivo de estilos CSS -->
-  <link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <div class="form-container">
-    <h1 class="form-title">Editar Categoría</h1>
-    <form class="needs-validation" method="post" novalidate>
-      {% csrf_token %}
-      <div class="form-group">
-        <label for="nombre" class="form-label">Nombre de la Categoría</label>
-        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ categoria.nombre }}" required>
-        <div class="invalid-feedback">
-          Por favor, proporciona el nombre de la categoría.
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="gasolina" class="form-label">Tipo de Gasolina</label>
-        <input type="text" class="form-control" id="gasolina" name="gasolina" value="{{ categoria.gasolina }}" required>
-        <div class="invalid-feedback">
-          Por favor, proporciona el tipo de gasolina.
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="rentadora" class="form-label">Rentadora</label>
-        <select class="form-control" id="rentadora" name="rentadora" required>
-          {% for rentadora in rentadoras %}
-          <option value="{{ rentadora.id }}" {% if categoria.rentadora.id == rentadora.id %}selected{% endif %}>
-            {{ rentadora.nombre }}
-          </option>
-          {% endfor %}
-        </select>
-        <div class="invalid-feedback">
-          Por favor, selecciona una rentadora.
-        </div>
-      </div>
+  <!-- HEADER -->
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Editar Categoría" %} — {{ categoria.nombre }}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Actualiza los datos de la categoría para los modelos de autos." %}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-categoria"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar cambios" %}
+      </button>
+    </div>
+  </section>
 
-      <!-- Modelos de Carros asociados -->
-      <div class="form-group">
-        <label class="form-label"><strong>Modelos de Carros en esta Categoría:</strong></label>
-        <div class="row">
-          {% for modelo in categoria.modelos.all %}
-          <div class="col-md-4 text-center mb-4">
-            <div class="card h-100">
-              {% if modelo.foto %}
-              <img src="{{ modelo.foto.url }}" alt="{{ modelo.nombre }}" class="card-img-top" style="max-height: 150px; object-fit: contain;">
-              {% endif %}
-              <div class="card-body">
-                <h5 class="card-title">{{ modelo.nombre }}</h5>
-              </div>
-            </div>
-          </div>
-          {% empty %}
-          <div class="col-12">
-            <p>No hay modelos asociados a esta categoría.</p>
-          </div>
-          {% endfor %}
-        </div>
+  <!-- ERROR GLOBAL (opcional) -->
+  {% if error_global %}
+    <div class="mb-4 rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200 px-4 py-3 text-sm">
+      {{ error_global }}
+    </div>
+  {% endif %}
+
+  <!-- FORM -->
+  <form id="form-categoria" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Nombre -->
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Nombre" %} *
+        </label>
+        <input name="nombre" required
+               value="{{ valores.nombre|default:categoria.nombre }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/>
+        {% if errores.nombre %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.nombre }}</p>
+        {% endif %}
       </div>
 
-      <!-- Locations asociadas -->
-      <div class="form-group">
-        <label class="form-label"><strong>Locations en esta Categoría:</strong></label>
-        <ul class="list-group">
-          {% for location in categoria.locations.all %}
-          <li class="list-group-item">{{ location.nombre }} - {{ location.pais }}</li>
-          {% empty %}
-          <li class="list-group-item">No hay locations asociadas a esta categoría.</li>
-          {% endfor %}
-        </ul>
+      <!-- Tipo de Gasolina -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Tipo de Gasolina" %} *
+        </label>
+        <input name="gasolina" required
+               value="{{ valores.gasolina|default:categoria.gasolina }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/>
+        {% if errores.gasolina %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.gasolina }}</p>
+        {% endif %}
       </div>
 
-      <div class="text-center mt-4">
-        <button type="submit" class="btn btn-primary btn-submit">Guardar Cambios</button>
+      <!-- Rentadora -->
+      <div class="md:col-span-3">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Rentadora" %} *
+        </label>
+        {% with valores.rentadora|default:categoria.rentadora_id|stringformat:"s" as seleccionado %}
+          <select name="rentadora" required
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+            <option value="">{% trans "Seleccione" %}</option>
+            {% for r in rentadoras %}
+              {% with r.id|stringformat:"s" as rid %}
+                <option value="{{ r.id }}" {% if rid == seleccionado %}selected{% endif %}>{{ r.nombre }}</option>
+              {% endwith %}
+            {% endfor %}
+          </select>
+        {% endwith %}
+        {% if errores.rentadora %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.rentadora }}</p>
+        {% endif %}
       </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-check"></i> {% trans "Guardar cambios" %}
+      </button>
+    </div>
+  </form>
+
+  <!-- AYUDA -->
+  <section class="mt-6 text-xs text-gray-500 dark:text-gray-400">
+    <p>• {% trans "Campos marcados con * son obligatorios." %}</p>
+    <p>• {% trans "Atajo: Ctrl/Cmd + Enter para enviar el formulario." %}</p>
+  </section>
+</main>
+
+<!-- JS UX pequeño -->
+<script>
+  (function () {
+    const form = document.getElementById('form-categoria');
+    const nombre = form.querySelector('input[name="nombre"]');
+    const gasolina = form.querySelector('input[name="gasolina"]');
+    const rentadora = form.querySelector('select[name="rentadora"]');
+
+    // Envío con Ctrl/Cmd + Enter
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') form.requestSubmit();
+    });
+
+    // Validación ligera
+    form.addEventListener('submit', (e) => {
+      let ok = true;
+      [nombre, gasolina, rentadora].forEach(el => el.classList.remove('ring-2','ring-rose-500'));
+
+      if (!nombre.value.trim()) { ok = false; nombre.classList.add('ring-2','ring-rose-500'); nombre.focus(); }
+      if (!gasolina.value.trim()) { ok = false; gasolina.classList.add('ring-2','ring-rose-500'); if (document.activeElement !== nombre) gasolina.focus(); }
+      if (!rentadora.value) { ok = false; rentadora.classList.add('ring-2','ring-rose-500'); if (!nombre.matches('.ring-2') && !gasolina.matches('.ring-2')) rentadora.focus(); }
+
+      if (!ok) e.preventDefault();
+    });
+  })();
+</script>
 {% endblock %}

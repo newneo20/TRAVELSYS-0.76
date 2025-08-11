@@ -1,5 +1,13 @@
 # apps/backoffice/views.py
 
+# apps/backoffice/views.py (o donde tengas esta vista)
+from django.contrib import messages
+from django.db import IntegrityError
+from django.utils.translation import gettext as _
+from django.contrib.auth.decorators import login_required
+from .models import CadenaHotelera
+# from .decorators import manager_required  # asumiendo que ya lo tienes
+
 # ===============================
 # Imports de la biblioteca estándar
 # ===============================
@@ -528,6 +536,7 @@ def editar_hotel(request, hotel_id):
 #        ]
 #    }
 #    return JsonResponse(data)
+
 
 # Vista para guardar una nueva habitación
 @manager_required
@@ -1080,7 +1089,7 @@ def listar_cadenas_hoteleras(request):
         )
 
     # Paginación: 5 cadenas hoteleras por página
-    paginator = Paginator(cadenas_qs, 5)
+    paginator = Paginator(cadenas_qs, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'backoffice/cadena_hotelera/listar_cadenas_hoteleras.html', {
@@ -1088,30 +1097,74 @@ def listar_cadenas_hoteleras(request):
         'query': query,
     })
     
+
 @manager_required
 @login_required
 def crear_cadena_hotelera(request):
+    errores = {}
+    valores = {}
+    error_general = ""
+
     if request.method == 'POST':
-        form = CadenaHoteleraForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_cadenas_hoteleras')
-    else:
-        form = CadenaHoteleraForm()
-    return render(request, 'backoffice/cadena_hotelera/crear_cadena_hotelera.html', {'form': form})
+        nombre = (request.POST.get('nombre') or '').strip()
+        descripcion = (request.POST.get('descripcion') or '').strip()
+        valores = {"nombre": nombre, "descripcion": descripcion}
+
+        # Validaciones
+        if not nombre:
+            errores['nombre'] = _("El nombre es obligatorio.")
+        elif len(nombre) > 255:
+            errores['nombre'] = _("Máximo 255 caracteres.")
+        elif CadenaHotelera.objects.filter(nombre__iexact=nombre).exists():
+            errores['nombre'] = _("Ya existe una cadena con ese nombre.")
+
+        if not errores:
+            try:
+                CadenaHotelera.objects.create(
+                    nombre=nombre,
+                    descripcion=descripcion or None
+                )
+                messages.success(request, _("Cadena hotelera creada correctamente."))
+                return redirect('backoffice:listar_cadenas_hoteleras')
+            except IntegrityError:
+                error_general = _("No se pudo guardar. Inténtalo de nuevo.")
+
+    ctx = {
+        "errores": errores,
+        "valores": valores,
+        "error_general": error_general,
+    }
+    return render(request, 'backoffice/cadena_hotelera/crear_cadena_hotelera.html', ctx)
+
+
 
 @manager_required
 @login_required
 def editar_cadena_hotelera(request, pk):
-    cadena_hotelera = get_object_or_404(CadenaHotelera, pk=pk)
-    if request.method == 'POST':
-        form = CadenaHoteleraForm(request.POST, instance=cadena_hotelera)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_cadenas_hoteleras')
-    else:
-        form = CadenaHoteleraForm(instance=cadena_hotelera)
-    return render(request, 'backoffice/cadena_hotelera/editar_cadena_hotelera.html', {'form': form, 'cadena_hotelera': cadena_hotelera})
+    obj = get_object_or_404(CadenaHotelera, pk=pk)
+
+    if request.method == "POST":
+        nombre = (request.POST.get("nombre") or "").strip()
+        descripcion = (request.POST.get("descripcion") or "").strip()
+
+        if not nombre:
+            messages.error(request, "El nombre es obligatorio.")
+            # re‑render con el objeto actual (ya está precargado en el template)
+            return render(request, "backoffice/cadena_hotelera/editar_cadena_hotelera.html", {"obj": obj})
+
+        # Guardar
+        obj.nombre = nombre
+        obj.descripcion = descripcion or None
+        obj.save()
+        messages.success(request, "Cadena actualizada correctamente.")
+        return redirect("backoffice:listar_cadenas_hoteleras")
+
+    # GET
+    return render(
+        request,
+        "backoffice/cadena_hotelera/editar_cadena_hotelera.html",
+        {"obj": obj},
+    )
 
 @manager_required
 @login_required
@@ -1119,7 +1172,7 @@ def eliminar_cadena_hotelera(request, pk):
     cadena_hotelera = get_object_or_404(CadenaHotelera, pk=pk)
     if request.method == 'POST':
         cadena_hotelera.delete()
-        return redirect('listar_cadenas_hoteleras')
+        return redirect('backoffice:listar_cadenas_hoteleras')
     return render(request, 'backoffice/cadena_hotelera/eliminar_cadena_hotelera.html', {'cadena_hotelera': cadena_hotelera})
 
 # ---------------------------------------- HABITACIONES ---------------------------------------- #
@@ -2632,67 +2685,178 @@ def eliminar_oferta_especial(request, pk):
 # ---------------------------------------- RENTADORAS --------------------------------------- #
 # =========================================================================================== #
 
+
 @manager_required
 @login_required
 def listar_rentadoras(request):
-    # Obtener término de búsqueda (o cadena vacía si no se pasó)
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    proveedor_id = request.GET.get('proveedor', '').strip()
 
-    # Queryset base, filtrado por nombre o proveedor si hay búsqueda
-    rentadoras_qs = Rentadora.objects.all()
+    rentadoras_qs = Rentadora.objects.select_related('proveedor').all()
+
     if query:
         rentadoras_qs = rentadoras_qs.filter(
-            Q(nombre__icontains=query) |
-            Q(proveedor__nombre__icontains=query)
+            Q(nombre__icontains=query) | Q(proveedor__nombre__icontains=query)
         )
+    if proveedor_id:
+        rentadoras_qs = rentadoras_qs.filter(proveedor_id=proveedor_id)
 
-    # Paginación: 10 rentadoras por página
     paginator = Paginator(rentadoras_qs, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
+    proveedores = Proveedor.objects.all().order_by('nombre')
 
     return render(request, 'backoffice/rentadoras/listar_rentadoras.html', {
         'page_obj': page_obj,
         'query': query,
+        'proveedores': proveedores,
+        'proveedor_id': proveedor_id,
     })
-    
+
+
 @manager_required
 @login_required
+@transaction.atomic
 def crear_rentadora(request):
-    proveedores = Proveedor.objects.all()
+    proveedores = Proveedor.objects.all().order_by('nombre')
+    errores = {}
+    error_global = None  # <- para errores generales
 
     if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        proveedor_id = request.POST.get('proveedor')
-        proveedor = get_object_or_404(Proveedor, id=proveedor_id)
+        nombre = (request.POST.get('nombre') or '').strip()
+        proveedor_id = (request.POST.get('proveedor') or '').strip()
 
-        Rentadora.objects.create(nombre=nombre, proveedor=proveedor)
-        return redirect('backoffice:listar_rentadoras')
+        # Validaciones
+        if not nombre:
+            errores['nombre'] = "El nombre es obligatorio."
+        if not proveedor_id:
+            errores['proveedor'] = "Debes seleccionar un proveedor."
 
-    return render(request, 'backoffice/rentadoras/crear_rentadora.html', {'proveedores': proveedores})
+        proveedor = None
+        if proveedor_id:
+            proveedor = Proveedor.objects.filter(id=proveedor_id).first()
+            if not proveedor:
+                errores['proveedor'] = "El proveedor seleccionado no existe."
+
+        # Unicidad lógica: misma rentadora bajo el mismo proveedor
+        if not errores and Rentadora.objects.filter(
+            nombre__iexact=nombre, proveedor_id=proveedor_id
+        ).exists():
+            errores['nombre'] = "Ya existe una rentadora con ese nombre para este proveedor."
+
+        # Si quieres error general en vez de ligado a un campo:
+        # if algun_error_global:
+        #     error_global = "Mensaje de error general."
+
+        if not errores and not error_global:
+            Rentadora.objects.create(nombre=nombre, proveedor=proveedor)
+            messages.success(request, "Rentadora creada correctamente.")
+            return redirect('backoffice:listar_rentadoras')
+
+        # Si hay errores, re-render con valores y errores
+        return render(request, 'backoffice/rentadoras/crear_rentadora.html', {
+            'proveedores': proveedores,
+            'valores': {'nombre': nombre, 'proveedor': proveedor_id},
+            'errores': errores,
+            'error_global': error_global,
+        })
+
+    return render(request, 'backoffice/rentadoras/crear_rentadora.html', {
+        'proveedores': proveedores,
+        'valores': {},
+        'errores': errores,
+        'error_global': error_global,
+    })
 
 @manager_required
 @login_required
+@transaction.atomic
 def editar_rentadora(request, rentadora_id):
-    rentadora = get_object_or_404(Rentadora, id=rentadora_id)
-    proveedores = Proveedor.objects.all()
+    rentadora = get_object_or_404(Rentadora.objects.select_related('proveedor'), id=rentadora_id)
+    proveedores = Proveedor.objects.all().order_by('nombre')
+    errores = {}
 
     if request.method == 'POST':
-        rentadora.nombre = request.POST.get('nombre')
-        proveedor_id = request.POST.get('proveedor')
-        rentadora.proveedor = get_object_or_404(Proveedor, id=proveedor_id)
-        rentadora.save()
-        return redirect('backoffice:listar_rentadoras')
+        nombre = (request.POST.get('nombre') or '').strip()
+        proveedor_id = (request.POST.get('proveedor') or '').strip()
 
-    return render(request, 'backoffice/rentadoras/editar_rentadora.html', {'rentadora': rentadora, 'proveedores': proveedores})
+        if not nombre:
+            errores['nombre'] = "El nombre es obligatorio."
+        if not proveedor_id:
+            errores['proveedor'] = "Debes seleccionar un proveedor."
+
+        proveedor = None
+        if proveedor_id:
+            proveedor = Proveedor.objects.filter(id=proveedor_id).first()
+            if not proveedor:
+                errores['proveedor'] = "El proveedor seleccionado no existe."
+
+        # Unicidad excluyendo el actual
+        if not errores and Rentadora.objects.filter(
+            nombre__iexact=nombre, proveedor_id=proveedor_id
+        ).exclude(id=rentadora.id).exists():
+            errores['nombre'] = "Ya existe una rentadora con ese nombre para este proveedor."
+
+        if not errores:
+            rentadora.nombre = nombre
+            rentadora.proveedor = proveedor
+            rentadora.save()
+            messages.success(request, "Cambios guardados correctamente.")
+            return redirect('backoffice:listar_rentadoras')
+
+        return render(request, 'backoffice/rentadoras/editar_rentadora.html', {
+            'rentadora': rentadora,
+            'proveedores': proveedores,
+            'valores': {'nombre': nombre, 'proveedor': proveedor_id},
+            'errores': errores,
+        })
+
+    # GET inicial
+    return render(request, 'backoffice/rentadoras/editar_rentadora.html', {
+        'rentadora': rentadora,
+        'proveedores': proveedores,
+        'valores': {'nombre': rentadora.nombre, 'proveedor': str(rentadora.proveedor_id)},
+        'errores': errores,
+    })
+
 
 @manager_required
 @login_required
+@transaction.atomic
 def eliminar_rentadora(request, rentadora_id):
     rentadora = get_object_or_404(Rentadora, id=rentadora_id)
+
     if request.method == 'POST':
+        nombre = rentadora.nombre
         rentadora.delete()
+        messages.success(request, f"Rentadora «{nombre}» eliminada correctamente.")
         return redirect('backoffice:listar_rentadoras')
-    return render(request, 'backoffice/rentadoras/eliminar_rentadora.html', {'rentadora': rentadora})
+
+    return render(request, 'backoffice/rentadoras/eliminar_rentadora.html', {
+        'rentadora': rentadora
+    })
+
+@manager_required
+@login_required
+@require_GET
+def detalles_rentadora(request, rentadora_id):
+    rentadora = get_object_or_404(
+        Rentadora.objects.select_related('proveedor'),
+        id=rentadora_id
+    )
+
+    data = {
+        "id": rentadora.id,
+        "nombre": rentadora.nombre,
+        "proveedor": {
+            "id": rentadora.proveedor.id,
+            "nombre": rentadora.proveedor.nombre
+        },
+        "creado": rentadora.created_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(rentadora, 'created_at') else None,
+        "modificado": rentadora.updated_at.strftime("%Y-%m-%d %H:%M:%S") if hasattr(rentadora, 'updated_at') else None,
+    }
+
+    return JsonResponse(data)
+
 
 # =========================================================================================== #
 # ---------------------------------------- CATEGORIAS --------------------------------------- #
@@ -3838,7 +4002,6 @@ def editar_cliente(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
 
     if request.method == 'POST':
-        # Capturar campos
         nombre = request.POST.get('nombre', '')
         apellidos = request.POST.get('apellidos', '')
 
@@ -3850,17 +4013,16 @@ def editar_cliente(request, pk):
         telefono_principal = request.POST.get('telefono_principal', '')
         email = request.POST.get('email', '')
 
-        direccio = request.POST.get('direccio', '')
+        direccion = request.POST.get('direccion', '')
         ciudad = request.POST.get('ciudad', '')
         estado = request.POST.get('estado', '')
         pais = request.POST.get('pais', '')
-        zip_code = request.POST.get('zip', '')
+        zip_code = request.POST.get('zip_code', '')
 
         fecha_nacimiento_str = request.POST.get('fecha_nacimiento', None)
         observaciones = request.POST.get('observaciones', '')
         es_vip = request.POST.get('es_vip', 'off')
 
-        # Parseo de fecha
         fecha_nacimiento = None
         if fecha_nacimiento_str:
             try:
@@ -3868,7 +4030,6 @@ def editar_cliente(request, pk):
             except ValueError:
                 fecha_nacimiento = None
 
-        # Actualizar campos
         cliente.nombre = nombre
         cliente.apellidos = apellidos
         cliente.pasaporte = pasaporte
@@ -3877,11 +4038,11 @@ def editar_cliente(request, pk):
         cliente.pasaporte_licencia = pasaporte_licencia
         cliente.telefono_principal = telefono_principal
         cliente.email = email
-        cliente.direccio = direccio
+        cliente.direccion = direccion
         cliente.ciudad = ciudad
         cliente.estado = estado
         cliente.pais = pais
-        cliente.zip = zip_code
+        cliente.zip_code = zip_code
         cliente.fecha_nacimiento = fecha_nacimiento
         cliente.observaciones = observaciones
         cliente.es_vip = (es_vip == 'on')
@@ -3889,11 +4050,7 @@ def editar_cliente(request, pk):
         cliente.save()
         return redirect('backoffice:listar_clientes')
 
-    # GET
-    context = {
-        'cliente': cliente
-    }
-    return render(request, 'backoffice/clientes/editar_cliente.html', context)
+    return render(request, 'backoffice/clientes/editar_cliente.html', {'cliente': cliente})
 
 @login_required
 def eliminar_cliente(request, pk):
@@ -3916,7 +4073,6 @@ def crear_contacto(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id)
 
     if request.method == 'POST':
-        # Capturar campos del nuevo modelo Contacto
         nombre = request.POST.get('nombre', '')
         apellidos = request.POST.get('apellidos', '')
         fecha_nacimiento_str = request.POST.get('fecha_nacimiento', '')
@@ -3930,17 +4086,20 @@ def crear_contacto(request, cliente_id):
         email = request.POST.get('email', '')
 
         calle = request.POST.get('calle', '')
-        numero = request.POST.get('numero', '')
+        numero = request.POST.get('numero', '')   # <-- antes venía 'No'
         entre_calle = request.POST.get('entre_calle', '')
         y_calle = request.POST.get('y_calle', '')
         apto_reparto = request.POST.get('apto_reparto', '')
         piso = request.POST.get('piso', '')
         municipio = request.POST.get('municipio', '')
         provincia = request.POST.get('provincia', '')
+        reparto = request.POST.get('reparto', '')
+        ciudad = request.POST.get('ciudad', '')
+        estado = request.POST.get('estado', '')
+        zip_code = request.POST.get('zip_code', '')
 
         observaciones = request.POST.get('observaciones', '')
 
-        # Parsear la fecha de nacimiento
         fecha_nacimiento = None
         if fecha_nacimiento_str:
             try:
@@ -3948,7 +4107,6 @@ def crear_contacto(request, cliente_id):
             except ValueError:
                 fecha_nacimiento = None
 
-        # Crear instancia del modelo Contacto
         contacto = Contacto(
             cliente=cliente,
             nombre=nombre,
@@ -3968,13 +4126,17 @@ def crear_contacto(request, cliente_id):
             piso=piso,
             municipio=municipio,
             provincia=provincia,
+            reparto=reparto,
+            ciudad=ciudad,
+            estado=estado,
+            zip_code=zip_code,
             observaciones=observaciones
         )
         contacto.save()
-
         return redirect('backoffice:editar_cliente', pk=cliente.id)
 
     return redirect('backoffice:editar_cliente', pk=cliente.id)
+
 
 @login_required
 def editar_contacto(request, contacto_id):
@@ -3994,7 +4156,7 @@ def editar_contacto(request, contacto_id):
         email = request.POST.get('email', '')
 
         calle = request.POST.get('calle', '')
-        numero = request.POST.get('No', '')
+        numero = request.POST.get('numero', '')  # <-- corregido
         entre_calle = request.POST.get('entre_calle', '')
         y_calle = request.POST.get('y_calle', '')
         apto_reparto = request.POST.get('apto_reparto', '')
@@ -4008,7 +4170,6 @@ def editar_contacto(request, contacto_id):
 
         observaciones = request.POST.get('observaciones', '')
 
-        # Parsear fecha
         fecha_nacimiento = None
         if fecha_nacimiento_str:
             try:
@@ -4016,7 +4177,6 @@ def editar_contacto(request, contacto_id):
             except ValueError:
                 fecha_nacimiento = None
 
-        # Actualizar campos
         contacto.nombre = nombre
         contacto.apellidos = apellidos
         contacto.fecha_nacimiento = fecha_nacimiento
@@ -4027,7 +4187,7 @@ def editar_contacto(request, contacto_id):
         contacto.telefono_secundario = telefono_secundario
         contacto.email = email
         contacto.calle = calle
-        contacto.No = numero
+        contacto.numero = numero     # <-- corregido
         contacto.entre_calle = entre_calle
         contacto.y_calle = y_calle
         contacto.apto_reparto = apto_reparto
@@ -4043,11 +4203,7 @@ def editar_contacto(request, contacto_id):
         contacto.save()
         return redirect('backoffice:editar_cliente', pk=contacto.cliente.id)
 
-    # GET
-    context = {
-        'contacto': contacto
-    }
-    return render(request, 'backoffice/clientes/editar_contacto.html', context)
+    return render(request, 'backoffice/clientes/editar_contacto.html', {'contacto': contacto})
 
 @login_required
 def eliminar_contacto(request, contacto_id):

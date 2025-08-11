@@ -1,75 +1,61 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load i18n %}
 
-{% load static %}
-
-{% block title %}Crear Vehículo{% endblock %}
+{% block title %}{% trans "Nuevo Vehículo" %}{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+<main class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-<div class="form-container">
-    <h1 class="form-title text-center">Crear Vehículo</h1>
-    <form class="needs-validation" method="post" enctype="multipart/form-data" novalidate>
-        {% csrf_token %}
+  <header class="mb-6 flex items-end justify-between">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Vehículo" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Tipos y capacidades para traslados." %}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fas fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-vehiculo"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fas fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </header>
 
-        <div class="form-group">
-            <label for="tipo" class="form-label">Tipo de Vehículo</label>
-            <select class="form-select" id="tipo" name="tipo" required>
-                <option value="" disabled selected>Seleccione un tipo de vehículo</option>
-                {% for key, value in vehiculo.TIPO_VEHICULO_CHOICES %}
-                    <option value="{{ key }}">{{ value }}</option>
-                {% endfor %}
-            </select>
-            <div class="invalid-feedback">
-                Por favor, selecciona un tipo de vehículo.
-            </div>
-        </div>
+  <form id="form-vehiculo" method="post" enctype="multipart/form-data" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 grid gap-4">
+    {% csrf_token %}
 
-        <div class="form-group">
-            <label for="capacidad_min" class="form-label">Capacidad Mínima</label>
-            <input type="number" class="form-control" id="capacidad_min" name="capacidad_min" required>
-            <div class="invalid-feedback">
-                Por favor, proporciona la capacidad mínima.
-            </div>
-        </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo de Vehículo" %} *</label>
+      <select name="tipo" required
+              class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        <option value="">{% trans "Seleccione" %}</option>
+        {% for key, value in vehiculo.TIPO_VEHICULO_CHOICES %}
+          <option value="{{ key }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-        <div class="form-group">
-            <label for="capacidad_max" class="form-label">Capacidad Máxima</label>
-            <input type="number" class="form-control" id="capacidad_max" name="capacidad_max" required>
-            <div class="invalid-feedback">
-                Por favor, proporciona la capacidad máxima.
-            </div>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Capacidad mínima" %} *</label>
+        <input type="number" name="capacidad_min" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Capacidad máxima" %} *</label>
+        <input type="number" name="capacidad_max" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+    </div>
 
-        <div class="form-group">
-            <label for="foto" class="form-label">Foto del Vehículo</label>
-            <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
-            <div class="invalid-feedback">
-                Por favor, sube una imagen válida del vehículo.
-            </div>
-        </div>
-
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
-            <a href="{% url 'backoffice:listar_vehiculos' %}" class="btn btn-secondary">Cancelar</a>
-        </div>
-    </form>
-</div>
-
-<script>
-    (function () {
-        'use strict';
-        var forms = document.querySelectorAll('.needs-validation');
-        Array.prototype.slice.call(forms).forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    })();
-</script>
-
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Foto del vehículo" %}</label>
+      <input type="file" name="foto" accept="image/*"
+             class="mt-1 block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+    </div>
+  </form>
+</main>
 {% endblock %}

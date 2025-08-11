@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError # type: ignore
 from django.db import models # type: ignore
 from decimal import Decimal
 from django.core.validators import MinValueValidator # type: ignore
+from django.db.models.functions import Lower
 
 
 # ==========================
@@ -77,8 +78,16 @@ class PlanAlimenticio(models.Model):
         return self.nombre
 
 class CadenaHotelera(models.Model):
-    nombre = models.CharField(max_length=255, unique=True)
+    nombre = models.CharField(max_length=255, unique=True)  # puedes dejarlo o quitar unique=True si usas la constraint
     descripcion = models.TextField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower('nombre'),
+                name='uniq_cadena_nombre_ci'
+            )
+        ]
 
     def __str__(self):
         return self.nombre

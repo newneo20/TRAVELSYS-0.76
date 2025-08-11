@@ -1,16 +1,59 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Editar Cadena Hotelera{% endblock %}
+{% block title %}{% trans "Editar Cadena Hotelera" %}{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <h1>Editar Cadena Hotelera</h1>
-        <form method="post" class="row g-3">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- HEADER -->
+  <section class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Editar Cadena Hotelera" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Actualiza la información de la cadena para asociarla a hoteles." %}
+      </p>
     </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'backoffice:listar_cadenas_hoteleras' %}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-cadena"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold transition">
+        <i class="fa-solid fa-floppy-disk"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <form id="form-cadena" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
+        <input name="nombre" required value="{{ obj.nombre|default_if_none:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %}</label>
+        <textarea name="descripcion" rows="4"
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">{{ obj.descripcion|default_if_none:'' }}</textarea>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{% url 'backoffice:listar_cadenas_hoteleras' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold transition">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold transition">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </form>
+</main>
 {% endblock %}

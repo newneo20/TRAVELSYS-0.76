@@ -1,35 +1,48 @@
 {% extends 'base.html' %}
-
-{% load static %}
-
-{% block title %}Crear Opción de Certificado{% endblock %}
-
+{% load i18n %}
+{% block title %}{% trans "Nueva Opción de Certificado" %}{% endblock %}
 {% block content %}
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nueva Opción de Certificado" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Define nombre, categoría (estrellas) y foto." %}</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-opc"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </section>
 
-<!-- Incluir el archivo de estilos CSS -->
-<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
-
-<div class="form-container">
-    <h1>Crear Opción de Certificado</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <label>Nombre:</label>
-        <input type="text" name="nombre" class="form-control" required>
-        
-        <label>Descripción:</label>
-        <textarea name="descripcion" class="form-control" required></textarea>
-        
-        <label>Categoría (Estrellas):</label>
-        <select name="categoria" class="form-control" required>
-            {% for i in "12345" %}
-            <option value="{{ i }}">{{ i }} Estrellas</option>
-            {% endfor %}
+  <form id="form-opc" method="post" enctype="multipart/form-data" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label><input name="nombre" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
+      <div class="md:col-span-2"><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %} *</label><textarea name="descripcion" rows="4" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"></textarea></div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Categoría (Estrellas)" %} *</label>
+        <select name="categoria" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+          <option value="">—</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
         </select>
-        
-        <label>Foto:</label>
-        <input type="file" name="foto" class="form-control">
-        
-        <button type="submit" class="btn btn-primary mt-3">Guardar</button>
-    </form>
-</div>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Foto" %}</label><input type="file" name="foto" class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/></div>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </form>
+</main>
 {% endblock %}

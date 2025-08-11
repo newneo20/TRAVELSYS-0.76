@@ -1,64 +1,59 @@
 {% extends 'base.html' %}
-
-{% load static %} 
-
-{% block title %}Crear Categoría{% endblock %}
-
-
+{% load i18n %}
+{% block title %}{% trans "Nueva Categoría" %}{% endblock %}
 {% block content %}
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nueva Categoría" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Defínela para los modelos de autos." %}</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-categoria"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </section>
 
-<!-- Incluir el archivo de estilos CSS -->
-<link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
+  <form id="form-categoria" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
+        <input name="nombre" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo de Gasolina" %} *</label>
+        <input name="gasolina" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/>
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Rentadora" %} *</label>
+        <select name="rentadora" required
+                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+          {% for r in rentadoras %}
+            <option value="{{ r.id }}">{{ r.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
 
-<div class="form-container">
-    <h1 class="form-title">Crear Categoría</h1>
-    <form class="needs-validation" method="post" novalidate>
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="nombre" class="form-label">Nombre de la Categoría</label>
-            <input type="text" class="form-control" id="nombre" name="nombre" required>
-            <div class="invalid-feedback">
-                Por favor, proporciona el nombre de la categoría.
-            </div>
-        </div>
-        <div class="form-group">
-            <label for="gasolina" class="form-label">Tipo de Gasolina</label>
-            <input type="text" class="form-control" id="gasolina" name="gasolina" required>
-            <div class="invalid-feedback">
-                Por favor, proporciona el tipo de gasolina.
-            </div>
-        </div>
-        <div class="form-group">
-            <label for="rentadora" class="form-label">Rentadora</label>
-            <select class="form-control" id="rentadora" name="rentadora" required>
-                {% for rentadora in rentadoras %}
-                    <option value="{{ rentadora.id }}">{{ rentadora.nombre }}</option>
-                {% endfor %}
-            </select>
-            <div class="invalid-feedback">
-                Por favor, selecciona una rentadora.
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary btn-submit">Guardar</button>
-        </div>
-    </form>
-</div>
-
-<script>
-    (function () {
-        'use strict'
-
-        var forms = document.querySelectorAll('.needs-validation');
-        Array.prototype.slice.call(forms).forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    })();
-</script>
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </form>
+</main>
 {% endblock %}

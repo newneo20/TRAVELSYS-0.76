@@ -1,21 +1,83 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% load static %} 
-
-{% block title %}Crear Cadena Hotelera{% endblock %}
+{% block title %}{% trans "Nueva Cadena Hotelera" %}{% endblock %}
 
 {% block content %}
-    <!-- Incluir el archivo de estilos CSS -->    
-    <link rel="stylesheet" href="{% static 'backoffice/css/formularios_crear.css' %}">
-    
-    <div class="container mt-4">
-        <h1>Crear Cadena Hotelera</h1>
-        <form method="post" class="row g-3">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Encabezado -->
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nueva Cadena Hotelera" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Registra una nueva cadena para asociarla a hoteles." %}</p>
     </div>
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-cadena" class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </section>
+
+  <!-- Errores generales -->
+  {% if error_general %}
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      {{ error_general }}
+    </div>
+  {% endif %}
+
+  <!-- Formulario -->
+  <form id="form-cadena" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
+        <input
+          name="nombre"
+          required
+          maxlength="255"
+          value="{{ valores.nombre|default:'' }}"
+          class="mt-1 w-full px-3 py-2 rounded-lg border bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
+                 {% if errores.nombre %}
+                   border-red-500 focus:ring-red-500
+                 {% else %}
+                   border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500
+                 {% endif %}"
+        />
+        {% if errores.nombre %}
+          <p class="mt-1 text-sm text-red-600">{{ errores.nombre }}</p>
+        {% else %}
+          <p class="mt-1 text-xs text-gray-500">{% trans "Máximo 255 caracteres." %}</p>
+        {% endif %}
+      </div>
+
+      <!-- Descripción -->
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %}</label>
+        <textarea
+          name="descripcion"
+          rows="4"
+          class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+        >{{ valores.descripcion|default:'' }}</textarea>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </form>
+</main>
 {% endblock %}

@@ -1,147 +1,130 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Crear Proveedor{% endblock %}
+{% block title %}{% trans "Nuevo Proveedor" %}{% endblock %}
 
 {% block content %}
+<main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-8 mt-10">
-    <h1 class="text-3xl font-bold text-slate-800 mb-8 text-center">Crear Proveedor</h1>
+  <header class="mb-6 flex items-end justify-between">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Proveedor" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Datos generales y campos dinámicos según tipo." %}</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fas fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-proveedor"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fas fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+  </header>
 
-    <form method="post" class="space-y-8">
-        {% csrf_token %}
+  <form id="form-proveedor" method="post" novalidate x-data="{tipo:''}"
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-8">
+    {% csrf_token %}
 
-        <!-- Bloque: Información básica -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre *</label>
-                <input type="text" name="nombre" required
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
-                <input type="text" name="telefono"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-        </div>
+    <!-- Básicos -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
+        <input name="nombre" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %}</label>
+        <input name="telefono"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+    </section>
 
-        <!-- Bloque: Correos -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Correo 1</label>
-                <input type="email" name="correo1"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Correo 2</label>
-                <input type="email" name="correo2"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Correo 3</label>
-                <input type="email" name="correo3"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-        </div>
+    <!-- Correos -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 1" %}</label>
+        <input type="email" name="correo1"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 2" %}</label>
+        <input type="email" name="correo2"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 3" %}</label>
+        <input type="email" name="correo3"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+    </section>
 
-        <!-- Bloque: Dirección & Cuenta -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección</label>
-                <input type="text" name="direccion"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Cuenta Bancaria</label>
-                <textarea name="detalles_cuenta_bancaria"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-            </div>
-        </div>
+    <!-- Dirección / Cuenta -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Dirección" %}</label>
+        <input name="direccion"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cuenta bancaria" %}</label>
+        <textarea name="detalles_cuenta_bancaria" rows="3"
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"></textarea>
+      </div>
+    </section>
 
-        <!-- Bloque: Tipo proveedor -->
+    <!-- Tipo -->
+    <section class="grid grid-cols-1 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo de proveedor" %} *</label>
+        <select name="tipo" x-model="tipo" required
+                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-indigo-500">
+          <option value="">{% trans "Seleccione" %}</option>
+          <option value="hoteles">Hoteles</option>
+          <option value="carros">Carros</option>
+          <option value="vuelos">Vuelos</option>
+          <option value="remesas">Remesas</option>
+          <option value="traslados">Traslados</option>
+          <option value="certificado">Certificados</option>
+          <option value="envio">Envíos</option>
+        </select>
+      </div>
+
+      <!-- Dinámicos -->
+      <div x-show="tipo==='hoteles'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 grid md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Proveedor *</label>
-            <select name="tipo" id="tipo" required
-                class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="">Seleccione el tipo</option>
-                <option value="hoteles">Hoteles</option>
-                <option value="carros">Carros</option>
-                <option value="vuelos">Vuelos</option>
-                <option value="remesas">Remesas</option>
-                <option value="traslados">Traslados</option>
-                <option value="certificado">Certificado Vacaciones</option>
-                <option value="envio">Envío</option>
-            </select>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Adultos" %}</label>
+          <input type="number" step="0.01" name="fee_adultos"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
         </div>
-
-        <!-- Bloque: Campos dinámicos -->
-
-        <div id="campos_hoteles" class="hidden transition-all duration-500 ease-in-out">
-            <div class="bg-slate-50 p-6 rounded-xl shadow-inner mt-4 space-y-6">
-                <h3 class="text-lg font-semibold text-slate-700 mb-2">Campos para Hoteles</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Fee Adultos</label>
-                        <input type="number" step="0.01" name="fee_adultos"
-                            class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Fee Niños</label>
-                        <input type="number" step="0.01" name="fee_ninos"
-                            class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="campos_carros" class="hidden transition-all duration-500 ease-in-out">
-            <div class="bg-slate-50 p-6 rounded-xl shadow-inner mt-4">
-                <h3 class="text-lg font-semibold text-slate-700 mb-4">Campos para Carros</h3>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Fee por Noche</label>
-                <input type="number" step="0.01" name="fee_noche"
-                    class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-        </div>
-
-        <!-- Bloque: Servicios -->
         <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Servicios Ofrecidos</label>
-            <select name="servicios" id="servicios" multiple
-                class="w-full rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                {% for servicio in servicios %}
-                <option value="{{ servicio.id }}">{{ servicio.nombre }}</option>
-                {% endfor %}
-            </select>
-            <p class="text-sm text-slate-500 mt-1">Puede seleccionar múltiples servicios.</p>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Niños" %}</label>
+          <input type="number" step="0.01" name="fee_ninos"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
         </div>
+      </div>
 
-        <!-- Botón -->
-        <div class="flex justify-center">
-            <button type="submit"
-                class="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-semibold rounded-lg shadow-md transition-all duration-300">
-                Guardar Proveedor
-            </button>
-        </div>
+      <div x-show="tipo==='carros'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee por noche" %}</label>
+        <input type="number" step="0.01" name="fee_noche"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+    </section>
 
-    </form>
-</div>
+    <!-- Servicios -->
+    <section>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Servicios ofrecidos" %}</label>
+      <select name="servicios" multiple
+              class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        {% for servicio in servicios %}
+          <option value="{{ servicio.id }}">{{ servicio.nombre }}</option>
+        {% endfor %}
+      </select>
+      <p class="text-xs text-gray-500 mt-1">{% trans "Puede seleccionar múltiples servicios." %}</p>
+    </section>
+  </form>
 
-<script>
-const tipoSelect = document.getElementById('tipo');
-const camposHoteles = document.getElementById('campos_hoteles');
-const camposCarros = document.getElementById('campos_carros');
-
-tipoSelect.addEventListener('change', () => {
-    camposHoteles.classList.add('hidden');
-    camposCarros.classList.add('hidden');
-
-    if (tipoSelect.value === 'hoteles') {
-        camposHoteles.classList.remove('hidden');
-    }
-    if (tipoSelect.value === 'carros') {
-        camposCarros.classList.remove('hidden');
-    }
-});
-</script>
-
+</main>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}
