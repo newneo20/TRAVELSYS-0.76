@@ -1,96 +1,132 @@
-{% extends 'base.html' %}
-{% load static %}
-{% load i18n %}
+{% extends "base.html" %}
+{% load static i18n %}
 
-{% block title %}
-  {% trans "Editar Reserva" %} ({{ reserva.id }})
-{% endblock %}
+{% block title %}{% trans "Editar Reserva" %} ({{ reserva.id }}){% endblock %}
 
 {% block content %}
-<div class="max-w-[1800px] mx-auto px-10 py-10">
+<main class="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <section id="seccion-editar-reserva">
+  <!-- CABECERA -->
+  <header class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+      <div class="border-l-4 border-indigo-600 pl-4">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          {% trans "Editar Reserva" %} #{{ reserva.id }}
+        </h1>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          {% trans "Actualiza los datos generales, costos y habitaciones." %}
+        </p>
+      </div>
 
-    <form action="{% url 'backoffice:guardar_edicion_reserva' reserva.id %}" method="post">
-      {% csrf_token %}
+      <!-- BOTONERA SUPERIOR (sin forms anidados) -->
+      <div class="sticky md:static top-2 z-40">
+        <div class="flex flex-wrap items-center gap-2 rounded-full bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 shadow px-2 py-2 backdrop-blur">
+          <a href="{% url 'backoffice:listar_reservas' %}"
+             class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+          </a>
 
-      
-      {# —————— Cabecera con título y botones —————— #}
-      <div class="mb-6 flex items-center justify-between border-l-4 border-indigo-600 pl-4">
-        <div>
-          <h2 class="text-2xl font-bold text-indigo-700">🧾 {% trans "Datos Generales" %}</h2>
-          <p class="text-sm text-gray-500">{% trans "Información básica de la reserva" %}</p>
-        </div>
-        <div class="flex space-x-2">
-
-          {# Botones DISTAL #}
-          {% if reserva.tipo == 'hoteles' and reserva.proveedor.nombre == 'DISTALCU' and not reserva.numero_confirmacion %}
+          {# DISTAL: hoteles + proveedor DISTALCU + sin confirmación #}
+          {% if reserva.tipo == 'hoteles' and reserva.proveedor and reserva.proveedor.nombre == 'DISTALCU' and not reserva.numero_confirmacion %}
             <a href="{% url 'backoffice:enviar_booking_distal' reserva.id %}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
-              <i class="fas fa-paper-plane mr-1"></i> {% trans "Confirmar Distal" %}
+               class="inline-flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-semibold transition">
+              <i class="fa-solid fa-paper-plane"></i> {% trans "Confirmar Distal" %}
             </a>
             <a href="{% url 'backoffice:vista_preview_booking_distal' reserva.id %}"
-               class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm">
-              <i class="fas fa-eye mr-1"></i> {% trans "Ver XML Distal" %}
+               class="inline-flex items-center gap-2 rounded-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 text-sm font-semibold transition">
+              <i class="fa-solid fa-eye"></i> {% trans "Ver XML" %}
             </a>
           {% endif %}
 
-          {# Botón Notificar + Solicitar Hotel (no-DISTAL) #}
-          {% if reserva.tipo == 'hoteles' and reserva.proveedor.nombre != 'DISTALCU' and not reserva.numero_confirmacion %}            
-            <form action="{% url 'common:enviar_solicitud_hotel' reserva.id %}"
-                  method="post" class="inline-block">
-              {% csrf_token %}
-              <button type="submit"
-                      class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
-                <i class="fas fa-paper-plane mr-1"></i> {% trans "Solicitar Hotel" %}
+          {# NO DISTAL: hoteles + sin confirmación + (sin proveedor o proveedor != DISTALCU) #}
+          {% if reserva.tipo == 'hoteles' and not reserva.numero_confirmacion %}
+            {% if not reserva.proveedor %}
+              <button type="button" id="btn-solicitar-hotel"
+                      data-post-url="{% url 'common:enviar_solicitud_hotel' reserva.id %}"
+                      class="inline-flex items-center gap-2 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-semibold transition">
+                <i class="fa-solid fa-paper-plane"></i> {% trans "Solicitar Hotel" %}
               </button>
-            </form>
+            {% else %}
+              {% if reserva.proveedor.nombre != 'DISTALCU' %}
+                <button type="button" id="btn-solicitar-hotel"
+                        data-post-url="{% url 'common:enviar_solicitud_hotel' reserva.id %}"
+                        class="inline-flex items-center gap-2 rounded-full bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 text-sm font-semibold transition">
+                  <i class="fa-solid fa-paper-plane"></i> {% trans "Solicitar Hotel" %}
+                </button>
+              {% endif %}
+            {% endif %}
           {% endif %}
 
           <a href="{% url 'backoffice:vista_preview_voucher_distal' reserva.id %}" target="_blank"
-               class="inline-flex items-center px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-sm">
-              <i class="fas fa-file-pdf mr-1"></i> {% trans "Voucher PDF" %}
-            </a>
+             class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold transition">
+            <i class="fa-solid fa-file-pdf"></i> {% trans "Voucher PDF" %}
+          </a>
 
+          <button form="form-editar-reserva"
+                  class="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-semibold transition">
+            <i class="fa-solid fa-floppy-disk"></i> {% trans "Guardar" %}
+          </button>
         </div>
       </div>
+    </div>
+  </header>
 
-      {# —————— Grid de campos —————— #}
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-white p-8 rounded-2xl shadow-lg mb-12 border border-gray-200">
+  <!-- FORMULARIO -->
+  <form id="form-editar-reserva" method="post" novalidate
+        action="{% url 'backoffice:guardar_edicion_reserva' reserva.id %}"
+        class="space-y-12">
+    {% csrf_token %}
+
+    {# =================== DATOS GENERALES =================== #}
+    <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6">
+      <div class="mb-6 border-l-4 border-indigo-600 pl-4">
+        <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-300">🧾 {% trans "Datos Generales" %}</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Información básica de la reserva." %}</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="md:col-span-4">
-          <h3 class="text-xl font-bold text-indigo-700">{% trans "Reserva Id:" %} {{ reserva.id }}</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {% trans "Reserva Id:" %} <span class="text-gray-900 dark:text-white font-bold">{{ reserva.id }}</span>
+          </h3>
         </div>
 
+        <!-- Nombre usuario -->
         <div class="relative">
-          <label class="text-sm font-medium text-gray-700">{% trans "Nombre de Usuario" %}</label>
-          <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre de Usuario" %}</label>
+          <i class="fas fa-user absolute left-3 top-10 -translate-y-1/2 text-gray-400"></i>
           <input type="text" name="nombre_usuario" value="{{ reserva.nombre_usuario }}"
-                 class="w-full border rounded-lg pl-10 pr-3 py-2" placeholder="{% trans 'Usuario' %}">
+                 class="w-full border rounded-lg pl-10 pr-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                 placeholder="{% trans 'Usuario' %}">
         </div>
 
+        <!-- Email -->
         <div class="relative">
-          <label class="text-sm font-medium text-gray-700">{% trans "Email" %}</label>
-          <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+          <i class="fas fa-envelope absolute left-3 top-10 -translate-y-1/2 text-gray-400"></i>
           <input type="email" name="email_empleado" value="{{ reserva.email_empleado }}"
-                 class="w-full border rounded-lg pl-10 pr-3 py-2" placeholder="{% trans 'Email' %}">
+                 class="w-full border rounded-lg pl-10 pr-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                 placeholder="{% trans 'Email' %}">
         </div>
 
+        <!-- Tipo -->
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Tipo" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo" %}</label>
           <input type="text" readonly value="{{ reserva.tipo }}"
-                 class="w-full bg-gray-100 border rounded-lg px-3 py-2">
+                 class="w-full bg-gray-100 dark:bg-gray-900/60 border rounded-lg px-3 py-2 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">
         </div>
 
+        <!-- Estatus actual (badge) -->
         <div class="flex flex-col items-center justify-center">
-          <label class="text-sm font-medium text-gray-700">{% trans "Estatus actual" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Estatus actual" %}</label>
           <span class="inline-flex items-center mt-1 px-3 py-1 rounded-full text-white text-sm
             {% if reserva.estatus == 'solicitada' %}bg-blue-600
-            {% elif reserva.estatus == 'pendiente' %}bg-yellow-500
+            {% elif reserva.estatus == 'pendiente' %}bg-amber-500
             {% elif reserva.estatus == 'confirmada' %}bg-green-600
             {% elif reserva.estatus == 'modificada' %}bg-indigo-600
             {% elif reserva.estatus == 'ejecutada' %}bg-purple-600
-            {% elif reserva.estatus == 'cancelada' %}bg-red-600
-            {% elif reserva.estatus == 'reembolsada' %}bg-gray-700
+            {% elif reserva.estatus == 'cancelada' %}bg-rose-600
+            {% elif reserva.estatus == 'reembolsada' %}bg-slate-700
             {% else %}bg-gray-500{% endif %}">
             {% if reserva.estatus == 'solicitada' %}
               <i class="fas fa-hourglass-half mr-1"></i>
@@ -113,18 +149,22 @@
           </span>
         </div>
 
+        <!-- Cambiar estatus -->
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Cambiar estatus" %}</label>
-          <select name="estatus" class="w-full border rounded-lg px-3 py-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cambiar estatus" %}</label>
+          <select name="estatus"
+                  class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500">
             {% for value,label in estatus_choices %}
               <option value="{{ value }}" {% if reserva.estatus == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
 
+        <!-- Proveedor -->
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Proveedor" %}</label>
-          <select name="proveedor" class="w-full border rounded-lg px-3 py-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Proveedor" %}</label>
+          <select name="proveedor"
+                  class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500">
             <option value="">{% trans "Seleccione un proveedor" %}</option>
             {% for proveedor in proveedores %}
               <option value="{{ proveedor.id }}"
@@ -135,214 +175,347 @@
           </select>
         </div>
 
+        <!-- No Confirmación -->
         <div class="relative">
-          <label class="text-sm font-medium text-gray-700">{% trans "No. Confirmación" %}</label>
-          <i class="fas fa-check-double absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "No. Confirmación" %}</label>
+          <i class="fas fa-check-double absolute left-3 top-10 -translate-y-1/2 text-gray-400"></i>
           <input type="text" name="numero_confirmacion" value="{{ reserva.numero_confirmacion }}"
-                 class="w-full border rounded-lg pl-10 pr-3 py-2" placeholder="N° Confirmación">
+                 class="w-full border rounded-lg pl-10 pr-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                 placeholder="N° Confirmación">
         </div>
 
+        <!-- Costos -->
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Costo Proveedor" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Costo Proveedor" %}</label>
           <input type="number" step="0.01" name="costo_sin_fee" value="{{ reserva.costo_sin_fee }}"
-                 class="w-full border rounded-lg px-3 py-2">
+                 class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Costo Agencia" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Costo Agencia" %}</label>
           <input type="number" step="0.01" name="costo_total" value="{{ reserva.costo_total }}"
-                 class="w-full border rounded-lg px-3 py-2">
+                 class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
-          <label class="text-sm font-medium text-gray-700">{% trans "Precio Agencia" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Precio Agencia" %}</label>
           <input type="number" step="0.01" name="precio_total" value="{{ reserva.precio_total }}"
-                 class="w-full border rounded-lg px-3 py-2">
+                 class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500">
         </div>
 
-        <div class="flex items-center space-x-6 md:col-span-4">
+        <!-- Checkboxes -->
+        <div class="flex items-center gap-6 md:col-span-4">
           <label class="inline-flex items-center">
-            <input type="checkbox" name="cobrada" class="form-checkbox h-5 w-5 text-green-600"
+            <input type="checkbox" name="cobrada" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                    {% if reserva.cobrada %}checked{% endif %}>
-            <span class="ml-2 text-gray-700">{% trans "Cobrada" %}</span>
+            <span class="ml-2 text-gray-700 dark:text-gray-300">{% trans "Cobrada" %}</span>
           </label>
           <label class="inline-flex items-center">
-            <input type="checkbox" name="pagada" class="form-checkbox h-5 w-5 text-blue-600"
+            <input type="checkbox" name="pagada" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                    {% if reserva.pagada %}checked{% endif %}>
-            <span class="ml-2 text-gray-700">{% trans "Pagada" %}</span>
+            <span class="ml-2 text-gray-700 dark:text-gray-300">{% trans "Pagada" %}</span>
           </label>
         </div>
 
+        <!-- Notas -->
         <div class="md:col-span-4">
-          <label class="text-sm font-medium text-gray-700">{% trans "Notas" %}</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Notas" %}</label>
           <textarea name="notas" rows="3"
-                    class="w-full border rounded-lg px-3 py-2"
+                    class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500"
                     placeholder="{% trans 'Notas adicionales...' %}">{{ reserva.notas }}</textarea>
         </div>
       </div>
+    </section>
 
-      {# —————— Sección de Habitaciones —————— #}
-      <div class="mt-16">
-        <div class="mb-6 border-l-4 border-indigo-600 pl-4">
-          <h2 class="text-2xl font-bold text-indigo-700">🛏️ {% trans "Habitaciones" %}</h2>
-          <p class="text-sm text-gray-500">{% trans "Cada habitación puede tener múltiples pasajeros y fechas." %}</p>
-        </div>
-        <div id="habitaciones-container" class="space-y-10">
-          
-          {% for habitacion in habitaciones %}
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 habitacion-card" data-index="{{ forloop.counter }}">
-              <div class="flex justify-between items-center mb-5">
-                <h3 class="text-xl font-bold text-indigo-700">{% trans "Habitación" %} {{ forloop.counter }}</h3>
-                <button type="button" class="bg-red-100 text-red-600 hover:bg-red-200 px-4 py-2 rounded-full eliminar-habitacion">
-                  <i class="fas fa-trash mr-1"></i>{% trans "Eliminar" %}
-                </button>
+    {# =================== HABITACIONES =================== #}
+    <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6">
+      <div class="mb-6 border-l-4 border-indigo-600 pl-4">
+        <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-300">🛏️ {% trans "Habitaciones" %}</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{% trans "Cada habitación puede tener múltiples pasajeros y fechas." %}</p>
+      </div>
+
+      <div id="habitaciones-container" class="space-y-10">
+        {% for habitacion in habitaciones %}
+          <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 habitacion-card" data-index="{{ forloop.counter }}">
+            <div class="flex justify-between items-center mb-5">
+              <h3 class="text-lg font-bold text-indigo-700 dark:text-indigo-300">{% trans "Habitación" %} {{ forloop.counter }}</h3>
+              <button type="button" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-4 py-2 rounded-full eliminar-habitacion">
+                <i class="fas fa-trash mr-1"></i>{% trans "Eliminar" %}
+              </button>
+            </div>
+
+            <input type="hidden" name="habitacion_id_{{ forloop.counter }}" value="{{ habitacion.id }}">
+
+            <div class="grid grid-cols-12 gap-4 mb-4">
+              <div class="col-span-12 md:col-span-3">
+                <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Nombre" %}</label>
+                <input type="text" name="habitacion_nombre_{{ forloop.counter }}" value="{{ habitacion.habitacion_nombre }}"
+                       class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
               </div>
 
-              <input type="hidden" name="habitacion_id_{{ forloop.counter }}" value="{{ habitacion.id }}">
-
-              <div class="grid grid-cols-12 gap-4 mb-4">
-                <div class="col-span-3">
-                  <label class="text-sm text-gray-700">{% trans "Nombre" %}</label>
-                  <input type="text" name="habitacion_nombre_{{ forloop.counter }}" value="{{ habitacion.habitacion_nombre }}" class="w-full border rounded-lg px-3 py-2">
-                </div>
-
-                <div class="col-span-2">
-                  <label class="text-sm text-gray-700">{% trans "Fechas" %}</label>
-                  <input type="text" name="fechas_viaje_{{ forloop.counter }}" value="{{ habitacion.fechas_viaje }}" class="w-full border rounded-lg px-3 py-2 rango-fechas">
-                </div>
-
-                <div class="col-span-2">
-                  <label class="text-sm text-gray-700">{% trans "Precio" %}</label>
-                  <input type="number" name="precio_{{ forloop.counter }}" step="0.01" value="{{ habitacion.precio }}" class="w-full border rounded-lg px-3 py-2">
-                </div>
-
-                <div class="col-span-2">
-                  <label class="text-sm text-gray-700">{% trans "Adultos" %}</label>
-                  <input type="number" name="adultos_{{ forloop.counter }}" value="{{ habitacion.adultos }}" class="w-full border rounded-lg px-3 py-2">
-                </div>
-
-                <div class="col-span-2">
-                  <label class="text-sm text-gray-700">{% trans "Niños" %}</label>
-                  <input type="number" name="ninos_{{ forloop.counter }}" value="{{ habitacion.ninos }}" class="w-full border rounded-lg px-3 py-2">
-                </div>
+              <div class="col-span-12 md:col-span-3">
+                <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Fechas" %}</label>
+                <input type="text" name="fechas_viaje_{{ forloop.counter }}" value="{{ habitacion.fechas_viaje }}"
+                       class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 rango-fechas">
               </div>
 
-              <!-- Pasajeros -->
-              <div id="pasajeros_habitacion_{{ habitacion.id }}" class="space-y-3">
-                {% for pasajero in habitacion.pasajeros.all %}
+              <div class="col-span-6 md:col-span-2">
+                <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Precio" %}</label>
+                <input type="number" name="precio_{{ forloop.counter }}" step="0.01" value="{{ habitacion.precio }}"
+                       class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+              </div>
+
+              <div class="col-span-6 md:col-span-2">
+                <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Adultos" %}</label>
+                <input type="number" name="adultos_{{ forloop.counter }}" value="{{ habitacion.adultos }}"
+                       class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+              </div>
+
+              <div class="col-span-6 md:col-span-2">
+                <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Niños" %}</label>
+                <input type="number" name="ninos_{{ forloop.counter }}" value="{{ habitacion.ninos }}"
+                       class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+              </div>
+            </div>
+
+            <!-- Pasajeros -->
+            <div id="pasajeros_habitacion_{{ habitacion.id }}" class="space-y-3">
+              {% for pasajero in habitacion.pasajeros.all %}
                 <div class="grid grid-cols-7 gap-2 items-end pasajero-item">
-                  
-                  <!-- ID del pasajero (clave para backend) -->
                   <input type="hidden" name="pasajero_id_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.id }}">
 
-                  <!-- Nombre -->
                   <div class="relative">
-                    <i class="fas fa-user absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="pasajero_nombre_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.nombre }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Nombre">
+                    <i class="fas fa-user absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" name="pasajero_nombre_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.nombre }}"
+                           class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="{% trans 'Nombre' %}">
                   </div>
 
-                  <!-- Fecha de nacimiento -->
                   <div class="relative">
-                    <i class="fas fa-calendar-day absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="date" name="pasajero_fecha_nacimiento_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.fecha_nacimiento|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
+                    <i class="fas fa-calendar-day absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="date" name="pasajero_fecha_nacimiento_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.fecha_nacimiento|date:'Y-m-d' }}"
+                           class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
                   </div>
 
-                  <!-- Pasaporte -->
                   <div class="relative">
-                    <i class="fas fa-passport absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="pasajero_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="Pasaporte">
+                    <i class="fas fa-passport absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" name="pasajero_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pasaporte }}"
+                           class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="Pasaporte">
                   </div>
 
-                  <!-- Caducidad del pasaporte -->
                   <div class="relative">
-                    <i class="fas fa-calendar-check absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="date" name="pasajero_caducidad_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.caducidad_pasaporte|date:'Y-m-d' }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full">
+                    <i class="fas fa-calendar-check absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="date" name="pasajero_caducidad_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.caducidad_pasaporte|date:'Y-m-d' }}"
+                           class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
                   </div>
 
-                  <!-- País de emisión -->
                   <div class="relative">
-                    <i class="fas fa-flag absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="pasajero_pais_emision_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pais_emision_pasaporte }}" class="pl-8 border rounded-lg px-2 py-1 text-sm w-full" placeholder="País">
+                    <i class="fas fa-flag absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" name="pasajero_pais_emision_pasaporte_{{ habitacion.id }}_{{ pasajero.id }}" value="{{ pasajero.pais_emision_pasaporte }}"
+                           class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="{% trans 'País' %}">
                   </div>
 
-                  <!-- Botón eliminar -->
                   <div class="flex justify-end">
-                    <button type="button" class="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-full eliminar-pasajero" aria-label="Eliminar pasajero">
+                    <button type="button" class="bg-rose-100 hover:bg-rose-200 text-rose-700 p-2 rounded-full eliminar-pasajero" aria-label="{% trans 'Eliminar pasajero' %}">
                       <i class="fas fa-trash text-xs"></i>
                     </button>
                   </div>
                 </div>
-                {% endfor %}
-              </div>
-
-
-              <div class="mt-4">
-                <button type="button" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full agregar-pasajero" data-hab="{{ forloop.counter }}">
-                  <i class="fas fa-user-plus mr-2"></i> {% trans "Agregar Pasajero" %}
-                </button>
-              </div>
+              {% endfor %}
             </div>
-          {% endfor %}  
-          
-        </div>
+
+            <div class="mt-4">
+              <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-full agregar-pasajero" data-hab="{{ forloop.counter }}">
+                <i class="fas fa-user-plus mr-2"></i> {% trans "Agregar Pasajero" %}
+              </button>
+            </div>
+          </div>
+        {% endfor %}
       </div>
 
-      {# —————— Botones finales: guardar y agregar habitación —————— #}
-      <div class="mt-12 flex justify-between">
+      <div class="mt-8">
         <button type="button" id="agregar-habitacion"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-bold text-lg">
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full">
           <i class="fas fa-plus mr-2"></i> {% trans "Agregar Habitación" %}
         </button>
-        <button type="submit"
-                class="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-full font-bold text-lg">
-          <i class="fas fa-save mr-2"></i> {% trans "Guardar Cambios" %}
-        </button>
       </div>
+    </section>
 
-    </form>
+    {# =================== CTA FINAL =================== #}
+    <section class="flex flex-col sm:flex-row justify-between gap-3">
+      <a href="{% url 'backoffice:listar_reservas' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-6 py-3 text-sm font-semibold transition">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button type="submit"
+              class="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 text-sm font-semibold transition">
+        <i class="fas fa-save"></i> {% trans "Guardar Cambios" %}
+      </button>
+    </section>
+  </form>
+</main>
 
-  </section>
-
-</div>
-
-{# Scripts para datepickers y manejo dinámico de habitaciones/pasajeros #}
+{# ======= JS de soporte (daterangepicker y acciones) ======= #}
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
 <script>
-  $(document).ready(function () {
-    let habitacionIndex = {{ habitaciones|length }};
-    function inicializarPickers() {
-      $('.rango-fechas').daterangepicker({ locale: { format: 'YYYY-MM-DD' } });
+  (function () {
+    // CSRF para fetch
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
     }
-    inicializarPickers();
+    const csrftoken = getCookie('csrftoken');
 
-    $('#agregar-habitacion').click(() => {
-      habitacionIndex++;
-      // ... tu lógica para añadir un bloque de habitación ...
-      inicializarPickers();
+    // Inicializar pickers
+    function initPickers(ctx) {
+      const $scope = ctx ? $(ctx) : $(document);
+      $scope.find('.rango-fechas').daterangepicker({ locale: { format: 'YYYY-MM-DD' } });
+    }
+    initPickers();
+
+    // Solicitar Hotel (POST via fetch)
+    const btnSolicitar = document.getElementById('btn-solicitar-hotel');
+    if (btnSolicitar) {
+      btnSolicitar.addEventListener('click', async () => {
+        const url = btnSolicitar.getAttribute('data-post-url');
+        btnSolicitar.disabled = true;
+        btnSolicitar.classList.add('opacity-60','cursor-not-allowed');
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' }
+          });
+          if (!res.ok) throw new Error('Bad response');
+          alert("{% trans 'Solicitud enviada correctamente.' %}");
+        } catch (e) {
+          alert("{% trans 'No se pudo enviar la solicitud.' %}");
+        } finally {
+          btnSolicitar.disabled = false;
+          btnSolicitar.classList.remove('opacity-60','cursor-not-allowed');
+        }
+      });
+    }
+
+    // Agregar/eliminar habitaciones
+    let habitacionIndex = {{ habitaciones|length|default:0 }};
+    document.getElementById('agregar-habitacion').addEventListener('click', () => {
+      habitacionIndex += 1;
+      const cont = document.getElementById('habitaciones-container');
+      const div = document.createElement('div');
+      div.className = 'bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 habitacion-card';
+      div.setAttribute('data-index', habitacionIndex);
+      div.innerHTML = `
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="text-lg font-bold text-indigo-700 dark:text-indigo-300">{% trans "Habitación" %} ${habitacionIndex}</h3>
+          <button type="button" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-4 py-2 rounded-full eliminar-habitacion">
+            <i class="fas fa-trash mr-1"></i>{% trans "Eliminar" %}
+          </button>
+        </div>
+        <input type="hidden" name="habitacion_id_${habitacionIndex}" value="">
+        <div class="grid grid-cols-12 gap-4 mb-4">
+          <div class="col-span-12 md:col-span-3">
+            <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Nombre" %}</label>
+            <input type="text" name="habitacion_nombre_${habitacionIndex}"
+                   class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+          <div class="col-span-12 md:col-span-3">
+            <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Fechas" %}</label>
+            <input type="text" name="fechas_viaje_${habitacionIndex}"
+                   class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 rango-fechas">
+          </div>
+          <div class="col-span-6 md:col-span-2">
+            <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Precio" %}</label>
+            <input type="number" step="0.01" name="precio_${habitacionIndex}"
+                   class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+          <div class="col-span-6 md:col-span-2">
+            <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Adultos" %}</label>
+            <input type="number" name="adultos_${habitacionIndex}"
+                   class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+          <div class="col-span-6 md:col-span-2">
+            <label class="text-sm text-gray-700 dark:text-gray-300">{% trans "Niños" %}</label>
+            <input type="number" name="ninos_${habitacionIndex}"
+                   class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+        </div>
+        <div id="pasajeros_habitacion_new_${habitacionIndex}" class="space-y-3"></div>
+        <div class="mt-4">
+          <button type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-full agregar-pasajero" data-hab="${habitacionIndex}">
+            <i class="fas fa-user-plus mr-2"></i> {% trans "Agregar Pasajero" %}
+          </button>
+        </div>
+      `;
+      cont.appendChild(div);
+      initPickers(div);
     });
 
-    $(document).on('click', '.eliminar-habitacion', function(){
-      if(confirm('{% trans "¿Eliminar esta habitación?" %}')){
-        $(this).closest('.habitacion-card').remove();
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.eliminar-habitacion')) {
+        if (confirm('{% trans "¿Eliminar esta habitación?" %}')) {
+          e.target.closest('.habitacion-card').remove();
+        }
+      }
+      if (e.target.closest('.eliminar-pasajero')) {
+        if (confirm('{% trans "¿Eliminar pasajero?" %}')) {
+          e.target.closest('.pasajero-item').remove();
+        }
+      }
+      if (e.target.closest('.agregar-pasajero')) {
+        const btn = e.target.closest('.agregar-pasajero');
+        const habIndex = btn.getAttribute('data-hab');
+        const wrap = btn.parentElement.previousElementSibling; // contenedor de pasajeros
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-7 gap-2 items-end pasajero-item';
+        const uid = Date.now().toString(36);
+        row.innerHTML = `
+          <input type="hidden" name="pasajero_id_${habIndex}_${uid}" value="">
+          <div class="relative">
+            <i class="fas fa-user absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="pasajero_nombre_${habIndex}_${uid}"
+                   class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="{% trans 'Nombre' %}">
+          </div>
+          <div class="relative">
+            <i class="fas fa-calendar-day absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="date" name="pasajero_fecha_nacimiento_${habIndex}_${uid}"
+                   class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+          <div class="relative">
+            <i class="fas fa-passport absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="pasajero_pasaporte_${habIndex}_${uid}"
+                   class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="Pasaporte">
+          </div>
+          <div class="relative">
+            <i class="fas fa-calendar-check absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="date" name="pasajero_caducidad_pasaporte_${habIndex}_${uid}"
+                   class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600">
+          </div>
+          <div class="relative">
+            <i class="fas fa-flag absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="pasajero_pais_emision_pasaporte_${habIndex}_${uid}"
+                   class="pl-8 border rounded-lg px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" placeholder="{% trans 'País' %}">
+          </div>
+          <div class="flex justify-end">
+            <button type="button" class="bg-rose-100 hover:bg-rose-200 text-rose-700 p-2 rounded-full eliminar-pasajero" aria-label="{% trans 'Eliminar pasajero' %}">
+              <i class="fas fa-trash text-xs"></i>
+            </button>
+          </div>
+        `;
+        wrap.appendChild(row);
       }
     });
-    $(document).on('click', '.eliminar-pasajero', function(){
-      if(confirm('{% trans "¿Eliminar pasajero?" %}')){
-        $(this).closest('.pasajero-item').remove();
-      }
-    });
 
-    $('form').submit(function(e){
-      const est = $('select[name="estatus"]').val();
-      const num = $('input[name="numero_confirmacion"]').val().trim();
-      if(est==='confirmada'&&num===''){
+    // Validación mínima en envío: si confirmada, exige número
+    document.getElementById('form-editar-reserva').addEventListener('submit', (e) => {
+      const est = document.querySelector('select[name="estatus"]').value;
+      const num = (document.querySelector('input[name="numero_confirmacion"]').value || '').trim();
+      if (est === 'confirmada' && num === '') {
         alert('{% trans "Debe ingresar el número de confirmación para reservas confirmadas." %}');
         e.preventDefault();
       }
     });
-  });
+  })();
 </script>
 {% endblock %}
-
-

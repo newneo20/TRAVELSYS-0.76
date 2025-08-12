@@ -1,48 +1,65 @@
-"""
-Django settings for viajero_plus project.
-"""
-
-from pathlib import Path
+#settings_dev.py
 import os
-from dotenv import load_dotenv # Importar load_dotenv
+from pathlib import Path
+import environ
 
-# Carga las variables de entorno del archivo .env
-# Asegúrate de que el archivo .env esté en la raíz de tu proyecto Docker (my_django_app/)
-load_dotenv()
+# ──────────────────────────────────────────────────────────────────────────────
+# BASE_DIR y Entorno
+# ──────────────────────────────────────────────────────────────────────────────
+# /viajero_plus/envs/settings_dev.py → raíz = parents[2]
+BASE_DIR = Path(__file__).resolve().parents[2]
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-# Usamos la versión moderna y eliminamos la redundancia
-BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env(
+    DEBUG=(bool, True),  # ← dev por defecto
+    SECRET_KEY=(str, "dev-secret-change-me"),
+    DATABASE_URL=(str, f"sqlite:///{(BASE_DIR / 'db.sqlite3').as_posix()}"),
+    DATABASE_READONLY_URL=(str, None),
+    ALLOWED_HOSTS=(list, ["*"]),
+    LANGUAGE_CODE=(str, "es-es"),
+    TIME_ZONE=(str, "America/New_York"),
+    SESSION_COOKIE_AGE=(int, 1800),
+    SESSION_EXPIRE_AT_BROWSER_CLOSE=(bool, True),
+    SESSION_SAVE_EVERY_REQUEST=(bool, True),
+    CELERY_BROKER_URL=(str, 'redis://localhost:6379/0'),
+    CELERY_RESULT_BACKEND=(str, 'redis://localhost:6379/0'),
+    EMAIL_REMITENTE=(str, ''),
+    EMAIL_HOST=(str, ''),          # si vacío → consola
+    EMAIL_PORT=(int, 587),
+    EMAIL_HOST_USER=(str, ''),
+    EMAIL_PASSWORD=(str, ''),
+)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+ENV_FILE = os.getenv("ENV_FILE", BASE_DIR / ".env")
+if os.path.exists(ENV_FILE):
+    environ.Env.read_env(ENV_FILE)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# Lee la clave secreta de una variable de entorno
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fallback-key-for-dev-only')
+# ──────────────────────────────────────────────────────────────────────────────
+# Seguridad básica
+# ──────────────────────────────────────────────────────────────────────────────
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# Controla DEBUG con una variable de entorno, por defecto False para producción
-DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
-
-# Hosts permitidos para tu aplicación en producción
-# Lee los hosts permitidos de una variable de entorno, separados por comas
-# Si DEBUG es True, permite todos los hosts para facilitar el desarrollo
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
-if DEBUG:
-    ALLOWED_HOSTS = ['*'] # Permite todos los hosts en modo DEBUG
-
-
-# Application definition
-
+# ──────────────────────────────────────────────────────────────────────────────
+# Aplicaciones instaladas
+# ──────────────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
+    # Core de Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
+    # Terceros
+    'django_celery_beat',
+    'dal',
+    'dal_select2',
+    # opcional en dev (coméntala si no la tienes instalada)
+    'django_extensions',
+
+    # Tus apps
     'apps.usuarios',
     'apps.backoffice',
     'apps.renta_hoteles',
@@ -51,14 +68,13 @@ INSTALLED_APPS = [
     'apps.gestion_economica',
     'apps.booking',
     'apps.finanzas',
-
+    'apps.common',
     'viajero_plus',
-    'django_celery_beat',
-    'dal',
-    'dal_select2',
 ]
 
-
+# ──────────────────────────────────────────────────────────────────────────────
+# Middleware
+# ──────────────────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -67,18 +83,19 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#    'viajero_plus.middleware.AutoLogoutMiddleware',
     'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'viajero_plus.urls'
+WSGI_APPLICATION = 'viajero_plus.wsgi.application'
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Templates
+# ──────────────────────────────────────────────────────────────────────────────
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # Ajusta DIRS para apuntar al directorio 'templates' dentro de 'viajero_plus'
-        # Si tus templates están en 'my_django_app/templates'
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # raíz/templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -91,147 +108,75 @@ TEMPLATES = [
         },
     },
 ]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
-LOCALE_PATHS = [
-    BASE_DIR / 'locale',
-]
-
-WSGI_APPLICATION = 'viajero_plus.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-# Configuración de PostgreSQL para Docker Compose
+# ──────────────────────────────────────────────────────────────────────────────
+# Bases de datos
+# ──────────────────────────────────────────────────────────────────────────────
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'mydatabase_prod'), # Nombre de la DB, default para seguridad
-        'USER': os.getenv('POSTGRES_USER', 'myuser_prod'),   # Usuario de la DB, default
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'mypassword_prod_secure'), # Contraseña, default
-        'HOST': os.getenv('POSTGRES_HOST', 'db'), # 'db' es el nombre del servicio en docker-compose
-        'PORT': os.getenv('POSTGRES_PORT', '5432'), # Puerto de PostgreSQL, default 5432
-        # 'OPTIONS': {
-        #     'sslmode': 'require', # Habilitar si tu PostgreSQL requiere SSL (común en la nube)
-        # },
-    }
-    # Si tienes una base de datos de solo lectura, configúrala de manera similar
-    # 'readonly': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.getenv('POSTGRES_DB', 'mydatabase_prod'),
-    #     'USER': os.getenv('POSTGRES_USER_RO', 'myuser_ro'),
-    #     'PASSWORD': os.getenv('POSTGRES_PASSWORD_RO', 'mypassword_ro_secure'),
-    #     'HOST': os.getenv('POSTGRES_HOST_RO', 'db_ro'),
-    #     'PORT': os.getenv('POSTGRES_PORT_RO', '5433'),
-    #     'OPTIONS': {
-    #         'sslmode': 'require',
-    #     },
-    # }
+    'default': env.db('DATABASE_URL'),  # usa SQLite si no defines otra cosa
 }
+readonly_url = env('DATABASE_READONLY_URL', default=None)
+if readonly_url:
+    DATABASES['readonly'] = env.db('DATABASE_READONLY_URL')
 
-# 🚦 Aquí se especifica el enrutador de bases de datos personalizado
-# Si usas un enrutador de DB, descomenta esta línea y asegúrate de que el router esté en tu código
-# DATABASE_ROUTERS = ['apps.common.routers.ReadOnlyRouter']
-
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
-LANGUAGE_CODE = 'es-es' # Cambiado a español por defecto si la app es en español
-
-LANGUAGES = [
-    ('en', 'English'),
-    ('es', 'Español'),
-]
-
-# Tu zona horaria específica
-TIME_ZONE = 'America/Toronto'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = False
-
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# ──────────────────────────────────────────────────────────────────────────────
+# Autenticación
+# ──────────────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'usuarios.CustomUser'
-
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/usuarios/dashboard/'
 
-# Celery settings
-# Apunta al servicio 'redis' en Docker Compose
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+# ──────────────────────────────────────────────────────────────────────────────
+# Internacionalización
+# ──────────────────────────────────────────────────────────────────────────────
+LANGUAGE_CODE = env('LANGUAGE_CODE')
+LANGUAGES = [('en', 'English'), ('es', 'Español')]
+TIME_ZONE = env('TIME_ZONE')
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Archivos estáticos y media
+# ──────────────────────────────────────────────────────────────────────────────
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [p for p in [BASE_DIR / 'static'] if p.exists()]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sesiones
+# ──────────────────────────────────────────────────────────────────────────────
+SESSION_COOKIE_AGE = env('SESSION_COOKIE_AGE')
+SESSION_EXPIRE_AT_BROWSER_CLOSE = env('SESSION_EXPIRE_AT_BROWSER_CLOSE')
+SESSION_SAVE_EVERY_REQUEST = env('SESSION_SAVE_EVERY_REQUEST')
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Celery
+# ──────────────────────────────────────────────────────────────────────────────
+CELERY_BROKER_URL = env('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND')
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Email: consola por defecto; SMTP si hay host definido
+# ──────────────────────────────────────────────────────────────────────────────
+if env('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = env('EMAIL_HOST')
+    EMAIL_PORT = env('EMAIL_PORT')
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = env('EMAIL_PASSWORD')
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = env('EMAIL_REMITENTE')
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-STATIC_URL = '/static/'
-
-# STATICFILES_DIRS es para encontrar estáticos durante desarrollo y collectstatic
-STATICFILES_DIRS = [
-    BASE_DIR / 'static', # Asumiendo que 'static' está al mismo nivel que 'viajero_plus'
-]
-
-# STATIC_ROOT es donde 'collectstatic' copiará todos los archivos estáticos para producción
-# Este directorio será montado por Nginx
-STATIC_ROOT = '/app/staticfiles/' # Nuevo directorio para estáticos recolectados
-
-MEDIA_URL = '/media/'
-# MEDIA_ROOT es donde se guardarán los archivos subidos por usuarios
-# Este directorio será montado por Nginx
-MEDIA_ROOT = '/app/mediafiles/' # Nuevo directorio para archivos de medios
-
-
-# Tiempo de expiración de sesión (en segundos)
-SESSION_COOKIE_AGE = 1800
-
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = True
-
-# Configuración para CSRF cuando se usa un proxy como Cloudflare
-# Lee los orígenes de confianza de una variable de entorno, separados por comas
-CSRF_TRUSTED_ORIGINS = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
-
-# Eliminar posibles espacios en blanco alrededor de cada origen
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
-
-# Asegura que Django sepa que está detrás de un proxy SSL (Nginx/Cloudflare)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Si tu sitio es solo HTTPS, es buena práctica forzar esto:
-SECURE_SSL_REDIRECT = True # Esto hará que Django redirija HTTP a HTTPS a nivel de aplicación (Nginx ya lo hace)
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-
-# Configuración de dominio para cookies de sesión y CSRF
-#SESSION_COOKIE_DOMAIN = os.getenv('DJANGO_SESSION_COOKIE_DOMAIN')
-#CSRF_COOKIE_DOMAIN = os.getenv('DJANGO_SESSION_COOKIE_DOMAIN')
+# ──────────────────────────────────────────────────────────────────────────────
+# Seguridad (relajada en dev)
+# ──────────────────────────────────────────────────────────────────────────────
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False

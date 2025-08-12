@@ -1,19 +1,233 @@
 {% extends 'base.html' %}
-{% block title %}Vista Previa XML Distal{% endblock %}
+{% load i18n %}
+
+{% block title %}{% trans "Vista Previa XML Distal" %}{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto p-8">
-  <h1 class="text-2xl font-bold text-indigo-700 mb-4">Vista previa del Booking XML para Distal</h1>
+<main class="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <pre class="whitespace-pre-wrap bg-gray-900 text-green-200 p-6 rounded-xl overflow-auto max-h-[80vh] text-sm">
-{{ xml }}
-  </pre>
+  <!-- Encabezado -->
+  <header class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div class="border-l-4 border-indigo-600 pl-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Vista previa del Booking XML para Distal" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Revisa, copia o descarga el XML generado antes de enviarlo." %}
+      </p>
+    </div>
 
-  <div class="mt-6">
-    <a href="{% url 'backoffice:editar_reserva' reserva.id %}"
-       class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full">
-      ← Volver a la edición
-    </a>
-  </div>
-</div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{% url 'backoffice:editar_reserva' reserva.id %}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver a la edición" %}
+      </a>
+    </div>
+  </header>
+
+  <!-- Panel principal -->
+  <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-center gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+      <button id="btn-copy"
+              class="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-black/90 transition">
+        <i class="fa-regular fa-copy"></i> {% trans "Copiar" %}
+      </button>
+      <button id="btn-download"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-semibold hover:bg-indigo-700 transition">
+        <i class="fa-solid fa-download"></i> {% trans "Descargar .xml" %}
+      </button>
+      <button id="btn-pretty"
+              class="inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm font-semibold hover:bg-emerald-700 transition">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> {% trans "Formatear" %}
+      </button>
+      <button id="btn-minify"
+              class="inline-flex items-center gap-2 rounded-full bg-amber-600 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-700 transition">
+        <i class="fa-solid fa-compress"></i> {% trans "Minificar" %}
+      </button>
+      <button id="btn-wrap"
+              class="inline-flex items-center gap-2 rounded-full bg-slate-600 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-700 transition">
+        <i class="fa-solid fa-align-left"></i> {% trans "Ajuste de línea" %}
+      </button>
+      <button id="btn-lines"
+              class="inline-flex items-center gap-2 rounded-full bg-slate-500 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-600 transition">
+        <i class="fa-solid fa-list-ol"></i> {% trans "Núm. de línea" %}
+      </button>
+      <button id="btn-validate"
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">
+        <i class="fa-solid fa-check-circle"></i> {% trans "Validar XML" %}
+      </button>
+
+      <span id="status-pill" class="ml-auto hidden text-xs px-2 py-1 rounded-full"></span>
+    </div>
+
+    <!-- Viewer -->
+    <div class="relative">
+      <pre id="xml-pre"
+           class="hljs language-xml !bg-gray-900 text-gray-100 m-0 p-5 overflow-auto max-h-[70vh] text-sm leading-6 whitespace-pre"
+           style="tab-size: 2; -moz-tab-size: 2;"><code id="xml-code">{{ xml }}</code></pre>
+      <!-- Línea guía para ancho -->
+      <div class="absolute inset-y-0 left-0 pointer-events-none"></div>
+    </div>
+  </section>
+</main>
+
+<!-- highlight.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+<script>
+(function(){
+  const pre  = document.getElementById('xml-pre');
+  const code = document.getElementById('xml-code');
+
+  // Estado UI
+  let wrapped   = false;
+  let numbered  = false;
+  let original  = code.textContent;
+
+  // Utils
+  function download(filename, text) {
+    const blob = new Blob([text], {type: 'application/xml;charset=utf-8'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function setStatus(ok, msg){
+    const pill = document.getElementById('status-pill');
+    pill.classList.remove('hidden');
+    pill.textContent = msg;
+    pill.classList.toggle('bg-emerald-200', ok);
+    pill.classList.toggle('text-emerald-800', ok);
+    pill.classList.toggle('bg-rose-200', !ok);
+    pill.classList.toggle('text-rose-800', !ok);
+    setTimeout(()=> pill.classList.add('hidden'), 3000);
+  }
+
+  // Pretty print XML (ligero, sin dependencias)
+  function prettyXml(xml) {
+    try{
+      // Quita espacios entre tags >< y normaliza saltos
+      xml = xml.replace(/>\s+</g, '><').replace(/\r\n?/g, '\n');
+      let formatted = '', pad = 0;
+      xml.split(/>\s*</).forEach((node, i, arr) => {
+        if (i) node = '<' + node + '>';
+        if (node.match(/^<\/\w/)) pad--;
+        formatted += '  '.repeat(pad) + node + '\n';
+        if (node.match(/^<\w[^>]*[^\/]>$/)) pad++;
+      });
+      return formatted.trim();
+    }catch(e){
+      return xml; // fallback
+    }
+  }
+
+  function minifyXml(xml){
+    return xml
+      .replace(/>\s+</g,'><')
+      .replace(/\s{2,}/g,' ')
+      .replace(/\n+/g,'\n')
+      .trim();
+  }
+
+  // Números de línea usando CSS counters
+  function enableLineNumbers() {
+    if (numbered) return;
+    numbered = true;
+    pre.classList.add('pl-12'); // espacio para números
+
+    // envolvemos cada línea en span
+    const lines = code.textContent.replace(/\n$/,'').split('\n');
+    code.innerHTML = lines.map(l => `<span class="code-line">${hljs.highlight(l,{language:'xml',ignoreIllegals:true}).value}</span>`).join('\n');
+
+    const style = document.createElement('style');
+    style.id = 'code-lines-style';
+    style.textContent = `
+      #xml-pre { counter-reset: line; }
+      #xml-pre .code-line { display:block; counter-increment: line; position: relative; padding-left: .25rem; }
+      #xml-pre .code-line::before {
+        content: counter(line);
+        position:absolute; left:-2.75rem; width:2.25rem; text-align:right;
+        color: rgba(255,255,255,.35);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function disableLineNumbers() {
+    if (!numbered) return;
+    numbered = false;
+    pre.classList.remove('pl-12');
+    // volvemos al texto plano resaltado por hljs
+    document.getElementById('code-lines-style')?.remove();
+    code.textContent = code.textContent; // forzamos reflow
+    hljs.highlightElement(code);
+  }
+
+  // Controles
+  document.getElementById('btn-copy').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(code.textContent);
+      setStatus(true, '{% trans "XML copiado al portapapeles" %}');
+    }catch{
+      setStatus(false, '{% trans "No se pudo copiar" %}');
+    }
+  });
+
+  document.getElementById('btn-download').addEventListener('click', ()=>{
+    download(`booking_{{ reserva.id }}.xml`, code.textContent);
+  });
+
+  document.getElementById('btn-pretty').addEventListener('click', ()=>{
+    const pretty = prettyXml(code.textContent);
+    code.textContent = pretty + '\n';
+    original = code.textContent;
+    hljs.highlightElement(code);
+    setStatus(true, '{% trans "Formateado" %}');
+  });
+
+  document.getElementById('btn-minify').addEventListener('click', ()=>{
+    const m = minifyXml(code.textContent);
+    code.textContent = m;
+    original = code.textContent;
+    hljs.highlightElement(code);
+    setStatus(true, '{% trans "Minificado" %}');
+  });
+
+  document.getElementById('btn-wrap').addEventListener('click', ()=>{
+    wrapped = !wrapped;
+    pre.classList.toggle('whitespace-pre-wrap', wrapped);
+    pre.classList.toggle('whitespace-pre', !wrapped);
+  });
+
+  document.getElementById('btn-lines').addEventListener('click', ()=>{
+    if (numbered) disableLineNumbers(); else enableLineNumbers();
+  });
+
+  document.getElementById('btn-validate').addEventListener('click', ()=>{
+    try{
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(code.textContent, 'application/xml');
+      const errs = doc.getElementsByTagName('parsererror');
+      if (errs.length) {
+        setStatus(false, '{% trans "XML inválido" %}');
+      } else {
+        setStatus(true, '{% trans "XML válido" %}');
+      }
+    }catch{
+      setStatus(false, '{% trans "XML inválido" %}');
+    }
+  });
+
+  // Primera pasada de highlight
+  hljs.highlightElement(code);
+})();
+</script>
 {% endblock %}

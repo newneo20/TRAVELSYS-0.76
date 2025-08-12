@@ -1,3 +1,4 @@
+#settings_dev.py
 import os
 from pathlib import Path
 import environ
