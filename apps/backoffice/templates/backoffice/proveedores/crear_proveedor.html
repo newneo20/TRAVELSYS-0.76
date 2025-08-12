@@ -14,11 +14,11 @@
     <div class="flex items-center gap-2">
       <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-        <i class="fas fa-arrow-left"></i> {% trans "Volver" %}
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
       </a>
       <button form="form-proveedor"
               class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
-        <i class="fas fa-save"></i> {% trans "Guardar" %}
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
       </button>
     </div>
   </header>
@@ -44,19 +44,16 @@
     <!-- Correos -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 1" %}</label>
-        <input type="email" name="correo1"
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 1</label>
+        <input type="email" name="correo1" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 2" %}</label>
-        <input type="email" name="correo2"
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 2</label>
+        <input type="email" name="correo2" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Correo 3" %}</label>
-        <input type="email" name="correo3"
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 3</label>
+        <input type="email" name="correo3" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
     </section>
 
@@ -64,13 +61,11 @@
     <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Dirección" %}</label>
-        <input name="direccion"
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        <input name="direccion" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cuenta bancaria" %}</label>
-        <textarea name="detalles_cuenta_bancaria" rows="3"
-                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"></textarea>
+        <textarea name="detalles_cuenta_bancaria" rows="3" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"></textarea>
       </div>
     </section>
 
@@ -86,8 +81,8 @@
           <option value="vuelos">Vuelos</option>
           <option value="remesas">Remesas</option>
           <option value="traslados">Traslados</option>
-          <option value="certificado">Certificados</option>
-          <option value="envio">Envíos</option>
+          <option value="certificado">Certificado de Vacaciones</option>
+          <option value="envio">Envío</option>
         </select>
       </div>
 
@@ -95,20 +90,17 @@
       <div x-show="tipo==='hoteles'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 grid md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Adultos" %}</label>
-          <input type="number" step="0.01" name="fee_adultos"
-                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+          <input type="number" step="0.01" name="fee_adultos" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Niños" %}</label>
-          <input type="number" step="0.01" name="fee_ninos"
-                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+          <input type="number" step="0.01" name="fee_ninos" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
         </div>
       </div>
 
       <div x-show="tipo==='carros'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee por noche" %}</label>
-        <input type="number" step="0.01" name="fee_noche"
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        <input type="number" step="0.01" name="fee_noche" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
     </section>
 
@@ -124,7 +116,6 @@
       <p class="text-xs text-gray-500 mt-1">{% trans "Puede seleccionar múltiples servicios." %}</p>
     </section>
   </form>
-
 </main>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}

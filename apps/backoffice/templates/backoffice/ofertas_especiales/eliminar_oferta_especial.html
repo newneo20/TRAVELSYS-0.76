@@ -1,38 +1,86 @@
-{# usuarios/templates/usuarios/eliminar_oferta.html #}
-{% extends 'base.html' %}
-{% load static i18n %}
+{# backoffice/templates/ofertas_especiales/eliminar_oferta_especial.html #}
+{% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}{% trans "Eliminar Oferta" %}{% endblock %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-6">
-  <section class="bg-white p-6 shadow-md rounded">
-    <h1 class="text-2xl font-bold mb-4">{% trans "Eliminar Oferta" %}</h1>
-    <p class="mb-4 text-gray-700">
-      {% blocktrans with nombre=oferta.nombre %}
-        ¿Estás seguro de que deseas eliminar la oferta <strong>{{ nombre }}</strong>?
-      {% endblocktrans %}
+<main class="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <header class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+      {% trans "Eliminar Oferta" %}
+    </h1>
+    <p class="text-sm text-gray-600 dark:text-gray-300">
+      {% trans "Esta acción es permanente y no se puede deshacer." %}
     </p>
-    <form method="POST">
-      {% csrf_token %}
-      <div class="flex gap-2">
-        <button
-          type="submit"
-          class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700
-                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          {% trans "Eliminar" %}
-        </button>
-        <a
-          href="{% url 'backoffice:listar_ofertas_especiales' %}"
-          class="px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
-                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          role="button"
-        >
-          {% trans "Cancelar" %}
-        </a>
+  </header>
+
+  <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+
+    <div class="flex items-start gap-3 px-5 py-4 rounded-t-2xl bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-900/30">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200">
+        <i class="fas fa-triangle-exclamation"></i>
+      </span>
+      <div class="text-sm text-rose-700 dark:text-rose-200">
+        <p class="font-semibold">{% trans "Vas a eliminar esta oferta especial." %}</p>
+        <p class="opacity-90">{{ oferta.codigo|default:"—" }} — {{ oferta.nombre|default:"—" }}</p>
       </div>
-    </form>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Tipo" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ oferta.get_tipo_display|default:oferta.tipo }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Disponible" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{% if oferta.disponible %}Sí{% else %}No{% endif %}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Descripción" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ oferta.descripcion|default:"—" }}</p>
+        </div>
+      </div>
+
+      <form id="form-eliminar" method="post" class="flex flex-wrap items-center gap-2 pt-2">
+        {% csrf_token %}
+        <div class="grow">
+          <label for="confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {% blocktrans %}Escribe <strong>ELIMINAR</strong> para confirmar{% endblocktrans %}
+          </label>
+          <input id="confirm" name="confirm" type="text"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-rose-500"
+                 placeholder="ELIMINAR">
+        </div>
+
+        <button type="submit" id="btn-eliminar" disabled
+                class="inline-flex items-center gap-2 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 text-sm font-semibold">
+          <i class="fas fa-trash-alt"></i> {% trans "Eliminar definitivamente" %}
+        </button>
+        <a href="{% url 'backoffice:listar_ofertas_especiales' %}"
+           class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+        </a>
+      </form>
+    </div>
   </section>
+
+  <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+    {% trans "Atajo: Ctrl/Cmd + Enter para confirmar si el campo pone ELIMINAR." %}
+  </p>
 </main>
+
+<script>
+  (function () {
+    const input = document.getElementById('confirm');
+    const submit = document.getElementById('btn-eliminar');
+    const form = document.getElementById('form-eliminar');
+    function toggle(){ submit.disabled = (input.value.trim().toUpperCase() !== 'ELIMINAR'); }
+    input.addEventListener('input', toggle); toggle();
+    document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key === 'Enter' && !submit.disabled){ form.requestSubmit(); }});
+    form.addEventListener('submit', ()=>{ submit.disabled = True; submit.classList.add('opacity-60','cursor-not-allowed'); });
+  })();
+</script>
 {% endblock %}

@@ -1,15 +1,86 @@
-{% extends 'base.html' %}
+{# backoffice/templates/locations/eliminar_location.html #}
+{% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Eliminar Location{% endblock %}
+{% block title %}{% trans "Eliminar Location" %}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Eliminar Location</h2>
-    <p>¿Estás seguro de que deseas eliminar el location {{ location.nombre }}?</p>
-    <form method="post">
+<main class="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <header class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+      {% trans "Eliminar Location" %}
+    </h1>
+    <p class="text-sm text-gray-600 dark:text-gray-300">
+      {% trans "Esta acción es permanente y no se puede deshacer." %}
+    </p>
+  </header>
+
+  <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+
+    <div class="flex items-start gap-3 px-5 py-4 rounded-t-2xl bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-900/30">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200">
+        <i class="fas fa-triangle-exclamation"></i>
+      </span>
+      <div class="text-sm text-rose-700 dark:text-rose-200">
+        <p class="font-semibold">{% trans "Vas a eliminar este location." %}</p>
+        <p class="opacity-90">{{ location.nombre|default:"—" }} — {{ location.pais|default:"—" }}</p>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Nomenclatura" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ location.nomenclatura|default:"—" }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Es Aeropuerto" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{% if location.es_aeropuerto %}Sí{% else %}No{% endif %}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Disponibilidad" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ location.disponibilidad_carros|default:"0" }}</p>
+        </div>
+      </div>
+
+      <form id="form-eliminar" method="post" class="flex flex-wrap items-center gap-2 pt-2">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Eliminar</button>
-        <a href="{% url 'backoffice:listar_locations' %}" class="btn btn-secondary">Cancelar</a>
-    </form>
-</div>
+        <div class="grow">
+          <label for="confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {% blocktrans %}Escribe <strong>ELIMINAR</strong> para confirmar{% endblocktrans %}
+          </label>
+          <input id="confirm" name="confirm" type="text"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-rose-500"
+                 placeholder="ELIMINAR">
+        </div>
+
+        <button type="submit" id="btn-eliminar" disabled
+                class="inline-flex items-center gap-2 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 text-sm font-semibold">
+          <i class="fas fa-trash-alt"></i> {% trans "Eliminar definitivamente" %}
+        </button>
+        <a href="{% url 'backoffice:listar_locations' %}"
+           class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+        </a>
+      </form>
+    </div>
+  </section>
+
+  <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+    {% trans "Atajo: Ctrl/Cmd + Enter para confirmar si el campo pone ELIMINAR." %}
+  </p>
+</main>
+
+<script>
+  (function () {
+    const input = document.getElementById('confirm');
+    const submit = document.getElementById('btn-eliminar');
+    const form = document.getElementById('form-eliminar');
+    function toggle(){ submit.disabled = (input.value.trim().toUpperCase() !== 'ELIMINAR'); }
+    input.addEventListener('input', toggle); toggle();
+    document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key === 'Enter' && !submit.disabled){ form.requestSubmit(); }});
+    form.addEventListener('submit', ()=>{ submit.disabled = true; submit.classList.add('opacity-60','cursor-not-allowed'); });
+  })();
+</script>
 {% endblock %}

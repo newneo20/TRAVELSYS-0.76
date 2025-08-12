@@ -1,78 +1,132 @@
+{# backoffice/templates/destinatarios/editar_destinatario.html #}
 {% extends 'base.html' %}
-{% load static %}
+{% load i18n %}
 
-{% block title %}Editar Destinatario{% endblock %}
+{% block title %}{% trans "Editar Destinatario" %}{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto p-6 mt-8 bg-white shadow-md rounded-lg">
-  <h1 class="text-2xl font-bold mb-6 text-gray-800">Editar Destinatario</h1>
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <form method="post" novalidate>
+  <!-- HEADER -->
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Editar Destinatario" %} — {{ destinatario.primer_nombre }} {{ destinatario.primer_apellido }}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Actualiza los datos de contacto y dirección." %}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'backoffice:listar_destinatarios' %}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-destinatario"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar cambios" %}
+      </button>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <form id="form-destinatario" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
     {% csrf_token %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-      <div>
-        <label for="primer_nombre" class="block text-sm font-medium text-gray-700 mb-1">Primer Nombre</label>
-        <input type="text" id="primer_nombre" name="primer_nombre" required
-               value="{{ destinatario.primer_nombre }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+    {% if error_global %}
+      <div class="rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200 px-4 py-3 text-sm">
+        {{ error_global }}
       </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
-        <label for="segundo_nombre" class="block text-sm font-medium text-gray-700 mb-1">Segundo Nombre</label>
-        <input type="text" id="segundo_nombre" name="segundo_nombre"
-               value="{{ destinatario.segundo_nombre }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Primer Nombre" %} *</label>
+        <input name="primer_nombre" required
+               value="{{ valores.primer_nombre|default:destinatario.primer_nombre }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.primer_nombre %}<p class="mt-1 text-sm text-rose-600">{{ errores.primer_nombre }}</p>{% endif %}
       </div>
+
       <div>
-        <label for="primer_apellido" class="block text-sm font-medium text-gray-700 mb-1">Primer Apellido</label>
-        <input type="text" id="primer_apellido" name="primer_apellido" required
-               value="{{ destinatario.primer_apellido }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Segundo Nombre" %}</label>
+        <input name="segundo_nombre"
+               value="{{ valores.segundo_nombre|default:destinatario.segundo_nombre }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
+
       <div>
-        <label for="segundo_apellido" class="block text-sm font-medium text-gray-700 mb-1">Segundo Apellido</label>
-        <input type="text" id="segundo_apellido" name="segundo_apellido"
-               value="{{ destinatario.segundo_apellido }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Primer Apellido" %} *</label>
+        <input name="primer_apellido" required
+               value="{{ valores.primer_apellido|default:destinatario.primer_apellido }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.primer_apellido %}<p class="mt-1 text-sm text-rose-600">{{ errores.primer_apellido }}</p>{% endif %}
       </div>
+
       <div>
-        <label for="ci" class="block text-sm font-medium text-gray-700 mb-1">CI</label>
-        <input type="text" id="ci" name="ci"
-               value="{{ destinatario.ci }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Segundo Apellido" %}</label>
+        <input name="segundo_apellido"
+               value="{{ valores.segundo_apellido|default:destinatario.segundo_apellido }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
+
       <div>
-        <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-        <input type="text" id="telefono" name="telefono" required
-               value="{{ destinatario.telefono }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">CI</label>
+        <input name="ci"
+               value="{{ valores.ci|default:destinatario.ci }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
+
       <div>
-        <label for="telefono_adicional" class="block text-sm font-medium text-gray-700 mb-1">Teléfono Adicional</label>
-        <input type="text" id="telefono_adicional" name="telefono_adicional"
-               value="{{ destinatario.telefono_adicional }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %} *</label>
+        <input name="telefono" required
+               value="{{ valores.telefono|default:destinatario.telefono }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.telefono %}<p class="mt-1 text-sm text-rose-600">{{ errores.telefono }}</p>{% endif %}
       </div>
+
       <div>
-        <label for="calle" class="block text-sm font-medium text-gray-700 mb-1">Calle</label>
-        <input type="text" id="calle" name="calle" required
-               value="{{ destinatario.calle }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono Adicional" %}</label>
+        <input name="telefono_adicional"
+               value="{{ valores.telefono_adicional|default:destinatario.telefono_adicional }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
+
       <div>
-        <label for="numero" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
-        <input type="text" id="numero" name="numero"
-               value="{{ destinatario.numero }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:outline-none">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Calle" %} *</label>
+        <input name="calle" required
+               value="{{ valores.calle|default:destinatario.calle }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.calle %}<p class="mt-1 text-sm text-rose-600">{{ errores.calle }}</p>{% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Número" %}</label>
+        <input name="numero"
+               value="{{ valores.numero|default:destinatario.numero }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
     </div>
 
-    <div class="text-center">
-      <button type="submit"
-              class="inline-flex items-center px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        Guardar Cambios
+    <div class="flex gap-2">
+      <a href="{% url 'backoffice:listar_destinatarios' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-save"></i> {% trans "Guardar cambios" %}
       </button>
     </div>
   </form>
-</div>
+</main>
+
+<script>
+  (function () {
+    const f = document.getElementById('form-destinatario');
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') f.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

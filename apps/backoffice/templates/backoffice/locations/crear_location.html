@@ -1,15 +1,20 @@
+{# backoffice/templates/locations/crear_location.html #}
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block title %}{% trans "Nueva Localidad" %}{% endblock %}
+
 {% block content %}
-<main class="w-full max-w-[1920px] mx:auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- HEADER -->
   <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
     <div>
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nueva Localidad" %}</h1>
       <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Usada para traslados y rentadoras." %}</p>
     </div>
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+      <a href="{% url 'backoffice:listar_locations' %}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
         <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
       </a>
@@ -20,24 +25,57 @@
     </div>
   </section>
 
+  <!-- FORM -->
   <form id="form-location" method="post" novalidate
         class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
     {% csrf_token %}
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre del Location" %} *</label><input name="nombre" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "País" %} *</label><input name="pais" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nomenclatura" %} *</label><input name="nomenclatura" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div class="flex items-center gap-3 mt-6"><input id="es_aeropuerto" name="es_aeropuerto" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"><label for="es_aeropuerto" class="text-sm text-gray-700 dark:text-gray-300">{% trans "Es Aeropuerto" %}</label></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Disponibilidad de Carros" %} *</label><input type="number" name="disponibilidad_carros" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Categoría" %} *</label>
-        <select name="categoria" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
-          {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre del Location" %} *</label>
+        <input name="nombre" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "País" %} *</label>
+        <input name="pais" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nomenclatura" %} *</label>
+        <input name="nomenclatura" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input id="es_aeropuerto" name="es_aeropuerto" type="checkbox"
+               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+        <label for="es_aeropuerto" class="text-sm text-gray-700 dark:text-gray-300">{% trans "Es Aeropuerto" %}</label>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Disponibilidad de Carros" %} *</label>
+        <input type="number" min="0" name="disponibilidad_carros" required
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Categoría" %} *</label>
+        <select name="categoria" required
+                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+          <option value="">{% trans "Seleccione" %}</option>
+          {% for c in categorias %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+          {% endfor %}
         </select>
       </div>
     </div>
 
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+      <a href="{% url 'backoffice:listar_locations' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
         <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
       </a>
       <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
@@ -45,5 +83,18 @@
       </button>
     </div>
   </form>
+
+  <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+    {% trans "Atajo: Ctrl/Cmd + Enter para enviar." %}
+  </p>
 </main>
+
+<script>
+  (function () {
+    const f = document.getElementById('form-location');
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') f.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

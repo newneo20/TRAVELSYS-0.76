@@ -1,15 +1,24 @@
+{# backoffice/templates/destinatarios/crear_destinatario.html #}
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block title %}{% trans "Nuevo Destinatario" %}{% endblock %}
+
 {% block content %}
 <main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- HEADER -->
   <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Destinatario" %}</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Datos básicos de contacto y dirección." %}</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Nuevo Destinatario" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Datos básicos de contacto y dirección." %}
+      </p>
     </div>
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+      <a href="{% url 'backoffice:listar_destinatarios' %}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
         <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
       </a>
@@ -20,23 +29,121 @@
     </div>
   </section>
 
+  <!-- FORM -->
   <form id="form-destinatario" method="post" novalidate
         class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
     {% csrf_token %}
+
+    {% if error_global %}
+      <div class="rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200 px-4 py-3 text-sm">
+        {{ error_global }}
+      </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Primer Nombre" %} *</label><input name="primer_nombre" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Segundo Nombre" %}</label><input name="segundo_nombre" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Primer Apellido" %} *</label><input name="primer_apellido" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Segundo Apellido" %}</label><input name="segundo_apellido" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">CI</label><input name="ci" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %} *</label><input name="telefono" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono Adicional" %}</label><input name="telefono_adicional" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Calle" %} *</label><input name="calle" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Número" %}</label><input name="numero" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
+      <!-- Primer nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Primer Nombre" %} *
+        </label>
+        <input name="primer_nombre" required
+               value="{{ valores.primer_nombre|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.primer_nombre %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.primer_nombre }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Segundo nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Segundo Nombre" %}
+        </label>
+        <input name="segundo_nombre"
+               value="{{ valores.segundo_nombre|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Primer apellido -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Primer Apellido" %} *
+        </label>
+        <input name="primer_apellido" required
+               value="{{ valores.primer_apellido|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.primer_apellido %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.primer_apellido }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Segundo apellido -->
+      <div class="md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Segundo Apellido" %}
+        </label>
+        <input name="segundo_apellido"
+               value="{{ valores.segundo_apellido|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- CI -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">CI</label>
+        <input name="ci"
+               value="{{ valores.ci|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Teléfono -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Teléfono" %} *
+        </label>
+        <input name="telefono" required
+               value="{{ valores.telefono|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.telefono %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.telefono }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Teléfono adicional -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Teléfono Adicional" %}
+        </label>
+        <input name="telefono_adicional"
+               value="{{ valores.telefono_adicional|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Calle -->
+      <div class="md:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Calle" %} *
+        </label>
+        <input name="calle" required
+               value="{{ valores.calle|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        {% if errores.calle %}
+          <p class="mt-1 text-sm text-rose-600">{{ errores.calle }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Número -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Número" %}
+        </label>
+        <input name="numero"
+               value="{{ valores.numero|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
     </div>
 
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+      <a href="{% url 'backoffice:listar_destinatarios' %}"
          class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
         <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
       </a>
@@ -46,4 +153,14 @@
     </div>
   </form>
 </main>
+
+<!-- UX: atajo submit y validación ligera -->
+<script>
+  (function () {
+    const f = document.getElementById('form-destinatario');
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') f.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

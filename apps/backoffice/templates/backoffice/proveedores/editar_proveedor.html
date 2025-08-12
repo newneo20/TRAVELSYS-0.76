@@ -4,7 +4,8 @@
 {% block title %}{% trans "Editar Proveedor" %}{% endblock %}
 
 {% block content %}
-<main class="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
   <section class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
     <div>
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Editar Proveedor" %}</h1>
@@ -23,6 +24,7 @@
   </section>
 
   <form id="form-proveedor" method="post" novalidate
+        x-data="{tipo:'{{ proveedor.tipo|default_if_none:'' }}'}"
         class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-8">
     {% csrf_token %}
 
@@ -30,12 +32,12 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
-        <input name="nombre" required value="{{ obj.nombre|default_if_none:'' }}"
+        <input name="nombre" required value="{{ proveedor.nombre|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %}</label>
-        <input name="telefono" value="{{ obj.telefono|default_if_none:'' }}"
+        <input name="telefono" value="{{ proveedor.telefono|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
     </div>
@@ -44,17 +46,17 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 1</label>
-        <input type="email" name="correo1" value="{{ obj.correo1|default_if_none:'' }}"
+        <input type="email" name="correo1" value="{{ proveedor.correo1|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 2</label>
-        <input type="email" name="correo2" value="{{ obj.correo2|default_if_none:'' }}"
+        <input type="email" name="correo2" value="{{ proveedor.correo2|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo 3</label>
-        <input type="email" name="correo3" value="{{ obj.correo3|default_if_none:'' }}"
+        <input type="email" name="correo3" value="{{ proveedor.correo3|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
     </div>
@@ -63,42 +65,59 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Dirección" %}</label>
-        <input name="direccion" value="{{ obj.direccion|default_if_none:'' }}"
+        <input name="direccion" value="{{ proveedor.direccion|default_if_none:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cuenta bancaria" %}</label>
         <textarea name="detalles_cuenta_bancaria" rows="3"
-                  class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">{{ obj.detalles_cuenta_bancaria|default_if_none:'' }}</textarea>
+                  class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">{{ proveedor.detalles_cuenta_bancaria|default_if_none:'' }}</textarea>
       </div>
     </div>
 
     <!-- Tipo -->
     <div>
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo de Proveedor" %} *</label>
-      <select name="tipo" required
+      <select name="tipo" x-model="tipo" required
               class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
-        {% for v, lbl in "hoteles:Hoteles,carros:Carros,vuelos:Vuelos,remesas:Remesas,traslados:Traslados,certificado:Certificado Vacaciones,envio:Envío".split(',') %}
-          {% with parts=v|cut:":" %}
-          {% endwith %}
-        {% endfor %}
-        <option value="hoteles" {% if obj.tipo == 'hoteles' %}selected{% endif %}>Hoteles</option>
-        <option value="carros" {% if obj.tipo == 'carros' %}selected{% endif %}>Carros</option>
-        <option value="vuelos" {% if obj.tipo == 'vuelos' %}selected{% endif %}>Vuelos</option>
-        <option value="remesas" {% if obj.tipo == 'remesas' %}selected{% endif %}>Remesas</option>
-        <option value="traslados" {% if obj.tipo == 'traslados' %}selected{% endif %}>Traslados</option>
-        <option value="certificado" {% if obj.tipo == 'certificado' %}selected{% endif %}>Certificado Vacaciones</option>
-        <option value="envio" {% if obj.tipo == 'envio' %}selected{% endif %}>Envío</option>
+        <option value="hoteles"    {% if proveedor.tipo == 'hoteles' %}selected{% endif %}>Hoteles</option>
+        <option value="carros"     {% if proveedor.tipo == 'carros' %}selected{% endif %}>Carros</option>
+        <option value="vuelos"     {% if proveedor.tipo == 'vuelos' %}selected{% endif %}>Vuelos</option>
+        <option value="remesas"    {% if proveedor.tipo == 'remesas' %}selected{% endif %}>Remesas</option>
+        <option value="traslados"  {% if proveedor.tipo == 'traslados' %}selected{% endif %}>Traslados</option>
+        <option value="certificado"{% if proveedor.tipo == 'certificado' %}selected{% endif %}>Certificado de Vacaciones</option>
+        <option value="envio"      {% if proveedor.tipo == 'envio' %}selected{% endif %}>Envío</option>
       </select>
+    </div>
+
+    <!-- Dinámicos (según tipo) -->
+    <div x-show="tipo==='hoteles'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Adultos" %}</label>
+        <input type="number" step="0.01" name="fee_adultos" value="{{ proveedor.fee_adultos|default_if_none:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee Niños" %}</label>
+        <input type="number" step="0.01" name="fee_ninos" value="{{ proveedor.fee_ninos|default_if_none:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+      </div>
+    </div>
+
+    <div x-show="tipo==='carros'" class="rounded-xl bg-slate-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fee por noche" %}</label>
+      <input type="number" step="0.01" name="fee_noche" value="{{ proveedor.fee_noche|default_if_none:'' }}"
+             class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
     </div>
 
     <!-- Servicios -->
     <div>
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Servicios ofrecidos" %}</label>
-      <select name="servicios" id="servicios" multiple
+      <select name="servicios" multiple
               class="mt-1 w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
         {% for s in servicios %}
-          <option value="{{ s.id }}" {% if s.id in obj.servicios.values_list 'id' %}selected{% endif %}>{{ s.nombre }}</option>
+          {# comparar por objeto es lo más simple en templates #}
+          <option value="{{ s.id }}" {% if s in proveedor.servicios.all %}selected{% endif %}>{{ s.nombre }}</option>
         {% endfor %}
       </select>
       <p class="text-sm text-gray-500 mt-1">{% trans "Puede seleccionar múltiples servicios." %}</p>
@@ -115,4 +134,5 @@
     </div>
   </form>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}

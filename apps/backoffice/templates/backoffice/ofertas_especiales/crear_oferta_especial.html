@@ -1,8 +1,8 @@
-{# backoffice/templates/ofertas_especiales/editar_oferta_especial.html #}
+{# backoffice/templates/ofertas_especiales/crear_oferta_especial.html #}
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Editar Oferta Especial" %}{% endblock %}
+{% block title %}{% trans "Nueva Oferta Especial" %}{% endblock %}
 
 {% block content %}
 <main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -10,10 +10,8 @@
   <!-- HEADER -->
   <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-        {% trans "Editar Oferta Especial" %} — {{ oferta.nombre|default:"—" }}
-      </h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Actualiza los datos de la oferta." %}</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nueva Oferta Especial" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Define código, nombre, tipo y disponibilidad." %}</p>
     </div>
     <div class="flex gap-2">
       <a href="{% url 'backoffice:listar_ofertas_especiales' %}"
@@ -22,7 +20,7 @@
       </a>
       <button form="form-oferta"
               class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
-        <i class="fa-solid fa-save"></i> {% trans "Guardar cambios" %}
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
       </button>
     </div>
   </section>
@@ -35,20 +33,20 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Código" %} *</label>
-        <input name="codigo" required value="{{ oferta.codigo|default_if_none:'' }}"
+        <input name="codigo" required
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
-        <input name="nombre" required value="{{ oferta.nombre|default_if_none:'' }}"
+        <input name="nombre" required
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %}</label>
         <textarea name="descripcion" rows="4"
-                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">{{ oferta.descripcion|default_if_none:'' }}</textarea>
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"></textarea>
       </div>
 
       <div>
@@ -57,13 +55,13 @@
                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
           <option value="">{% trans "Seleccione" %}</option>
           {% for val,label in tipos_choices %}
-            <option value="{{ val }}" {% if oferta.tipo == val %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ val }}">{{ label }}</option>
           {% endfor %}
         </select>
       </div>
 
       <div class="flex items-center gap-3">
-        <input id="disponible" name="disponible" type="checkbox" {% if oferta.disponible %}checked{% endif %}
+        <input id="disponible" name="disponible" type="checkbox"
                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
         <label for="disponible" class="text-sm text-gray-700 dark:text-gray-300">{% trans "Disponible" %}</label>
       </div>
@@ -75,7 +73,7 @@
         <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
       </a>
       <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
-        <i class="fas fa-save"></i> {% trans "Guardar cambios" %}
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
       </button>
     </div>
   </form>

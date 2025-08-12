@@ -1,38 +1,114 @@
-{# usuarios/templates/usuarios/eliminar_proveedor.html #}
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load i18n %}
 
 {% block title %}{% trans "Eliminar Proveedor" %}{% endblock %}
 
 {% block content %}
-<main class="container mx-auto px-4 py-6">
-  <section class="bg-white p-6 shadow-md rounded">
-    <h1 class="text-2xl font-bold mb-4">{% trans "Eliminar Proveedor" %}</h1>
-    <p class="mb-4 text-gray-700">
-      {% blocktrans with nombre=proveedor.nombre %}
-        ¿Estás seguro de que deseas eliminar el proveedor <strong>{{ nombre }}</strong>?
-      {% endblocktrans %}
-    </p>
-    <form method="post">
+<main class="w-full max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+    {% trans "Eliminar Proveedor" %}
+  </h1>
+  <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+    {% trans "Esta acción es permanente y no se puede deshacer." %}
+  </p>
+
+  <section class="rounded-2xl border border-rose-200/60 dark:border-rose-800/60 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+    <!-- Banner de advertencia -->
+    <div class="px-5 py-4 bg-rose-100/70 dark:bg-rose-900/30 border-b border-rose-200/60 dark:border-rose-800/60 text-rose-800 dark:text-rose-100 flex items-start gap-3">
+      <i class="fa-solid fa-triangle-exclamation mt-[2px]"></i>
+      <div>
+        <p class="font-semibold">{% trans "Vas a eliminar este proveedor." %}</p>
+        <p class="text-sm opacity-90">
+          {% trans "Si tiene reservas u otros datos asociados, podrías perder información relacionada." %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div class="text-xs text-gray-500 dark:text-gray-400">{% trans "NOMBRE" %}</div>
+        <div class="mt-1 font-medium text-gray-900 dark:text-gray-100">{{ proveedor.nombre|default:"—" }}</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div class="text-xs text-gray-500 dark:text-gray-400">{% trans "TIPO" %}</div>
+        <div class="mt-1 text-gray-900 dark:text-gray-100">{{ proveedor.tipo|default:"—" }}</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div class="text-xs text-gray-500 dark:text-gray-400">{% trans "TELÉFONO" %}</div>
+        <div class="mt-1 text-gray-900 dark:text-gray-100">{{ proveedor.telefono|default:"—" }}</div>
+      </div>
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div class="text-xs text-gray-500 dark:text-gray-400">{% trans "CORREO PRINCIPAL" %}</div>
+        <div class="mt-1 text-gray-900 dark:text-gray-100">{{ proveedor.correo1|default:"—" }}</div>
+      </div>
+
+      {% if proveedor.servicios.all %}
+      <div class="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">{% trans "SERVICIOS" %}</div>
+        <div class="flex flex-wrap gap-2">
+          {% for s in proveedor.servicios.all %}
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">{{ s.nombre }}</span>
+          {% empty %}
+            <span class="text-gray-500 dark:text-gray-400">—</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Confirmación -->
+    <form method="POST" class="p-5 border-t border-gray-200 dark:border-gray-700" id="form-eliminar">
       {% csrf_token %}
-      <div class="flex gap-2">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        {% trans "Escribe ELIMINAR para confirmar" %}
+      </label>
+      <input
+        type="text" name="confirm_text" autocomplete="off"
+        placeholder="ELIMINAR"
+        class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-rose-500"
+        id="confirm-input"
+        required
+      />
+      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        {% trans "Esto evita eliminaciones por error." %}
+      </p>
+
+      <div class="mt-5 flex items-center gap-3">
         <button
-          type="submit"
-          class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700
-                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          type="submit" id="btn-eliminar"
+          class="inline-flex items-center gap-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
         >
-          {% trans "Eliminar" %}
+          <i class="fa-solid fa-trash-can"></i> {% trans "Eliminar definitivamente" %}
         </button>
-        <a
-          href="{% url 'backoffice:listar_proveedores' %}"
-          class="px-4 py-2 rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300
-                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          role="button"
-        >
-          {% trans "Cancelar" %}
+
+        <a href="{% url 'backoffice:listar_proveedores' %}"
+           class="inline-flex items-center gap-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 px-4 py-2 text-sm font-semibold">
+          <i class="fa-solid fa-circle-xmark"></i> {% trans "Cancelar" %}
         </a>
       </div>
+
+      <p class="mt-4 text-[11px] text-gray-500 dark:text-gray-400">
+        {% trans "Atajo: Ctrl/Cmd + Enter para confirmar si el campo pone ELIMINAR." %}
+      </p>
     </form>
   </section>
 </main>
+
+<script>
+  (function () {
+    const input = document.getElementById('confirm-input');
+    const btn   = document.getElementById('btn-eliminar');
+    const form  = document.getElementById('form-eliminar');
+
+    function toggle() { btn.disabled = (input.value.trim().toUpperCase() !== 'ELIMINAR'); }
+    input.addEventListener('input', toggle);
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !btn.disabled) form.requestSubmit();
+    });
+    toggle();
+  })();
+</script>
 {% endblock %}

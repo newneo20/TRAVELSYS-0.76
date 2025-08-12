@@ -1,61 +1,168 @@
+{# backoffice/templates/envios/editar_envio.html #}
 {% extends 'base.html' %}
-{% load static %}
+{% load i18n %}
 
-{% block title %}Editar Envío{% endblock %}
+{% block title %}{% trans "Editar Envío" %}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 mt-8 bg-white shadow-md rounded-lg">
-  <h1 class="text-2xl font-bold mb-6 text-gray-800">Editar Envío</h1>
+<main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <form method="post" novalidate x-data @submit.prevent="if ($el.checkValidity()) $el.submit(); else $el.classList.add('was-validated')">
+  <!-- HEADER -->
+  <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Editar Envío" %} — #{{ envio.id }}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Actualiza remitente, destinatario, modalidad, servicio y (opcionalmente) el primer ítem." %}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'backoffice:listar_envios' %}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
+      </a>
+      <button form="form-envio"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
+        <i class="fa-solid fa-save"></i> {% trans "Guardar cambios" %}
+      </button>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <form id="form-envio" method="post" novalidate
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-8">
     {% csrf_token %}
-    
-    <!-- Remitente y Destinatario -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div>
-        <label for="remitente" class="block text-sm font-medium text-gray-700 mb-1">Remitente</label>
-        <input type="text" id="remitente" name="remitente" required
-               value="{{ envio.remitente }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <p class="mt-1 text-sm text-red-500 hidden peer-invalid:block">Campo requerido</p>
-      </div>
-      <div>
-        <label for="destinatario" class="block text-sm font-medium text-gray-700 mb-1">Destinatario</label>
-        <input type="text" id="destinatario" name="destinatario" required
-               value="{{ envio.destinatario }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <p class="mt-1 text-sm text-red-500 hidden peer-invalid:block">Campo requerido</p>
-      </div>
-    </div>
 
-    <!-- Descripción, Peso y Cantidad -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <div class="md:col-span-1 md:col-start-1 md:col-end-3">
-        <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea id="descripcion" name="descripcion" required rows="4"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ envio.descripcion }}</textarea>
+    {% if error_global %}
+      <div class="rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200 px-4 py-3 text-sm">
+        {{ error_global }}
       </div>
-      <div>
-        <label for="peso" class="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
-        <input type="number" step="0.01" id="peso" name="peso" required
-               value="{{ envio.peso }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      <div>
-        <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-        <input type="number" id="cantidad" name="cantidad" required
-               value="{{ envio.cantidad }}"
-               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-    </div>
+    {% endif %}
 
-    <!-- Botón -->
-    <div class="text-center">
-      <button type="submit"
-              class="inline-flex items-center px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        Guardar Cambios
+    <!-- Datos del envío -->
+    <fieldset class="space-y-4">
+      <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300">{% trans "Datos del Envío" %}</legend>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Remitente -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Remitente" %} *</label>
+          <select name="remitente" required
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+            <option value="">{% trans "Seleccione" %}</option>
+            {% with valores.remitente|default:envio.remitente_id|stringformat:"s" as rsel %}
+              {% for r in remitentes %}
+                {% with r.id|stringformat:"s" as rid %}
+                  <option value="{{ r.id }}" {% if rsel == rid %}selected{% endif %}>{{ r.nombre_apellido }}</option>
+                {% endwith %}
+              {% endfor %}
+            {% endwith %}
+          </select>
+          {% if errores.remitente %}<p class="mt-1 text-sm text-rose-600">{{ errores.remitente }}</p>{% endif %}
+        </div>
+
+        <!-- Destinatario -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Destinatario" %} *</label>
+          <select name="destinatario" required
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+            <option value="">{% trans "Seleccione" %}</option>
+            {% with valores.destinatario|default:envio.destinatario_id|stringformat:"s" as dsel %}
+              {% for d in destinatarios %}
+                {% with d.id|stringformat:"s" as did %}
+                  <option value="{{ d.id }}" {% if dsel == did %}selected{% endif %}>{{ d.nombre_completo }}</option>
+                {% endwith %}
+              {% endfor %}
+            {% endwith %}
+          </select>
+          {% if errores.destinatario %}<p class="mt-1 text-sm text-rose-600">{{ errores.destinatario }}</p>{% endif %}
+        </div>
+
+        <!-- Modalidad -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Modalidad" %}</label>
+          <input name="modalidad"
+                 value="{{ valores.modalidad|default:envio.modalidad|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+                 placeholder="{% trans 'Ej: Aéreo / Marítimo' %}">
+        </div>
+
+        <!-- Servicio -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Servicio" %}</label>
+          <input name="servicio"
+                 value="{{ valores.servicio|default:envio.servicio|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+                 placeholder="{% trans 'Ej: Paquetería, Mudanza, etc.' %}">
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Ítem opcional -->
+    <fieldset class="space-y-4">
+      <legend class="text-sm font-semibold text-gray-700 dark:text-gray-300">{% trans "Primer Ítem (opcional)" %}</legend>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-1">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">HBL</label>
+          <input name="item_hbl" value="{{ valores.item_hbl|default:item_hbl|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cantidad" %}</label>
+          <input type="number" min="1" name="item_cantidad" value="{{ valores.item_cantidad|default:item_cantidad|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Peso (kg)" %}</label>
+          <input type="number" step="0.01" min="0" name="item_peso" value="{{ valores.item_peso|default:item_peso|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %}</label>
+          <textarea name="item_descripcion" rows="3"
+                    class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">{{ valores.item_descripcion|default:item_descripcion|default_if_none:'' }}</textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Precio" %}</label>
+          <input type="number" step="0.01" min="0" name="item_precio" value="{{ valores.item_precio|default:item_precio|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Valor Aduanal" %}</label>
+          <input type="number" step="0.01" min="0" name="item_valor_aduanal" value="{{ valores.item_valor_aduanal|default:item_valor_aduanal|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo" %}</label>
+          <input name="item_tipo" value="{{ valores.item_tipo|default:item_tipo|default_if_none:'' }}"
+                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        {% trans "Si dejas todos los campos del ítem vacíos, eliminaremos el ítem existente." %}
+      </p>
+    </fieldset>
+
+    <div class="flex gap-2">
+      <a href="{% url 'backoffice:listar_envios' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-save"></i> {% trans "Guardar cambios" %}
       </button>
     </div>
   </form>
-</div>
+</main>
+
+<script>
+  (function () {
+    const f = document.getElementById('form-envio');
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') f.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

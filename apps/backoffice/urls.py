@@ -122,10 +122,13 @@ urlpatterns = [
     # ======== #
     # REMESAS  #
     # ======== #
-    path('remesas/listar/', views.listar_remesas, name='listar_remesas'),
+    # backoffice/urls.py
+    path('remesas/', views.listar_remesas, name='listar_remesas'),
+    path('remesas/crear/', views.crear_remesa, name='crear_remesa'),
+    path('remesas/editar/<int:pk>/', views.editar_remesa, name='editar_remesa'),
     path('remesas/eliminar/<int:pk>/', views.eliminar_remesa, name='eliminar_remesa'),
-    path('remesas/editar/<int:pk>/', views.cargar_editar_remesa, name='editar_remesa'),  # Este nombre es el que busca tu template
-    path('remesas/guardar-edicion/<int:pk>/', views.guardar_editar_remesa, name='guardar_editar_remesa'),
+    path('remesas/detalles_remesa/<int:pk>/', views.detalles_remesa_json, name='detalles_remesa_json'),
+
 
 
 

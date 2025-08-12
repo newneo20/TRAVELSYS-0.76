@@ -6,12 +6,17 @@
 {% block content %}
 <main class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <!-- Encabezado -->
+  <!-- HEADER -->
   <header class="mb-6 flex items-end justify-between">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Polo Turístico" %}</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Registra polos para asociarlos a hoteles y traslados." %}</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Nuevo Polo Turístico" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Registra polos para asociarlos a hoteles y traslados." %}
+      </p>
     </div>
+
     <div class="flex items-center gap-2">
       <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -24,22 +29,71 @@
     </div>
   </header>
 
+  <!-- FORM -->
   <form id="form-polo" method="post" novalidate
-        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 grid gap-4">
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 grid gap-6">
     {% csrf_token %}
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Nombre -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre" %} *</label>
-        <input name="nombre" required
+        <label for="nombre" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Nombre" %} *
+        </label>
+        <input id="nombre" name="nombre" required autofocus
+               value="{{ valores.nombre|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
+
+      <!-- País -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "País" %} *</label>
-        <input name="pais" required
+        <label for="pais" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "País" %} *
+        </label>
+        <input id="pais" name="pais" required
+               value="{{ valores.pais|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
       </div>
     </div>
+
+    <!-- Acciones -->
+    <div class="flex items-center justify-end gap-2 pt-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button type="submit"
+              class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-save"></i> {% trans "Guardar" %}
+      </button>
+    </div>
+
+    <!-- Ayuda -->
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      {% trans "Atajo:" %} <kbd class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">Ctrl/Cmd</kbd> + <kbd class="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">Enter</kbd>
+    </p>
   </form>
 </main>
+
+<script>
+  (function () {
+    const form = document.getElementById('form-polo');
+    const nombre = document.getElementById('nombre');
+    const pais = document.getElementById('pais');
+
+    // Ctrl/Cmd + Enter
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') form.requestSubmit();
+    });
+
+    // Validación ligera
+    form.addEventListener('submit', (e) => {
+      let ok = true;
+      [nombre, pais].forEach(el => el.classList.remove('ring-2','ring-rose-500'));
+      if (!nombre.value.trim()) { nombre.classList.add('ring-2','ring-rose-500'); nombre.focus(); ok = false; }
+      if (!pais.value.trim())   { pais.classList.add('ring-2','ring-rose-500');   if (document.activeElement!==nombre) pais.focus(); ok = false; }
+      if (!ok) e.preventDefault();
+    });
+  })();
+</script>
 {% endblock %}

@@ -1,15 +1,20 @@
+{# backoffice/templates/items_envio/crear_item_envio.html #}
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block title %}{% trans "Nuevo Ítem de Envío" %}{% endblock %}
+
 {% block content %}
 <main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- HEADER -->
   <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
     <div>
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Ítem de Envío" %}</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Detalle de piezas, peso y valor." %}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Detalle de piezas, peso, precio y valor aduanal." %}</p>
     </div>
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+      <a href="{% url 'backoffice:listar_items_envio' %}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
         <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
       </a>
@@ -20,18 +25,97 @@
     </div>
   </section>
 
+  <!-- FORM -->
   <form id="form-item" method="post" novalidate
         class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
     {% csrf_token %}
+
+    {% if error_global %}
+      <div class="rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200 px-4 py-3 text-sm">
+        {{ error_global }}
+      </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "ID del Envío" %} *</label><input type="number" name="envio" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %} *</label><input name="descripcion" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Peso (kg)" %}</label><input type="number" step="0.01" name="peso" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Valor Aduanal" %}</label><input type="number" step="0.01" name="valor_aduana" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"/></div>
+      <!-- Envío -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Envío" %} *</label>
+        <select name="envio" required
+                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+          <option value="">{% trans "Seleccione" %}</option>
+          {% for e in envios %}
+            {% with e.id|stringformat:"s" as eid %}
+              <option value="{{ e.id }}" {% if valores.envio == eid %}selected{% endif %}>#{{ e.id }} — {{ e.remitente.nombre_apellido|default:"—" }} → {{ e.destinatario.nombre_completo|default:"—" }}</option>
+            {% endwith %}
+          {% endfor %}
+        </select>
+        {% if errores.envio %}<p class="mt-1 text-sm text-rose-600">{{ errores.envio }}</p>{% endif %}
+      </div>
+
+      <!-- HBL -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">HBL</label>
+        <input name="hbl" value="{{ valores.hbl|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+               placeholder="Ej: HBL-001234">
+      </div>
+
+      <!-- Descripción -->
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Descripción" %} *</label>
+        <textarea name="descripcion" rows="3" required
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+                  placeholder="{% trans 'Contenido del paquete...' %}">{{ valores.descripcion|default:'' }}</textarea>
+        {% if errores.descripcion %}<p class="mt-1 text-sm text-rose-600">{{ errores.descripcion }}</p>{% endif %}
+      </div>
+
+      <!-- Cantidad -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Cantidad" %}</label>
+        <input type="number" min="1" name="cantidad" value="{{ valores.cantidad|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+               placeholder="1">
+      </div>
+
+      <!-- Peso -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Peso (kg)" %}</label>
+        <input type="number" step="0.01" min="0" name="peso" value="{{ valores.peso|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Precio -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Precio" %}</label>
+        <input type="number" step="0.01" min="0" name="precio" value="{{ valores.precio|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Valor Aduanal -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Valor Aduanal" %}</label>
+        <input type="number" step="0.01" min="0" name="valor_aduanal" value="{{ valores.valor_aduanal|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Tipo / Envío-Manejo -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo" %}</label>
+        <input name="tipo" value="{{ valores.tipo|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+               placeholder="Ej: caja, sobre, electrodoméstico">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Envío/Manejo" %}</label>
+        <input name="envio_manejo" value="{{ valores.envio_manejo|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"
+               placeholder="Ej: frágil, manejo especial">
+      </div>
     </div>
 
     <div class="flex gap-2">
-      <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+      <a href="{% url 'backoffice:listar_items_envio' %}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
         <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
       </a>
       <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
@@ -40,4 +124,13 @@
     </div>
   </form>
 </main>
+
+<script>
+  (function () {
+    const f = document.getElementById('form-item');
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') f.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

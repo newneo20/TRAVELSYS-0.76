@@ -1,8 +1,8 @@
-{# backoffice/templates/pasajeros/editar_pasajero.html #}
+{# backoffice/templates/pasajeros/crear_pasajero.html #}
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Editar Pasajero" %}{% endblock %}
+{% block title %}{% trans "Nuevo Pasajero" %}{% endblock %}
 
 {% block content %}
 <main class="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -10,10 +10,8 @@
   <!-- HEADER -->
   <section class="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-        {% trans "Editar Pasajero" %} — {{ pasajero.nombre|default_if_none:""|default:"—" }}
-      </h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Actualiza los datos del pasajero." %}</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Pasajero" %}</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Datos personales y de contacto." %}</p>
     </div>
     <div class="flex gap-2">
       <a href="{% url 'backoffice:listar_pasajeros' %}"
@@ -22,7 +20,7 @@
       </a>
       <button form="form-pasajero"
               class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
-        <i class="fa-solid fa-save"></i> {% trans "Guardar cambios" %}
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
       </button>
     </div>
   </section>
@@ -36,96 +34,73 @@
       <!-- Nombre -->
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre completo" %} *</label>
-        <input name="nombre" required
-               value="{{ valores.nombre|default:pasajero.nombre|default_if_none:'' }}"
+        <input name="nombre" required value="{{ valores.nombre|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
         {% if errores.nombre %}<p class="mt-1 text-sm text-rose-600">{{ errores.nombre }}</p>{% endif %}
       </div>
 
-      <!-- Fecha de nacimiento -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Fecha de nacimiento" %}</label>
-        {% with fn=valores.fecha_nacimiento|default:pasajero.fecha_nacimiento %}
-          <input type="date" name="fecha_nacimiento" value="{{ fn|date:'Y-m-d' }}"
-                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
-        {% endwith %}
+        <input type="date" name="fecha_nacimiento" value="{{ valores.fecha_nacimiento|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Email -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-        <input type="email" name="email"
-               value="{{ valores.email|default:pasajero.email|default_if_none:'' }}"
+        <input type="email" name="email" value="{{ valores.email|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Teléfono -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %}</label>
-        <input name="telefono"
-               value="{{ valores.telefono|default:pasajero.telefono|default_if_none:'' }}"
+        <input name="telefono" value="{{ valores.telefono|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Dirección -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Dirección" %}</label>
-        <input name="direccion"
-               value="{{ valores.direccion|default:pasajero.direccion|default_if_none:'' }}"
+        <input name="direccion" value="{{ valores.direccion|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Pasaporte -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Pasaporte" %}</label>
-        <input name="pasaporte"
-               value="{{ valores.pasaporte|default:pasajero.pasaporte|default_if_none:'' }}"
+        <input name="pasaporte" value="{{ valores.pasaporte|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Caducidad pasaporte -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Caducidad pasaporte" %}</label>
-        {% with cp=valores.caducidad_pasaporte|default:pasajero.caducidad_pasaporte %}
-          <input type="date" name="caducidad_pasaporte" value="{{ cp|date:'Y-m-d' }}"
-                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
-        {% endwith %}
-      </div>
-
-      <!-- País de emisión -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "País de emisión" %}</label>
-        <input name="pais_emision_pasaporte"
-               value="{{ valores.pais_emision_pasaporte|default:pasajero.pais_emision_pasaporte|default_if_none:'' }}"
+        <input type="date" name="caducidad_pasaporte" value="{{ valores.caducidad_pasaporte|default:'' }}"
                class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
 
-      <!-- Estado civil -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "País de emisión" %}</label>
+        <input name="pais_emision_pasaporte" value="{{ valores.pais_emision_pasaporte|default:'' }}"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Estado civil" %}</label>
-        {% with current_estado=valores.estado_civil|default:pasajero.estado_civil|default_if_none:'' %}
         <select name="estado_civil"
                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
           <option value="">{% trans "Seleccione" %}</option>
           {% for val,label in estado_civil_choices %}
-            <option value="{{ val }}" {% if current_estado == val %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ val }}" {% if valores.estado_civil == val %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        {% endwith %}
       </div>
 
-      <!-- Tipo -->
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Tipo" %}</label>
-        {% with current_tipo=valores.tipo|default:pasajero.tipo|default_if_none:'' %}
         <select name="tipo"
                 class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500">
           <option value="">{% trans "Seleccione" %}</option>
           {% for val,label in tipo_choices %}
-            <option value="{{ val }}" {% if current_tipo == val %}selected{% endif %}>{{ label }}</option>
+            <option value="{{ val }}" {% if valores.tipo == val %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        {% endwith %}
       </div>
     </div>
 
@@ -135,7 +110,7 @@
         <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
       </a>
       <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 text-sm font-semibold">
-        <i class="fas fa-save"></i> {% trans "Guardar cambios" %}
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
       </button>
     </div>
   </form>
