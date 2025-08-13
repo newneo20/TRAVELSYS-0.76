@@ -1,51 +1,88 @@
+{# backoffice/templates/backoffice/remitentes/crear_remitente.html #}
 {% extends "base.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Nuevo Remitente" %}{% endblock %}
 
 {% block content %}
-<main class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="w-full max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <header class="mb-6 flex items-end justify-between">
+  <!-- HEADER -->
+  <section class="mb-6 flex items-end justify-between">
     <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{% trans "Nuevo Remitente" %}</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Datos de contacto del remitente." %}</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+        {% trans "Nuevo Remitente" %}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {% trans "Datos de contacto del remitente." %}
+      </p>
     </div>
-    <div class="flex items-center gap-2">
+
+    <div class="flex gap-2">
       <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
          class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-        <i class="fas fa-arrow-left"></i> {% trans "Volver" %}
+        <i class="fa-solid fa-arrow-left"></i> {% trans "Volver" %}
       </a>
       <button form="form-remitente"
               class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-semibold">
-        <i class="fas fa-save"></i> {% trans "Guardar" %}
+        <i class="fa-solid fa-save"></i> {% trans "Guardar" %}
       </button>
     </div>
-  </header>
+  </section>
 
+  <!-- FORM -->
   <form id="form-remitente" method="post" novalidate
-        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 grid gap-4">
+        class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 grid gap-6">
     {% csrf_token %}
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Nombre y Apellido" %} *</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Nombre y Apellido" %} *
+        </label>
         <input name="nombre_apellido" required
-               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID Documento</label>
-        <input name="id_documento" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "ID Documento" %}
+        </label>
+        <input name="id_documento"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
+
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Teléfono" %}</label>
-        <input name="telefono" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Teléfono" %}
+        </label>
+        <input name="telefono"
+               class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600
+                      bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500" />
       </div>
+
       <div class="md:col-span-2">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{% trans "Dirección" %}</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% trans "Dirección" %}
+        </label>
         <textarea name="direccion" rows="3"
-                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"></textarea>
+                  class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600
+                         bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500"></textarea>
       </div>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+         class="inline-flex items-center gap-2 rounded-full bg-gray-100 hover:bg-gray-200
+                dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-100 px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+      </a>
+      <button class="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700
+                     text-white px-5 py-2 text-sm font-semibold">
+        <i class="fas fa-check"></i> {% trans "Guardar" %}
+      </button>
     </div>
   </form>
 </main>

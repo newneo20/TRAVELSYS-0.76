@@ -1,40 +1,190 @@
-{% extends 'base.html' %}
-{% load static i18n %}
+{# backoffice/templates/reservas/eliminar_reserva.html #}
+{% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}{% trans "Eliminar Reserva" %}{% endblock %}
 
 {% block content %}
-<main class="w-full max-w-2xl mx-auto px-6 py-12">
-  <div class="bg-white border border-red-200 rounded-3xl shadow-lg p-8">
-    <h1 class="text-3xl font-bold text-red-700 mb-6 flex items-center gap-3">
-      <i class="fas fa-exclamation-triangle text-red-500"></i> {% trans "Confirmar Eliminación" %}
+<main class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <!-- Header -->
+  <header class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+      {% trans "Eliminar Reserva" %} — #{{ reserva.id }}
     </h1>
-
-    <p class="text-gray-700 text-md mb-6">
-      {% blocktrans with id=reserva.id name=reserva.hotel.hotel_nombre %}
-        ¿Estás seguro de que deseas eliminar la reserva {{ id }} – {{ name }}?
-      {% endblocktrans %}
+    <p class="text-sm text-gray-600 dark:text-gray-300">
+      {% trans "Esta acción es permanente y no se puede deshacer." %}
     </p>
+  </header>
 
-    <form method="post" class="flex items-center gap-4">
-      {% csrf_token %}
-      <button
-        type="submit"
-        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition"
-        aria-label="{% trans 'Eliminar Reserva' %}"
-      >
-        <i class="fas fa-trash-alt mr-2"></i> {% trans "Eliminar" %}
-      </button>
+  <!-- Card -->
+  <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
 
-      <a
-        href="{% url 'backoffice:listar_reservas' %}"
-        class="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition"
-        role="button"
-        aria-label="{% trans 'Cancelar' %}"
-      >
-        {% trans "Cancelar" %}
-      </a>
-    </form>
-  </div>
+    <!-- Alert -->
+    <div class="flex items-start gap-3 px-5 py-4 rounded-t-2xl bg-rose-50 dark:bg-rose-900/20 border-b border-rose-100 dark:border-rose-900/30">
+      <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-200">
+        <i class="fas fa-triangle-exclamation"></i>
+      </span>
+      <div class="text-sm text-rose-700 dark:text-rose-200">
+        <p class="font-semibold">
+          {% trans "Vas a eliminar esta reserva y todo lo relacionado." %}
+        </p>
+        <p class="opacity-90">
+          {% trans "Los elementos asociados (p. ej. remesa/envío/hotel, pasajeros, etc.) perderán su relación." %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-5">
+
+      <!-- Resumen -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Descripción" %}</p>
+          <p class="mt-1 font-semibold text-gray-900 dark:text-gray-100">
+            {% if reserva.descripcion %}
+              {{ reserva.descripcion }}
+            {% elif reserva.hotel %}
+              {{ reserva.hotel.hotel_nombre }}
+            {% elif reserva.remesa %}
+              {% trans "Remesa:" %} {{ reserva.remesa.remitente.nombre_apellido|default:"—" }}
+              → {{ reserva.remesa.destinatario.primer_nombre|default:"" }} {{ reserva.remesa.destinatario.primer_apellido|default:"" }}
+            {% elif reserva.envio %}
+              {% trans "Envío a:" %} {{ reserva.envio.destinatario.nombre_completo|default:"—" }}
+            {% else %}
+              —
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Agencia" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ reserva.agencia|default:"—" }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Proveedor" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">
+            {% firstof reserva.proveedor.nombre reserva.proveedor "—" %}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Usuario" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">
+            {# probamos varias rutas posibles sin romper si no existen #}
+            {% firstof reserva.usuario.get_full_name reserva.usuario reserva.user.get_full_name reserva.user "—" %}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Pasajero / Cliente" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">
+            {% firstof reserva.pasajero.nombre reserva.nombre_cliente "—" %}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Fecha" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Estatus" %}</p>
+          <p class="mt-2">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold
+                         {% if reserva.estatus == 'Confirmada' %} bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200
+                         {% elif reserva.estatus == 'Cancelada' %} bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200
+                         {% else %} bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200 {% endif %}">
+              {{ reserva.estatus|default:"—" }}
+            </span>
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{% trans "Totales" %}</p>
+          <p class="mt-1 text-gray-900 dark:text-gray-100">
+            {% trans "Costo:" %} {{ reserva.costo_total|default:"—" }}<br>
+            {% trans "Precio:" %} {{ reserva.precio_total|default:"—" }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Relacionados -->
+      <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{% trans "Elementos asociados" %}</p>
+        <ul class="text-sm text-gray-900 dark:text-gray-100 list-disc pl-5 space-y-1">
+          {% if reserva.hotel %}<li>{% trans "Hotel" %}: {{ reserva.hotel.hotel_nombre }}</li>{% endif %}
+          {% if reserva.remesa %}<li>{% trans "Remesa" %} #{{ reserva.remesa.id }}</li>{% endif %}
+          {% if reserva.envio %}<li>{% trans "Envío" %} #{{ reserva.envio.id }}</li>{% endif %}
+          {% if not reserva.hotel and not reserva.remesa and not reserva.envio %}
+            <li>—</li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <!-- Type to confirm -->
+      <div class="space-y-2">
+        <label for="confirm" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {% blocktrans %}Escribe <strong>ELIMINAR</strong> para confirmar{% endblocktrans %}
+        </label>
+        <input id="confirm" type="text"
+               class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-rose-500"
+               placeholder="ELIMINAR">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          {% trans "Esto evita eliminaciones por error." %}
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <form id="form-eliminar" method="post" class="flex flex-wrap items-center gap-2 pt-2">
+        {% csrf_token %}
+        <button type="submit" id="btn-eliminar" disabled
+                class="inline-flex items-center gap-2 rounded-full bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2 text-sm font-semibold">
+          <i class="fas fa-trash-alt"></i> {% trans "Eliminar definitivamente" %}
+        </button>
+        <a href="{{ request.META.HTTP_REFERER|default:'/' }}"
+           class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <i class="fas fa-times-circle"></i> {% trans "Cancelar" %}
+        </a>
+      </form>
+    </div>
+
+  </section>
+
+  <!-- Ayuda -->
+  <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+    {% trans "Atajo: Ctrl/Cmd + Enter para confirmar si el campo pone ELIMINAR." %}
+  </p>
 </main>
+
+<!-- JS UX -->
+<script>
+  (function () {
+    const input = document.getElementById('confirm');
+    const submit = document.getElementById('btn-eliminar');
+    const form = document.getElementById('form-eliminar');
+
+    function toggle() {
+      submit.disabled = (input.value.trim().toUpperCase() !== 'ELIMINAR');
+    }
+    input.addEventListener('input', toggle);
+    toggle();
+
+    // Atajo Ctrl/Cmd + Enter
+    document.addEventListener('keydown', (e) => {
+      const ok = input.value.trim().toUpperCase() === 'ELIMINAR';
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && ok) {
+        form.requestSubmit();
+      }
+    });
+
+    // Evita doble submit
+    form.addEventListener('submit', () => {
+      submit.disabled = true;
+      submit.classList.add('opacity-60', 'cursor-not-allowed');
+    });
+  })();
+</script>
 {% endblock %}
