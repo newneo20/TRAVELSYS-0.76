@@ -1,64 +1,59 @@
 # apps/backoffice/views.py
 
-# apps/backoffice/views.py (o donde tengas esta vista)
-from django.contrib import messages
-from django.db import IntegrityError
-from django.utils.translation import gettext as _
-from django.contrib.auth.decorators import login_required
-from .models import CadenaHotelera
-# from .decorators import manager_required  # asumiendo que ya lo tienes
-
 # ===============================
-# Imports de la biblioteca estándar
+# Biblioteca estándar (Python)
 # ===============================
-import os
 import json
 import logging
-import time
-import requests
+import os
 import re
+import time
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from random import randint
 from xml.dom import minidom
+from xml.etree import ElementTree as ET
 
 # ===============================
-# Imports de Django
+# Terceros
 # ===============================
-from django.forms import model_to_dict  # type: ignore
-from django.http import HttpResponse, JsonResponse  # type: ignore
-from django.shortcuts import render, get_object_or_404, redirect  # type: ignore
-from django.contrib.auth import logout, login, authenticate  # type: ignore
-from django.contrib.auth.decorators import login_required  # type: ignore
-from django.contrib import messages  # type: ignore
-from django.core.serializers import serialize  # type: ignore
-from django.db.models import Q  # type: ignore
-from django.views.decorators.csrf import csrf_exempt  # type: ignore
-from django.core.paginator import Paginator  # type: ignore
-from django.core.exceptions import ValidationError, ObjectDoesNotExist  # type: ignore
-from django.core.files.storage import default_storage  # type: ignore
-from django.urls import reverse  # type: ignore
-from django.db import transaction  # type: ignore
-from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_GET
+import requests
+
+# ===============================
+# Django
+# ===============================
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
+from django.core.serializers import serialize
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.forms import model_to_dict
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.translation import gettext as _
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 
 # ===============================
 # Imports locales
 # ===============================
+from apps.booking.xml_builders_1way2italy import enviar_booking_api
 from apps.usuarios.decorators import manager_required  # type: ignore
-from .models import (
-    Hotel, PlanAlimenticio, Proveedor, PoloTuristico, Habitacion, TipoFee, Oferta, HotelFacility,
-    HotelSetting, CadenaHotelera, Reserva, Pasajero, HabitacionReserva, OfertasEspeciales, Rentadora,
-    Categoria, ModeloAuto, Location, CertificadoVacaciones, OpcionCertificado, Servicio, TasaCambio,
-    Traslado, Transportista, Ubicacion, Vehiculo, Cliente, Contacto, Envio, Destinatario, Remitente,
-    ItemEnvio, Remesa
-)
 from .forms import (
-    PoloTuristicoForm, ProveedorForm, CadenaHoteleraForm, ReservaForm, PasajeroForm,
-    HabitacionForm, OfertasEspecialesForm
+    CadenaHoteleraForm, HabitacionForm, OfertasEspecialesForm, PasajeroForm, PoloTuristicoForm, ProveedorForm, ReservaForm,
 )
 from .funciones_externas import leer_datos_hoteles
-from apps.booking.xml_builders_1way2italy import enviar_booking_api
+from .models import (
+    CadenaHotelera, Categoria, CertificadoVacaciones, Cliente, Contacto, Destinatario, Envio, Habitacion, HabitacionReserva, Hotel,
+    HotelFacility, HotelSetting, ItemEnvio, Location, ModeloAuto, OpcionCertificado, Oferta, OfertasEspeciales, Pasajero, PlanAlimenticio,
+    PoloTuristico, Proveedor, Remesa, Rentadora, Reserva, Remitente, Servicio, TasaCambio, Transportista, Traslado, Ubicacion, Vehiculo,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +70,9 @@ def check_session_status(request):
     # Si el usuario está autenticado, devuelve "active", de lo contrario "inactive"
     return JsonResponse({'status': 'active'})
 
-
-# ---------------------------------------- DASHBOARD / PANEL DE CONTROL ----------------------------------------#
+# =========================================================================================== #
+# --------------------------- DASHBOARD / PANEL DE CONTROL ---------------------------------- #
+# =========================================================================================== #
 
 @manager_required
 @login_required
@@ -533,25 +529,6 @@ def editar_hotel(request, hotel_id):
     }
     return render(request, 'backoffice/hoteles/hotel_management.html', context)
 
-#@manager_required
-#@login_required
-#def listar_habitaciones(request, hotel_id):
-#    hotel = get_object_or_404(Hotel, id=hotel_id)
-#    habitaciones = Habitacion.objects.filter(hotel=hotel)
-#    data = {
-#        'habitaciones': [
-#            {
-#                'id': habitacion.id,
-#                'tipo_habitacion': habitacion.tipo,
-#                'descripcion': habitacion.descripcion,
-#                'capacidad_habitacion': habitacion.max_capacidad,
-#            }
-#            for habitacion in habitaciones
-#        ]
-#    }
-#    return JsonResponse(data)
-
-
 # Vista para guardar una nueva habitación
 @manager_required
 @login_required
@@ -821,14 +798,6 @@ def editar_habitacion(request, habitacion_id):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False})
 
-# Vista para eliminar una habitación
-#@manager_required
-#@login_required
-#def eliminar_habitacion(request, habitacion_id):
-#    habitacion = get_object_or_404(Habitacion, id=habitacion_id)
-#    habitacion.delete()
-#    return JsonResponse({'success': True})
-
 @manager_required
 @login_required
 def hotel_rooms(request):    
@@ -845,24 +814,6 @@ def hotel_settings(request, hotel_id):
         'hotel': hotel
     }
     return render(request, 'backoffice/hotel_settings.html', context)
-
-#@csrf_exempt
-#@login_required
-#def guardar_configuracion_hotel(request, hotel_id):
-#    if request.method == 'POST':
-#        hotel = get_object_or_404(Hotel, id=hotel_id)
-#        setting, created = HotelSetting.objects.get_or_create(hotel=hotel)
-#
-#        try:
-#            setting.edad_limite_nino = int(request.POST.get('edadLimite_nino', 0))
-#            setting.edad_limite_infante = int(request.POST.get('edadLimite_infante', 0))
-#            setting.cantidad_noches = int(request.POST.get('cantidad_noches', 0))
-#            setting.save()
-#            return JsonResponse({'status': 'success'})
-#        except ValueError as e:
-#            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-#
-#    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 @manager_required
 @login_required
@@ -1085,7 +1036,10 @@ def eliminar_hotel(request, hotel_id):
         return redirect('backoffice:listar_hoteles')
     return render(request, 'backoffice/hoteles/eliminar_hotel.html', {'hotel': hotel})
 
-# ---------------------------------------- CADENAS HOTELERAS ---------------------------------------- #
+# =========================================================================================== #
+# ---------------------------------------- CADENAS HOTELERAS -------------------------------- #
+# =========================================================================================== #
+
 @manager_required
 @login_required
 def listar_cadenas_hoteleras(request):
@@ -1189,7 +1143,9 @@ def eliminar_cadena_hotelera(request, pk):
         return redirect('backoffice:listar_cadenas_hoteleras')
     return render(request, 'backoffice/cadena_hotelera/eliminar_cadena_hotelera.html', {'cadena_hotelera': cadena_hotelera})
 
-# ---------------------------------------- HABITACIONES ---------------------------------------- #
+# =========================================================================================== #
+# ---------------------------------------- HABITACIONES ------------------------------------- #
+# =========================================================================================== #
 @manager_required
 @login_required
 def listar_habitaciones(request, hotel_id):
@@ -1230,7 +1186,9 @@ def eliminar_habitacion(request, habitacion_id):
 
     return render(request, 'backoffice/eliminar_habitacion.html', context)
 
-# ---------------------------------------- HABITACIONES OFERTAS ---------------------------------------- #
+# =========================================================================================== #
+# ----------------------------------- HABITACIONES OFERTAS ---------------------------------- #
+# =========================================================================================== #
 @manager_required
 @login_required
 def hotel_offers(request, hotel_id):
@@ -1468,7 +1426,9 @@ def guardar_configuracion_hotel(request, hotel_id):
 
     return JsonResponse({'status': 'fail'}, status=400)
 
-# ---------------------------------------- REMESAS ---------------------------------------- #
+# =========================================================================================== #
+# ---------------------------------------- REMESAS ------------------------------------------ #
+# =========================================================================================== #
 
 def _calcular_estimado(monto_envio: Decimal, moneda_envio: str, moneda_recepcion: str) -> Decimal:
     """
@@ -1826,9 +1786,9 @@ def detalles_remesa_json(request, pk):
     }
     return JsonResponse(data)
 
-
-# ---------------------------------------- RESERVAS ---------------------------------------- #
-
+# =========================================================================================== #
+# ---------------------------------------- RESERVAS ----------------------------------------- #
+# =========================================================================================== #
 
 @manager_required
 @login_required
@@ -1897,8 +1857,6 @@ def listar_reservas(request, estado=None):
         'fecha_fin': fecha_fin,
     }
     return render(request, 'backoffice/reservas/listar_reservas.html', context)
-
-
 
 
 def _safe_get(obj, path, default=None):
@@ -2057,7 +2015,6 @@ def eliminar_reserva(request, pk):
         return redirect('backoffice:listar_reservas')  # Usa el namespace aquí
     return render(request, 'backoffice/reservas/eliminar_reserva.html', {'reserva': reserva})
 
-# -------------------------------------------------------------------------------- #
 
 @manager_required
 @login_required
@@ -2107,109 +2064,6 @@ def actualizar_reserva_principal(request, reserva):
     except Exception as e:
         print(f'Error al guardar la reserva {reserva.id}: {e}')
 
-#@csrf_exempt
-#@login_required
-#def actualizar_traslado_y_pasajeros(request, reserva):
-#    """
-#    Actualiza los detalles específicos de un traslado y sus pasajeros.
-#    Se espera que la reserva tenga un objeto 'traslado' asociado.
-#    """
-#    # Importar modelos necesarios (si no están importados globalmente)
-#    from backoffice.models import Transportista, Ubicacion, Vehiculo
-#
-#    traslado = reserva.traslado
-#
-#    # Actualizar campos del traslado
-#    transportista_name = request.POST.get('transportista')
-#    origen_name = request.POST.get('origen')
-#    destino_name = request.POST.get('destino')
-#    vehiculo_tipo = request.POST.get('vehiculo')
-#    costo_traslado = request.POST.get('costo_traslado')
-#
-#    try:
-#        costo_traslado = float(costo_traslado)
-#    except (TypeError, ValueError):
-#        costo_traslado = traslado.costo  # O dejar el costo anterior si hay error
-#
-#    try:
-#        traslado.transportista = Transportista.objects.get(nombre=transportista_name)
-#    except Transportista.DoesNotExist:
-#        print(f"No se encontró el transportista '{transportista_name}'.")
-#    try:
-#        traslado.origen = Ubicacion.objects.get(nombre=origen_name)
-#    except Ubicacion.DoesNotExist:
-#        print(f"No se encontró el origen '{origen_name}'.")
-#    try:
-#        traslado.destino = Ubicacion.objects.get(nombre=destino_name)
-#    except Ubicacion.DoesNotExist:
-#        print(f"No se encontró el destino '{destino_name}'.")
-#    try:
-#        traslado.vehiculo = Vehiculo.objects.get(tipo=vehiculo_tipo)
-#    except Vehiculo.DoesNotExist:
-#        print(f"No se encontró el vehículo '{vehiculo_tipo}'.")
-#    
-#    traslado.costo = costo_traslado
-#    traslado.save()
-#
-#    # Actualizar pasajeros existentes asociados al traslado
-#    for pasajero in traslado.pasajeros.all():
-#        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
-#        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
-#        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
-#        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
-#        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
-#        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
-#        
-#        if fecha_nacimiento:
-#            try:
-#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                fecha_nacimiento = pasajero.fecha_nacimiento
-#        if caducidad_pasaporte:
-#            try:
-#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                caducidad_pasaporte = pasajero.caducidad_pasaporte
-#
-#        pasajero.nombre = nombre
-#        pasajero.fecha_nacimiento = fecha_nacimiento
-#        pasajero.pasaporte = pasaporte
-#        pasajero.caducidad_pasaporte = caducidad_pasaporte
-#        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
-#        pasajero.tipo = tipo
-#        pasajero.save()
-#
-#    # Agregar nuevos pasajeros para el traslado
-#    for key in request.POST:
-#        if key.startswith('traslado_pasajero_nombre_'):
-#            new_id = key.split('_')[-1]
-#            nombre = request.POST.get(f'traslado_pasajero_nombre_{new_id}')
-#            fecha_nacimiento = request.POST.get(f'traslado_pasajero_fecha_nacimiento_{new_id}')
-#            pasaporte = request.POST.get(f'traslado_pasajero_pasaporte_{new_id}')
-#            caducidad_pasaporte = request.POST.get(f'traslado_pasajero_caducidad_pasaporte_{new_id}')
-#            pais_emision_pasaporte = request.POST.get(f'traslado_pasajero_pais_emision_pasaporte_{new_id}')
-#            tipo = request.POST.get(f'traslado_pasajero_tipo_{new_id}')
-#            
-#            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-#                print(f"Datos incompletos para pasajero nuevo en traslado: {nombre}")
-#                continue
-#            
-#            try:
-#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                print(f"Error al convertir fechas para pasajero nuevo: {nombre}")
-#                continue
-#            
-#            Pasajero.objects.create(
-#                traslado=traslado,
-#                nombre=nombre,
-#                fecha_nacimiento=fecha_nacimiento,
-#                pasaporte=pasaporte,
-#                caducidad_pasaporte=caducidad_pasaporte,
-#                pais_emision_pasaporte=pais_emision_pasaporte,
-#                tipo=tipo
-#            )
 
 @csrf_exempt
 @login_required
@@ -2226,100 +2080,6 @@ def actualizar_habitaciones_y_pasajeros(request, reserva):
     
     recalcular_precio_y_costo(reserva)
 
-#@csrf_exempt
-#@login_required
-#def actualizar_habitacion(request, habitacion):
-#    habitacion_nombre = request.POST.get(f'habitacion_nombre_{habitacion.id}')
-#    adultos = request.POST.get(f'adultos_{habitacion.id}')
-#    ninos = request.POST.get(f'ninos_{habitacion.id}')
-#    fechas_viaje = request.POST.get(f'fechas_viaje_{habitacion.id}')
-#    
-#    if fechas_viaje and fechas_viaje != 'Invalid date':
-#        try:
-#            fechas_viaje = datetime.strptime(fechas_viaje, '%Y/%m/%d').strftime('%Y-%m-%d')
-#        except ValueError:
-#            fechas_viaje = habitacion.fechas_viaje
-#    habitacion.habitacion_nombre = habitacion_nombre
-#    habitacion.adultos = adultos
-#    habitacion.ninos = ninos
-#    habitacion.fechas_viaje = fechas_viaje
-#    habitacion.save()
-#
-#@csrf_exempt
-#@login_required
-#def actualizar_pasajeros_existentes(request, habitacion):
-#    for pasajero in habitacion.pasajeros.all():
-#        nombre = request.POST.get(f'pasajero_nombre_{pasajero.id}')
-#        fecha_nacimiento = request.POST.get(f'pasajero_fecha_nacimiento_{pasajero.id}')
-#        pasaporte = request.POST.get(f'pasajero_pasaporte_{pasajero.id}')
-#        caducidad_pasaporte = request.POST.get(f'pasajero_caducidad_pasaporte_{pasajero.id}')
-#        pais_emision_pasaporte = request.POST.get(f'pasajero_pais_emision_pasaporte_{pasajero.id}')
-#        tipo = request.POST.get(f'pasajero_tipo_{pasajero.id}')
-#        
-#        if fecha_nacimiento and fecha_nacimiento != 'Invalid date':
-#            try:
-#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                fecha_nacimiento = pasajero.fecha_nacimiento
-#        if caducidad_pasaporte and caducidad_pasaporte != 'Invalid date':
-#            try:
-#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                caducidad_pasaporte = pasajero.caducidad_pasaporte
-#        
-#        pasajero.nombre = nombre
-#        pasajero.fecha_nacimiento = fecha_nacimiento
-#        pasajero.pasaporte = pasaporte
-#        pasajero.caducidad_pasaporte = caducidad_pasaporte
-#        pasajero.pais_emision_pasaporte = pais_emision_pasaporte
-#        pasajero.tipo = tipo
-#        pasajero.save()
-#
-#@csrf_exempt
-#@login_required
-#def agregar_nuevos_pasajeros(request, habitacion):
-#    total_adultos = int(habitacion.adultos) if habitacion.adultos else 0
-#    total_ninos = int(habitacion.ninos) if habitacion.ninos else 0
-#
-#    for key in request.POST:
-#        if key.startswith(f'habitacion_{habitacion.id}_pasajero_nombre_'):
-#            new_passenger_id = key.split('_')[-1]
-#            nombre = request.POST.get(f'habitacion_{habitacion.id}_pasajero_nombre_{new_passenger_id}')
-#            fecha_nacimiento = request.POST.get(f'habitacion_{habitacion.id}_pasajero_fecha_nacimiento_{new_passenger_id}')
-#            pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pasaporte_{new_passenger_id}')
-#            caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_caducidad_pasaporte_{new_passenger_id}')
-#            pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion.id}_pasajero_pais_emision_pasaporte_{new_passenger_id}')
-#            tipo = request.POST.get(f'habitacion_{habitacion.id}_pasajero_tipo_{new_passenger_id}')
-#
-#            if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-#                print(f"Error: Faltan datos obligatorios para el pasajero {nombre}. No se guardará.")
-#                continue
-#
-#            try:
-#                fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-#                caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            except ValueError:
-#                print(f"Error al convertir fechas para el pasajero {nombre}.")
-#                continue
-#
-#            if not Pasajero.objects.filter(habitacion=habitacion, nombre=nombre, pasaporte=pasaporte).exists():
-#                nuevo_pasajero = Pasajero.objects.create(
-#                    habitacion=habitacion,
-#                    nombre=nombre,
-#                    fecha_nacimiento=fecha_nacimiento,
-#                    pasaporte=pasaporte,
-#                    caducidad_pasaporte=caducidad_pasaporte,
-#                    pais_emision_pasaporte=pais_emision_pasaporte,
-#                    tipo=tipo
-#                )
-#                if tipo == 'adulto':
-#                    total_adultos += 1
-#                else:
-#                    total_ninos += 1
-#
-#    habitacion.adultos = total_adultos
-#    habitacion.ninos = total_ninos
-#    habitacion.save()
 
 @csrf_exempt
 @login_required
@@ -2354,72 +2114,6 @@ def agregar_nuevas_habitaciones(request, reserva):
         agregar_nuevos_pasajeros_a_habitacion_nueva(request, nueva_habitacion, habitacion_counter)
         habitacion_counter += 1
 
-#@csrf_exempt
-#@login_required
-#def agregar_nuevos_pasajeros_a_habitacion_nueva(request, habitacion, habitacion_counter):
-#    pasajero_counter = 1
-#    while True:
-#        nombre = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_nombre')
-#        if not nombre:
-#            break
-#        fecha_nacimiento = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_fecha_nacimiento')
-#        pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pasaporte')
-#        caducidad_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_caducidad_pasaporte')
-#        pais_emision_pasaporte = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_pais_emision_pasaporte')
-#        tipo = request.POST.get(f'habitacion_{habitacion_counter}_pasajero_{pasajero_counter}_tipo')
-#
-#        if not (nombre and fecha_nacimiento and pasaporte and caducidad_pasaporte and pais_emision_pasaporte):
-#            break
-#
-#        try:
-#            fecha_nacimiento = datetime.strptime(fecha_nacimiento, '%m/%d/%Y').strftime('%Y-%m-%d')
-#            caducidad_pasaporte = datetime.strptime(caducidad_pasaporte, '%m/%d/%Y').strftime('%Y-%m-%d')
-#        except ValueError:
-#            break
-#
-#        Pasajero.objects.create(
-#            habitacion=habitacion,
-#            nombre=nombre,
-#            fecha_nacimiento=fecha_nacimiento,
-#            pasaporte=pasaporte,
-#            caducidad_pasaporte=caducidad_pasaporte,
-#            pais_emision_pasaporte=pais_emision_pasaporte,
-#            tipo=tipo
-#        )
-#        pasajero_counter += 1
-#
-#@login_required
-#def correo_confirmada(reserva):
-#    """
-#    Envía el correo de confirmación (para reservas de hoteles, por ahora).
-#    """
-#    pasajeros = Pasajero.objects.filter(habitacion__reserva=reserva)
-#    habitaciones = HabitacionReserva.objects.filter(reserva=reserva)
-#    encabezado = "{% trans 'Muchas gracias por reservar con RUTA MULTISERVICE, su solicitud ha sido confirmada:' %}"
-#    #enviar_correo(reserva, pasajeros, habitaciones, reserva.email_empleado, encabezado)
-#
-#@login_required
-#def recalcular_precio_y_costo(reserva):
-#    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
-#    precio_total = 0
-#    for habitacion_reserva in habitaciones_reserva:
-#        cant_adultos = habitacion_reserva.adultos
-#        habitacion_nombre = habitacion_reserva.habitacion_nombre
-#        fecha_viaje = habitacion_reserva.fechas_viaje
-#        nombre_hotel = reserva.hotel.hotel_nombre
-#        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
-#        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
-#        if habitacion_reserva.ninos == 1:
-#            nino1 = 1; nino2 = 0
-#        elif habitacion_reserva.ninos == 2:
-#            nino1 = 1; nino2 = 1
-#        else:
-#            nino1 = 0; nino2 = 0
-#        if habitacion and ofertas:
-#            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
-#            for result in dias_oferta:
-#                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
-#    return precio_total
 
 @csrf_exempt
 @login_required
@@ -2555,85 +2249,6 @@ def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
     # Esta función se mantiene sin cambios.
     pass  # Usa tu implementación actual aquí
 
-#@login_required
-#def calcular_dias_por_oferta(ofertas, fecha_viaje):
-#    try:
-#        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
-#    except ValueError as e:
-#        print(f"Error al parsear fechas de viaje: {e}")
-#        raise
-#    resultado = []
-#    for oferta in ofertas:
-#        try:
-#            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
-#        except ValueError as e:
-#            print(f"Error al parsear fechas de la oferta {oferta}: {e}")
-#            continue
-#        inicio_solapamiento = max(fecha_inicio_viaje, fecha_inicio_oferta)
-#        fin_solapamiento = min(fecha_fin_viaje, fecha_fin_oferta)
-#        if inicio_solapamiento <= fin_solapamiento:
-#            dias_en_oferta = (fin_solapamiento - inicio_solapamiento).days + 1
-#            resultado.append({
-#                "oferta": oferta,
-#                "dias_en_oferta": dias_en_oferta
-#            })
-#    return resultado
-#
-#@login_required
-#def obtener_habitacion(nombre_hotel, nombre_habitacion):
-#    try:
-#        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
-#        habitacion = Habitacion.objects.get(hotel=hotel, tipo=nombre_habitacion)
-#        return habitacion
-#    except ObjectDoesNotExist:
-#        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{nombre_habitacion}'.")
-#        return None
-#
-#@login_required
-#def obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre):
-#    try:
-#        fecha_inicio_viaje, fecha_fin_viaje = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in fecha_viaje.split(' - ')]
-#        hotel = Hotel.objects.get(hotel_nombre=nombre_hotel)
-#        ofertas = Oferta.objects.filter(
-#            hotel=hotel,
-#            tipo_habitacion=habitacion_nombre,
-#            disponible=True
-#        )
-#        ofertas_validas = []
-#        for oferta in ofertas:
-#            fecha_inicio_oferta, fecha_fin_oferta = [datetime.strptime(date.strip(), "%Y-%m-%d").date() for date in oferta.temporada.split(' - ')]
-#            if fecha_inicio_viaje <= fecha_fin_oferta and fecha_fin_viaje >= fecha_inicio_oferta:
-#                ofertas_validas.append(oferta)
-#        return ofertas_validas
-#    except ObjectDoesNotExist:
-#        print(f"No se encontró el hotel '{nombre_hotel}' o la habitación '{habitacion_nombre}'.")
-#        return []
-#    except ValueError as e:
-#        print(f"Error al parsear las fechas: {e}")
-#        return []
-#
-#@login_required
-#def recalcular_precio_y_costo(reserva):
-#    habitaciones_reserva = HabitacionReserva.objects.filter(reserva=reserva)
-#    precio_total = 0
-#    for habitacion_reserva in habitaciones_reserva:
-#        cant_adultos = habitacion_reserva.adultos
-#        habitacion_nombre = habitacion_reserva.habitacion_nombre
-#        fecha_viaje = habitacion_reserva.fechas_viaje
-#        nombre_hotel = reserva.hotel.hotel_nombre
-#        habitacion = obtener_habitacion(nombre_hotel, habitacion_nombre)
-#        ofertas = obtener_oferta(nombre_hotel, fecha_viaje, habitacion_nombre)
-#        if habitacion_reserva.ninos == 1:
-#            nino1 = 1; nino2 = 0
-#        elif habitacion_reserva.ninos == 2:
-#            nino1 = 1; nino2 = 1
-#        else:
-#            nino1 = 0; nino2 = 0
-#        if habitacion and ofertas:
-#            dias_oferta = calcular_dias_por_oferta(ofertas, fecha_viaje)
-#            for result in dias_oferta:
-#                precio_total += calcula_precio(cant_adultos, nino1, nino2, result["oferta"], habitacion, result["dias_en_oferta"])
-#    return precio_total
 
 @login_required
 def actualizar_traslado_y_pasajeros(request, reserva):
@@ -2727,12 +2342,6 @@ def actualizar_traslado_y_pasajeros(request, reserva):
                 tipo=tipo
             )
 
-
-## Las siguientes funciones se mantienen o se implementan según tu lógica actual:
-#@login_required
-#def calcula_precio(cant_adultos, nino1, nino2, oferta, habitacion, cant_dias):
-#    # Lógica actual para calcular el precio en reservas de hoteles
-#    pass
 
 @login_required
 def calcular_dias_por_oferta(ofertas, fecha_viaje):
@@ -3588,8 +3197,9 @@ def eliminar_opcion_certificado(request, opcion_id):
         return redirect('backoffice:listar_opciones_certificado')
     return render(request, 'backoffice/opciones_certificado/eliminar_opcion_certificado.html', {'opcion': opcion})
 
-# -------------------------------------------------------------------------------------------------#
-# ---------------------------------------- TASAS DE CAMBIO ----------------------------------------#
+# =========================================================================================== #
+# ---------------------------------------- TASAS DE CAMBIO ---------------------------------- #
+# =========================================================================================== #
 @manager_required
 @login_required
 def listar_tasas_cambio(request):
@@ -3947,7 +3557,6 @@ def editar_reserva(request, reserva_id):
         "estatus_choices": Reserva._meta.get_field('estatus').choices,
     }
     return render(request, 'backoffice/reservas/editar_reserva.html', context)
-
 
 
 logger = logging.getLogger(__name__)
@@ -5212,44 +4821,23 @@ def eliminar_item_envio(request, item_id):
         'item': item
     })
 
-# ─────────────────────────────────────
-#   ENVÍO A BOOKING DISTAL (BookingRQ)
-# ─────────────────────────────────────
-
+# =========================================================================================== #
+#                              ENVÍO A BOOKING DISTAL (BookingRQ)
+# =========================================================================================== #
 # -*- coding: utf-8 -*-
 """
-Backoffice - Distal Booking (HotelRes / ResStatus=Book) + Previews
+Backoffice – Distal Booking (estructura mínima confirmada por soporte)
 
-Incluye:
-- enviar_booking_distal (POST a Distal HTTP)
-- generar_xml_reserva_distal (GuestCounts + AgeQualifyingCode, ResIDs 14/16, Gender/NamePrefix)
-- vista_preview_booking_distal (muestra XML generado)
-- vista_preview_voucher_distal (render del voucher para Distal)
-
-Notas:
-- Endpoint HTTP (no HTTPS): http://api.1way2italy.it/Service/Production/v10/OtaService/HotelRes
-- No enviar datos de tarjeta reales por HTTP.
+- Envío de HotelRes (ResStatus="Book") con la estructura mínima que evita el 999.
+- Parser prioriza ResID_Type="14" (ID del proveedor).
 """
 
-import time
-from datetime import date
-from xml.dom import minidom
-from xml.etree import ElementTree as ET
-
-import requests
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.shortcuts import render, redirect, get_object_or_404
-
-from .models import Reserva, Pasajero  # ajusta a tu estructura real
-
 # ============================
-# CONSTANTES / CONFIG
+# CONFIG
 # ============================
-DISTAL_HOTELRES_URL = "http://api.1way2italy.it/Service/Production/v10/OtaService/HotelRes"
+DISTAL_HOTELRES_URL = "http://api.1way2italy.it/Service/Production/v10/OtaService/HotelRes"  # HTTP
 DISTAL_REQUESTOR_ID = "RUTA-US"
-DISTAL_PASSWORD = "xxxxxxx"
+DISTAL_PASSWORD = "Gmh3S246t987$"  # indicado por Filippo
 HTTP_TIMEOUT = 30
 
 OTA_NS = "http://www.opentravel.org/OTA/2003/05"
@@ -5259,43 +4847,15 @@ NS = {"ota": OTA_NS}
 # ============================
 # AUXILIARES
 # ============================
-def _iso(d):
-    return d.isoformat() if hasattr(d, "isoformat") else str(d)
+def _split_nombre(nombre_completo: str):
+    parts = (nombre_completo or "").strip().split()
+    if not parts:
+        return "GUEST", "GUEST"
+    given = parts[0]
+    surname = parts[-1] if len(parts) > 1 else parts[0]
+    return given, surname
 
-def _age_on(checkin: date, birth_iso: str | None, edad_fallback: int | None) -> int:
-    if birth_iso:
-        b = date.fromisoformat(birth_iso)
-        return max(0, checkin.year - b.year - ((checkin.month, checkin.day) < (b.month, b.day)))
-    if edad_fallback is not None:
-        return int(edad_fallback)
-    raise ValueError("Falta fecha_nacimiento o edad para calcular Age en GuestCounts.")
-
-def _birthdate_from_age(checkin: date, edad: int) -> str:
-    # fecha “estable” para evitar bordes (1 de julio)
-    return f"{checkin.year - int(edad)}-07-01"
-
-def _normaliza_nombre(p):
-    nombre = (getattr(p, "nombre", "") or "").strip()
-    apellidos = (getattr(p, "apellidos", "") or "").strip()
-    if nombre and apellidos:
-        return nombre.split()[0], apellidos.split()[-1]
-    parts = nombre.split()
-    if len(parts) >= 2:
-        return parts[0], parts[-1]
-    return (parts[0] if parts else "GUEST"), (parts[-1] if parts else "GUEST")
-
-def _get_birthdate_or_raise(p, checkin: date) -> str:
-    fn = getattr(p, "fecha_nacimiento", None)
-    if fn:
-        return _iso(fn)
-    edad = getattr(p, "edad", None)
-    if edad is None:
-        raise ValueError(
-            f"El pasajero '{getattr(p, 'nombre', 'SIN NOMBRE')}' no tiene 'fecha_nacimiento' ni 'edad'."
-        )
-    return _birthdate_from_age(checkin, int(edad))
-
-def _prefix_and_gender(p):
+def _prefix_gender(p):
     sexo = (getattr(p, "genero", None) or getattr(p, "sexo", "") or "").lower()
     if sexo in ("m", "male", "h", "masculino"):
         return "MR", "Male"
@@ -5303,216 +4863,144 @@ def _prefix_and_gender(p):
         return "MRS", "Female"
     return "MR", "Male"
 
-def _guardar_meta_distal(reserva, xml_req: str, xml_rs: str, supplier_id: str | None = None) -> None:
-    """Guarda request/response/supplier_id si el modelo tiene campos para ello (no bloquea flujo si falla)."""
-    try:
-        if hasattr(reserva, "xml_solicitud_proveedor"):
-            reserva.xml_solicitud_proveedor = xml_req
-        if hasattr(reserva, "xml_respuesta_proveedor"):
-            reserva.xml_respuesta_proveedor = xml_rs
-        if supplier_id and hasattr(reserva, "codigo_confirmacion_proveedor"):
-            reserva.codigo_confirmacion_proveedor = supplier_id
-        if hasattr(reserva, "metadatos"):
-            meta = reserva.metadatos or {}
-            distal = meta.get("distal", {})
-            distal.update({
-                "hotelres_request_xml": xml_req,
-                "hotelres_response_xml": xml_rs,
-                "supplier_reservation_id": supplier_id,
-            })
-            meta["distal"] = distal
-            reserva.metadatos = meta
-        reserva.save()
-    except Exception:
-        pass
+def _ref_cliente_16(reserva: Reserva) -> str:
+    if getattr(reserva, "referencia_cliente", None):
+        return reserva.referencia_cliente
+    ref = f"RUTA-{time.strftime('%Y%m%d')}-{reserva.id}"
+    if hasattr(reserva, "referencia_cliente"):
+        try:
+            reserva.referencia_cliente = ref
+            reserva.save(update_fields=["referencia_cliente"])
+        except Exception:
+            pass
+    return ref
 
 
 # ============================
-# GENERACIÓN XML BOOKING
+# GENERADOR XML MÍNIMO (Quote/Book)
 # ============================
-def generar_xml_reserva_distal(reserva: Reserva) -> str:
+def generar_xml_reserva_distal_minimo(reserva: Reserva, *, res_status: str = "Book") -> str:
     """
-    Requisitos:
-      - reserva.tipo == 'hoteles' y reserva.hotel_importado presente
-      - HabitacionReserva con booking_code y fechas_viaje = 'YYYY-MM-DD - YYYY-MM-DD'
-      - Cada pasajero con fecha_nacimiento o edad
-      - En booking: GuestCounts con Age (+ AgeQualifyingCode)
+    Estructura mínima validada por soporte:
+      - POS/RequestorID con password real
+      - RoomStay: RoomRate (BookingCode + Total=0), TimeSpan, BasicPropertyInfo solo con ChainCode
+      - ResGuestRPHs
+      - ResGuests (Customer con NamePrefix/Gender/BirthDate, contacto y dirección)
+      - ResGlobalInfo: HotelReservationIDs con un único ResID_Type="16" (referencia cliente)
+      - SIN GuestCounts / Comments / CancelPenalties / ResID 14 en el request
     """
     if reserva.tipo != 'hoteles' or not getattr(reserva, "hotel_importado", None):
         raise ValueError("Reserva no válida para Distal (tipo 'hoteles' y hotel_importado requerido).")
 
-    habitaciones = reserva.habitaciones_reserva.all()
-    if not habitaciones.exists():
+    habitaciones = list(reserva.habitaciones_reserva.all())
+    if not habitaciones:
         raise ValueError("No hay habitaciones asociadas.")
 
-    chain_code = 'DISTALCU'
-    hotel_code = reserva.hotel_importado.hotel_code
+    chain_code = "DISTALCU"
+    hab = habitaciones[0]
+    try:
+        fecha_inicio, fecha_fin = hab.fechas_viaje.split(" - ")
+    except Exception as e:
+        raise ValueError(f"No se pudo obtener fechas de la habitación {hab.id}: {e}")
 
-    # Referencias cliente (enviamos 14 y 16 para máxima compatibilidad)
-    # 14: booking reference del cliente
-    # 16: customer reference (obligatoria)
-    ref_16 = getattr(reserva, "referencia_cliente", None)
-    if not ref_16:
-        ref_16 = f"RUTA-{date.today().strftime('%Y%m%d')}-{reserva.id}"
-        if hasattr(reserva, "referencia_cliente"):
-            reserva.referencia_cliente = ref_16
-            try:
-                reserva.save(update_fields=["referencia_cliente"])
-            except Exception:
-                pass
-    ref_14 = getattr(reserva, "numero_confirmacion", None) or f"API-{reserva.id:05d}"
+    if not hab.booking_code:
+        raise ValueError(f"La habitación {hab.id} no tiene booking_code.")
 
-    # Check-in global (mínimo entre las habitaciones)
-    fechas_inicio = [h.fechas_viaje.split(' - ')[0] for h in habitaciones if h.fechas_viaje]
-    checkin_global = min(date.fromisoformat(fi) for fi in fechas_inicio) if fechas_inicio else date.today()
+    # RPHs para los pax de esta habitación
+    pax = list(hab.pasajeros.all())
+    if not pax:
+        raise ValueError("No hay pasajeros registrados en la habitación.")
 
-    # Construcción de RoomStays con RPHs y GuestCounts (EDADES + AgeQualifyingCode)
-    rph_counter = 1
-    rph_map: list[tuple[int, list[str], list[Pasajero]]] = []
-    room_stays_xml_parts = []
+    rphs_xml = "".join(f"<ResGuestRPH>{i+1}</ResGuestRPH>" for i in range(len(pax)))
 
-    for habitacion in habitaciones:
-        try:
-            fecha_inicio, fecha_fin = habitacion.fechas_viaje.split(' - ')
-        except Exception as e:
-            raise ValueError(f"No se pudo obtener fechas de la habitación {habitacion.id}: {e}")
+    roomstay_xml = f"""
+      <RoomStay>
+        <RoomRates>
+          <RoomRate BookingCode="{hab.booking_code}">
+            <Total AmountAfterTax="0" CurrencyCode="EUR"/>
+          </RoomRate>
+        </RoomRates>
+        <TimeSpan Start="{fecha_inicio}" End="{fecha_fin}"/>
+        <BasicPropertyInfo ChainCode="{chain_code}"/>
+        <ResGuestRPHs>
+          {rphs_xml}
+        </ResGuestRPHs>
+      </RoomStay>
+    """.strip()
 
-        if not habitacion.booking_code:
-            raise ValueError(f"La habitación {habitacion.id} no tiene booking_code.")
+    resguests_parts = []
+    for idx, p in enumerate(pax, start=1):
+        given, surname = _split_nombre(getattr(p, "nombre", "") or "GUEST GUEST")
+        birth = getattr(p, "fecha_nacimiento", None)
+        birth_iso = birth.strftime("%Y-%m-%d") if birth else "1990-01-01"
+        prefix, gender = _prefix_gender(p)
+        tel_cc = (getattr(p, "telefono_codigo", None) or "53").strip().lstrip("+")
+        tel_num = (getattr(p, "telefono", None) or "0000000000").strip()
+        email = getattr(p, "email", None) or "reservas@travelsys.com"
+        address_line = getattr(p, "direccion", None) or "Direccion Generica"
 
-        pasajeros_h = list(habitacion.pasajeros.all())
-        rphs = []
-        ages_xml = []
-
-        for p in pasajeros_h:
-            rphs.append(str(rph_counter))
-            rph_counter += 1
-
-            # calcular edad real al check-in de la HABITACIÓN
-            birth = getattr(p, "fecha_nacimiento", None)
-            birth_iso = _iso(birth) if birth else None
-            edad_fallback = getattr(p, "edad", None)
-            age_val = _age_on(date.fromisoformat(fecha_inicio), birth_iso, edad_fallback)
-
-            # AgeQualifyingCode: 10=adulto, 8=niño (umbral 12 años; ajusta si tu negocio usa otro)
-            aqc = "8" if age_val < 12 else "10"
-            ages_xml.append(f'<GuestCount Age="{age_val}" AgeQualifyingCode="{aqc}" Count="1"/>')
-
-        rphs_xml = ''.join(f'<ResGuestRPH>{r}</ResGuestRPH>' for r in rphs)
-        guestcounts_xml = ''.join(ages_xml)
-
-        room_stays_xml_parts.append(f"""
-        <RoomStay>
-          <RoomRates>
-            <RoomRate BookingCode="{habitacion.booking_code}">
-              <Total AmountAfterTax="0" CurrencyCode="EUR"/>
-            </RoomRate>
-          </RoomRates>
-          <TimeSpan Start="{fecha_inicio}" End="{fecha_fin}"/>
-          <BasicPropertyInfo ChainCode="{chain_code}" HotelCode="{hotel_code}"/>
-          <GuestCounts IsPerRoom="true">
-            {guestcounts_xml}
-          </GuestCounts>
-          <ResGuestRPHs>
-            {rphs_xml}
-          </ResGuestRPHs>
-        </RoomStay>
-        """.strip())
-
-        rph_map.append((habitacion.id, rphs, pasajeros_h))
-
-    # Pasajeros (Profiles/Customer con BirthDate + NamePrefix + Gender)
-    pasajeros_xml_parts = []
-    for _, rphs, pasajeros_h in rph_map:
-        for p, rph in zip(pasajeros_h, rphs):
-            given, sur = _normaliza_nombre(p)
-            birth_date = _get_birthdate_or_raise(p, checkin_global)
-            prefix, gender = _prefix_and_gender(p)
-            telefono = getattr(p, "telefono", None) or "0000000000"
-            email = getattr(p, "email", None) or "booking@rutamultiservice.com"
-            direccion = getattr(p, "direccion", None) or "Dirección Genérica"
-            ciudad = getattr(p, "ciudad", None) or "Havana"
-            postal = getattr(p, "codigo_postal", None) or "00000"
-            country_code = getattr(p, "pais_codigo", None) or "CU"
-
-            # CountryAccessCode: si el país es CU usamos 53, si no 001
-            country_access = "53" if country_code == "CU" else "001"
-            country_name_txt = "CUBA" if country_code == "CU" else "COUNTRY"
-
-            # StateProv: omitir si vacío
-            state = getattr(p, "estado", None) or getattr(p, "provincia", None) or ""
-            state_line = f"<StateProv>{state}</StateProv>" if state else ""
-
-            pasajeros_xml_parts.append(f"""
-        <ResGuest ResGuestRPH="{rph}">
+        resguests_parts.append(f"""
+        <ResGuest ResGuestRPH="{idx}">
           <Profiles>
             <ProfileInfo>
               <Profile>
-                <Customer Gender="{gender}" BirthDate="{birth_date}">
+                <Customer Gender="{gender}" BirthDate="{birth_iso}">
                   <PersonName>
                     <NamePrefix>{prefix}</NamePrefix>
                     <GivenName>{given}</GivenName>
-                    <Surname>{sur}</Surname>
+                    <Surname>{surname}</Surname>
                   </PersonName>
-                  <Telephone CountryAccessCode="{country_access}" PhoneNumber="{telefono}" PhoneTechType="5"/>
+                  <Telephone CountryAccessCode="{tel_cc}" PhoneNumber="{tel_num}" PhoneTechType="5"/>
                   <Email>{email}</Email>
                   <Address>
-                    <AddressLine>{direccion}</AddressLine>
-                    <CityName>{ciudad}</CityName>
-                    <PostalCode>{postal}</PostalCode>
-                    {state_line}
-                    <CountryName Code="{country_code}">{country_name_txt}</CountryName>
+                    <AddressLine>{address_line}</AddressLine>
+                    <CityName>Havana</CityName>
+                    <PostalCode>00000</PostalCode>
+                    <CountryName Code="CU">CUBA</CountryName>
                   </Address>
                 </Customer>
               </Profile>
             </ProfileInfo>
           </Profiles>
         </ResGuest>
-            """.strip())
+        """.strip())
+
+    ref16 = _ref_cliente_16(reserva)
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<OTA_HotelResRQ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                Target="Production" ResStatus="Book" MarketCountryCode="us"
-                PrimaryLangID="en"
+<OTA_HotelResRQ Target="Production" ResStatus="{res_status}" MarketCountryCode="us" PrimaryLangID="en"
                 xmlns="{OTA_NS}">
   <POS>
     <Source>
       <RequestorID ID="{DISTAL_REQUESTOR_ID}" MessagePassword="{DISTAL_PASSWORD}"/>
     </Source>
   </POS>
-
   <HotelReservations>
     <HotelReservation>
       <RoomStays>
-        {' '.join(room_stays_xml_parts)}
+        {roomstay_xml}
       </RoomStays>
-
       <ResGuests>
-        {' '.join(pasajeros_xml_parts)}
+        {' '.join(resguests_parts)}
       </ResGuests>
-
       <ResGlobalInfo>
         <HotelReservationIDs>
-          <!-- Enviamos ambas referencias para máxima compatibilidad -->
-          <HotelReservationID ResID_Type="14" ResID_Value="{ref_14}"/>
-          <HotelReservationID ResID_Type="16" ResID_Value="{ref_16}"/>
+          <HotelReservationID ResID_Type="16" ResID_Value="{ref16}"/>
         </HotelReservationIDs>
       </ResGlobalInfo>
     </HotelReservation>
   </HotelReservations>
 </OTA_HotelResRQ>"""
-
     return minidom.parseString(xml).toprettyxml(indent="  ")
 
 
 # ============================
-# ENVÍO Y PARSEO DE RESPUESTA
+# ENVÍO + PARSER (prioriza ResID 14)
 # ============================
 def enviar_booking_api(xml_data: str, url: str = DISTAL_HOTELRES_URL):
     headers = {"Content-Type": "text/xml; charset=utf-8"}
     resp = requests.post(url, data=xml_data.encode("utf-8"), headers=headers, timeout=HTTP_TIMEOUT)
-    print("📥 Respuesta cruda de Distal:\n", resp.text)
+    print("📥 RS Distal (crudo):\n", resp.text)
 
     if resp.status_code != 200:
         return None, False, f"{resp.status_code} {resp.reason} for url: {url}", resp.text
@@ -5522,45 +5010,55 @@ def enviar_booking_api(xml_data: str, url: str = DISTAL_HOTELRES_URL):
     except ET.ParseError as e:
         return None, False, f"XML mal formado: {e}", resp.text
 
-    # EchoToken para soporte
     echo_token = root.get("EchoToken") or ""
     if echo_token:
-        print(f"🔎 EchoToken de Distal: {echo_token}")
+        print(f"🔎 EchoToken: {echo_token}")
 
     # Errores
-    error_node = root.find(".//ota:Error", NS) or root.find(".//Error")
-    if error_node is not None:
-        code = error_node.get("Code", "") if hasattr(error_node, "get") else ""
-        msg  = error_node.get("ShortText", "") if hasattr(error_node, "get") else (error_node.text or "")
+    err = root.find(".//ota:Error", NS) or root.find(".//Error")
+    if err is not None:
+        code = err.get("Code", "") if hasattr(err, "get") else ""
+        msg = err.get("ShortText", "") if hasattr(err, "get") else (err.text or "")
         return None, False, f"Distal Error {code}: {msg}{f' [EchoToken={echo_token}]' if echo_token else ''}", resp.text
 
-    # Success (a veces vacío): presencia del nodo cuenta como True
-    success_el = root.find(".//ota:Success", NS) or root.find(".//Success")
-    success_flag = success_el is not None
+    # Éxito por presencia de <Success/>
+    success = (root.find(".//ota:Success", NS) is not None) or (root.find(".//Success") is not None)
 
-    # Booking ID del proveedor (no nuestros 14/16 si los reflejan)
-    booking_id = None
+    # IDs
+    id14 = None
+    id16 = None
+    otros = []
     for el in root.findall(".//ota:HotelReservationID", NS) + root.findall(".//HotelReservationID"):
-        rid = el.get("ResID_Value") if hasattr(el, "get") else None
-        rtype = el.get("ResID_Type") if hasattr(el, "get") else None
-        if rid and (rtype is None or rtype not in ("14", "16")):
-            booking_id = rid
-            break
+        rtype = el.get("ResID_Type")
+        rid = el.get("ResID_Value") or el.get("ID")
+        if not rid:
+            continue
+        if rtype == "14":
+            id14 = rid
+        elif rtype == "16":
+            id16 = rid
+        else:
+            otros.append(rid)
 
+    booking_id = id14  # preferimos el del proveedor
     if not booking_id:
-        el = root.find(".//ota:BookingID", NS) or root.find(".//BookingID")
-        if el is not None and (el.text or "").strip():
-            booking_id = el.text.strip()
-
+        # BookingID/UniqueID
+        x = root.find(".//ota:BookingID", NS) or root.find(".//BookingID")
+        if x is not None and (x.text or "").strip():
+            booking_id = x.text.strip()
     if not booking_id:
-        el = root.find(".//ota:UniqueID", NS) or root.find(".//UniqueID")
-        if el is not None and el.get("ID"):
-            booking_id = el.get("ID")
+        x = root.find(".//ota:UniqueID", NS) or root.find(".//UniqueID")
+        if x is not None and x.get("ID"):
+            booking_id = x.get("ID")
+    if not booking_id and otros:
+        booking_id = otros[0]
+    if not booking_id and id16:
+        booking_id = id16
 
-    if (success_flag and booking_id) or booking_id:
+    if success or booking_id:
         return booking_id, True, None, resp.text
 
-    return None, False, "No se encontró BookingID/UniqueID/HotelReservationID del proveedor", resp.text
+    return None, False, "Respuesta sin error pero sin identificador", resp.text
 
 
 # ============================
@@ -5570,75 +5068,54 @@ def enviar_booking_api(xml_data: str, url: str = DISTAL_HOTELRES_URL):
 @manager_required
 @transaction.atomic
 def enviar_booking_distal(request, reserva_id):
-    print("🔄 Iniciando proceso de envío de booking a Distal...")
+    """Confirmación real con estructura mínima (ResStatus=Book)."""
+    print("🔄 Enviando booking (mínimo) a Distal…")
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    print(f"✅ Reserva encontrada: ID {reserva.id}")
 
     try:
-        print("🧾 Generando XML de la reserva (GuestCounts + AQC + ResID 14/16 + Gender/Prefix)...")
-        xml_data = generar_xml_reserva_distal(reserva)
-        print("📦 XML generado para enviar a Distal:\n", xml_data)
+        xml_data = generar_xml_reserva_distal_minimo(reserva, res_status="Book")
+        print("🧾 XML enviado a Distal:\n", xml_data)
 
-        max_intentos = 3
-        intento = 1
-        booking_id = None
-        success = False
-        error_message = None
-        raw_response = ""
-
-        while intento <= max_intentos:
-            print(f"🌍 Intento #{intento}: POST → {DISTAL_HOTELRES_URL}")
-            try:
-                booking_id, success, error_message, raw_response = enviar_booking_api(xml_data, DISTAL_HOTELRES_URL)
-                if success:
-                    print("✅ Solicitud procesada con éxito por Distal.")
-                    break
-                if error_message and any(x in error_message for x in (" 502 ", " 503 ", "Error 999")):
-                    print(f"🔁 {error_message}. Reintentando en 2s…")
-                    time.sleep(2)
-                    intento += 1
-                    continue
-                break
-            except requests.RequestException as e:
-                print(f"💥 Excepción de red: {e}. Reintentando en 2s…")
-                time.sleep(2)
-                intento += 1
-
-        print("📥 Resultado API:",
-              f"\n   🔑 Booking ID proveedor: {booking_id}",
+        booking_id, success, error_message, raw = enviar_booking_api(xml_data, DISTAL_HOTELRES_URL)
+        print("📥 Resultado:",
+              f"\n   🔑 Booking ID (prioriza 14): {booking_id}",
               f"\n   ✅ Éxito: {success}",
               f"\n   ❌ Error: {error_message}")
 
-        # Auditoría
+        # Auditoría básica
         try:
-            _guardar_meta_distal(reserva, xml_data, raw_response, booking_id)
+            if hasattr(reserva, "xml_solicitud_proveedor"):
+                reserva.xml_solicitud_proveedor = xml_data
+            if hasattr(reserva, "xml_respuesta_proveedor"):
+                reserva.xml_respuesta_proveedor = raw
+            reserva.save()
         except Exception:
             pass
 
         if success:
             if booking_id and hasattr(reserva, "numero_confirmacion"):
-                reserva.numero_confirmacion = booking_id
-            reserva.estatus = 'confirmada'
+                reserva.numero_confirmacion = booking_id  # ← ahora será 14 si vino
+            reserva.estatus = "confirmada"
             reserva.save()
-            messages.success(request, f"✅ Reserva confirmada en Distal{f' (ID: {booking_id})' if booking_id else ''}")
+            messages.success(request, f"✅ Distal OK (ID: {booking_id or 'N/D'})")
         else:
-            messages.error(request, f"❌ Error al confirmar booking: {error_message or 'Respuesta sin éxito ni error explícito.'}")
+            messages.error(request, f"❌ Error Distal: {error_message or 'Sin éxito'}")
 
     except Exception as e:
-        print("💥 Excepción inesperada durante el proceso:", e)
+        print("💥 Excepción:", e)
         messages.error(request, f"⚠️ Error inesperado: {e}")
 
-    print("✅ Finalizado proceso de envío de booking.\n" + "-"*60)
     return redirect('backoffice:editar_reserva', reserva_id=reserva.id)
 
 
 @login_required
 def vista_preview_booking_distal(request, reserva_id):
+    """Preview del HotelRes (mínimo) para revisión."""
     reserva = get_object_or_404(Reserva, id=reserva_id)
     try:
-        xml_generado = generar_xml_reserva_distal(reserva)
+        xml_generado = generar_xml_reserva_distal_minimo(reserva, res_status="Book")
     except Exception as e:
-        xml_generado = f"⚠️ ERROR al generar XML: {str(e)}"
+        xml_generado = f"⚠️ ERROR: {e}"
 
     return render(request, 'backoffice/preview_booking_distal.html', {
         'reserva': reserva,
