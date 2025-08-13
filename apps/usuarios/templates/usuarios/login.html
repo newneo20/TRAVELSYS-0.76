@@ -1,84 +1,217 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAVELSYS Login</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Acceder | TravelSYS</title>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: {
+            brand1: '#06b6d4', /* cyan-500 */
+            brand2: '#6366f1'  /* indigo-500 */
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide icons -->
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
-
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <style>
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    /* Suaviza el relleno de autofill en dark */
+    input:-webkit-autofill {
+      -webkit-text-fill-color: #e5e7eb !important;
+      -webkit-box-shadow: 0 0 0px 1000px rgba(255,255,255,0.06) inset !important;
+      transition: background-color 9999s ease-in-out 0s;
+    }
+  </style>
 </head>
+<body class="h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 font-sans selection:bg-cyan-500/30">
 
-<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white font-inter">
+  <!-- Decor: blobs + spotlight -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 overflow-hidden">
+    <div class="absolute -top-24 -left-24 h-[28rem] w-[28rem] rounded-full bg-cyan-500/20 blur-3xl animate-[float_10s_ease-in-out_infinite]"></div>
+    <div class="absolute -bottom-32 -right-28 h-[34rem] w-[34rem] rounded-full bg-indigo-500/20 blur-3xl animate-[float_12s_ease-in-out_infinite]"></div>
+    <div class="absolute inset-x-0 top-1/4 h-48 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0)_70%)]"></div>
+  </div>
 
-    <div class="bg-white/10 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+  <main class="relative z-10 min-h-screen grid place-items-center p-4">
+    <section class="w-full max-w-md">
 
-        <div class="flex justify-center mb-6">
-            <img src="{% static 'img/TRAVELSYS_logo_W.png' %}" alt="Logo" class="h-16">
-        </div>
-
-        <h2 class="text-center text-2xl font-semibold mb-6">Acceda a su cuenta</h2>
-
-        {% if messages %}
-            <div class="mb-4">
-                {% for message in messages %}
-                    <div class="bg-red-500 text-white p-2 rounded">{{ message }}</div>
-                {% endfor %}
+      <!-- Marco con halo degradado -->
+      <div class="p-[1px] rounded-[28px] bg-gradient-to-br from-brand1/40 via-white/10 to-brand2/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
+        <!-- Card -->
+        <div class="rounded-[27px] border border-white/10 bg-white/5 backdrop-blur-xl ring-1 ring-white/10">
+          
+          <!-- Header + Logo -->
+          <div class="px-8 pt-8 text-center">
+            <div class="mx-auto mb-4 h-16 w-16 drop-shadow-lg">
+              <!-- Usa tu icono claro. Si luego añades oscuro, activa el <picture> -->
+              <!--
+              <picture>
+                <source media="(prefers-color-scheme: light)" srcset="{% static 'images/LOGO_TRAVEL-SYS_oscuro.png' %}">
+                <img ... src="{% static 'images/LOGO_TRAVEL-SYS_claro.png' %}">
+              </picture>
+              -->
+              <img
+                src="{% static 'images/LOGO_TRAVEL-SYS_claro.png' %}"
+                alt="TravelSYS"
+                class="h-16 w-16 object-contain [image-rendering:-webkit-optimize-contrast] [image-rendering:crisp-edges] rounded-xl ring-1 ring-white/15 bg-transparent"
+                loading="eager" decoding="async"
+                onerror="this.src='{% static 'img/favicon.png' %}'"
+              />
             </div>
-        {% endif %}
+            <h1 class="text-2xl font-bold tracking-tight text-white">Accede a tu cuenta</h1>
+            <p class="mt-1 text-sm text-slate-300/80">Panel de gestión de reservas TravelSYS</p>
+          </div>
 
-        <form method="post" action="{% url 'login' %}">
+          <!-- Mensajes Django -->
+          {% if messages %}
+          <div class="px-8 pt-4">
+            {% for message in messages %}
+              <div class="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-rose-100 text-sm">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Form -->
+          <form method="post" action="{% url 'login' %}" class="px-8 pb-8 pt-6 space-y-5" id="loginForm" novalidate>
             {% csrf_token %}
 
-            <!-- Usuario -->
-            <div class="relative mb-6">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-400 text-xl">
-                    <i class="fas fa-user"></i>
-                </div>
-                <input type="text" name="username" id="username"
-                    class="peer pl-12 pr-4 pt-6 pb-2 w-full bg-white/10 backdrop-blur-md rounded-xl border-2 border-cyan-400 text-white focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-                    placeholder=" " required autocomplete="username" value="{{ form.username.value|default:'' }}">
-                <label for="username"
-                    class="absolute left-12 top-2 text-cyan-300 text-sm transition-all duration-200 ease-in-out transform scale-100 origin-left
-                    peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-                    peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
-                    Usuario
-                </label>
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-rose-100 text-sm">
+              {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Usuario (label flotante + icono) -->
+            <div class="relative">
+              <i data-lucide="user" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
+              <input
+                id="id_username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                placeholder=" "
+                required
+                class="peer w-full rounded-xl border border-white/10 bg-white/5 px-11 pb-2.5 pt-5 text-white placeholder-transparent outline-none focus:border-cyan-400/60 focus:bg-white/10"
+                value="{{ form.username.value|default:'' }}"
+              />
+              <label for="id_username"
+                     class="absolute left-11 top-2 text-sm text-slate-300/80 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
+                Usuario
+              </label>
+              {% if form.username.errors %}
+                <p class="mt-1 text-sm text-rose-300">{{ form.username.errors|join:", " }}</p>
+              {% endif %}
             </div>
 
-            <!-- Contraseña -->
-            <div class="relative mb-8">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-400 text-xl">
-                    <i class="fas fa-lock"></i>
-                </div>
-                <input type="password" name="password" id="password"
-                    class="peer pl-12 pr-4 pt-6 pb-2 w-full bg-white/10 backdrop-blur-md rounded-xl border-2 border-cyan-400 text-white focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300"
-                    placeholder=" " required autocomplete="current-password">
-                <label for="password"
-                    class="absolute left-12 top-2 text-cyan-300 text-sm transition-all duration-200 ease-in-out transform scale-100 origin-left
-                    peer-placeholder-shown:top-5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-                    peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
-                    Contraseña
-                </label>
+            <!-- Password (label flotante + toggle + caps) -->
+            <div class="relative">
+              <i data-lucide="lock" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-slate-400"></i>
+              <input
+                id="id_password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder=" "
+                required
+                class="peer w-full rounded-xl border border-white/10 bg-white/5 px-11 pb-2.5 pt-5 text-white placeholder-transparent outline-none focus:border-cyan-400/60 focus:bg-white/10"
+              />
+              <label for="id_password"
+                     class="absolute left-11 top-2 text-sm text-slate-300/80 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-cyan-300">
+                Contraseña
+              </label>
+
+              <button
+                type="button"
+                id="togglePass"
+                aria-label="Mostrar u ocultar contraseña"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                <i data-lucide="eye"></i>
+              </button>
+
+              <p id="capsHint" class="hidden text-xs text-amber-300 mt-1">Bloq Mayús activado</p>
+              {% if form.password.errors %}
+                <p class="mt-1 text-sm text-rose-300">{{ form.password.errors|join:", " }}</p>
+              {% endif %}
             </div>
 
-            <button type="submit"
-                class="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg">
-                Entrar
+            <!-- Opciones -->
+            <div class="flex items-center justify-between">
+              <label class="inline-flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+                <input type="checkbox" name="remember"
+                       class="peer h-4 w-4 appearance-none rounded-md border border-white/15 bg-white/5 checked:bg-gradient-to-br checked:from-brand1 checked:to-brand2 checked:border-transparent
+                              focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition" />
+                <span class="peer-focus:text-white">Recuérdame</span>
+              </label>
+              {# <a href="{% url 'password_reset' %}" class="text-sm text-cyan-300 hover:text-cyan-200">¿Olvidaste tu contraseña?</a> #}
+            </div>
+
+            <!-- CTA -->
+            <button
+              id="submitBtn"
+              type="submit"
+              class="group w-full rounded-xl bg-gradient-to-r from-brand1 to-brand2 px-5 py-3 font-semibold text-white shadow-lg shadow-cyan-900/30 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 flex items-center justify-center gap-2"
+            >
+              <span>Entrar</span>
+              <svg id="btnSpinner" class="hidden h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
             </button>
-        </form>
 
-    </div>
+            <!-- Footer -->
+            <p class="text-center text-xs text-slate-400">© {{ now|date:"Y" }} TravelSYS 2025. Todos los derechos reservados.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Iconos
+    window.lucide && window.lucide.createIcons();
+
+    // Toggle contraseña + icono
+    const pass = document.getElementById('id_password');
+    const toggle = document.getElementById('togglePass');
+    toggle?.addEventListener('click', () => {
+      const isPwd = pass.type === 'password';
+      pass.type = isPwd ? 'text' : 'password';
+      toggle.innerHTML = isPwd ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+      window.lucide && window.lucide.createIcons();
+    });
+
+    // Caps Lock hint
+    const caps = document.getElementById('capsHint');
+    pass?.addEventListener('keyup', (e) => {
+      const on = e.getModifierState && e.getModifierState('CapsLock');
+      caps.classList.toggle('hidden', !on);
+    });
+
+    // Loader + disable en submit
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('submitBtn');
+    const spin = document.getElementById('btnSpinner');
+    form?.addEventListener('submit', () => {
+      btn.disabled = true;
+      spin.classList.remove('hidden');
+    });
+  </script>
 </body>
 </html>
