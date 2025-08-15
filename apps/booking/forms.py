@@ -16,12 +16,10 @@ class ProveedorForm(forms.ModelForm):
         model = Proveedor
         fields = '__all__'  # O lista explícitamente los campos que deseas incluir
 
-
 class CadenaHoteleraForm(forms.ModelForm):
     class Meta:
         model = CadenaHotelera
         fields = ['nombre', 'descripcion']
-        
 
 class ReservaForm(forms.ModelForm):
     class Meta:

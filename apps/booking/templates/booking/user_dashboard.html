@@ -15,13 +15,13 @@
         <img src="{% static 'images/user_default_logo.png' %}" alt="Logo" class="h-12 w-12 rounded-full ring-2 ring-indigo-200 object-cover">
       {% endif %}
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ user.agencia|default:"Usuario" }}</h1>
-        {% if user.is_manager %}<p class="text-xs text-gray-500">{% trans "Administrador" %}</p>{% endif %}
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{{ user.agencia|default:"Usuario" }}</h1>
+        {% if user.is_manager %}<p class="text-xs text-gray-500 dark:text-gray-400">{% trans "Administrador" %}</p>{% endif %}
       </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <a href="{% url 'booking:listar_reservas' %}" class="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-black/90 transition">
+      <a href="{% url 'backoffice:listar_reservas' %}" class="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:bg-black/90 transition dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
         <i class="fa-regular fa-rectangle-list"></i> {% trans "Ver Reservas" %}
       </a>
       <a href="#" class="inline-flex items-center gap-2 rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-semibold hover:bg-indigo-700 transition">
@@ -30,13 +30,18 @@
     </div>
   </header>
 
-  {# Tarjetas KPI – colores por CSS variables (siempre visibles) #}
+  {# Tarjetas KPI – gradientes controlados por CSS vars, compatibles con dark #}
   <style>
-    .kpi{position:relative;border-radius:1rem;padding:1.25rem;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);
-         background:linear-gradient(135deg,var(--from,#111827),var(--to,#374151));
-         transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+    .kpi{
+      position:relative;border-radius:1rem;padding:1.25rem;color:#fff;
+      box-shadow:0 1px 2px rgba(0,0,0,.06);
+      background:linear-gradient(135deg,var(--from,#111827),var(--to,#374151));
+      transition:transform .15s ease,box-shadow .15s ease,filter .15s ease
+    }
     .kpi:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(0,0,0,.08);filter:saturate(1.05)}
-    .kpi h3{font-weight:600}.kpi .muted{opacity:.9;font-size:.875rem}.kpi .big{margin-top:.75rem;font-size:1.875rem;font-weight:800}
+    .kpi h3{font-weight:600}
+    .kpi .muted{opacity:.9;font-size:.875rem}
+    .kpi .big{margin-top:.75rem;font-size:1.875rem;font-weight:800}
     .kpi .icon{opacity:.92}
   </style>
 
@@ -44,7 +49,7 @@
   <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
 
     <!-- Por Pagar -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=por_pagar" class="kpi" style="--from:#dc2626;--to:#ef4444">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=por_pagar" class="kpi" style="--from:#dc2626;--to:#ef4444" aria-label="{% trans 'Reservas por pagar' %}">
       <div class="flex items-center justify-between">
         <h3>{% trans "Por Pagar" %}</h3><i class="fa-solid fa-circle-exclamation icon"></i>
       </div>
@@ -54,7 +59,7 @@
 
     {% if user.is_manager %}
     <!-- Por Cobrar (solo Administrador) -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=por_cobrar" class="kpi" style="--from:#d97706;--to:#f59e0b">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=por_cobrar" class="kpi" style="--from:#d97706;--to:#f59e0b" aria-label="{% trans 'Reservas por cobrar' %}">
       <div class="flex items-center justify-between">
         <h3>{% trans "Por Cobrar" %}</h3><i class="fa-solid fa-sack-dollar icon"></i>
       </div>
@@ -64,7 +69,7 @@
     {% endif %}
 
     <!-- Solicitadas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=solicitada" class="kpi" style="--from:#059669;--to:#10b981">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=solicitada" class="kpi" style="--from:#059669;--to:#10b981">
       <div class="flex items-center justify-between">
         <h3>{% trans "Solicitadas" %}</h3><i class="fa-regular fa-clipboard icon"></i>
       </div>
@@ -73,16 +78,16 @@
     </a>
 
     <!-- Confirmadas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=confirmada" class="kpi" style="--from:#0d9488;--to:#14b8a6">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=confirmada" class="kpi" style="--from:#0d9488;--to:#14b8a6">
       <div class="flex items-center justify-between">
-        <h3>{% trans "Confirmadas" %}</h3><i class="fa-solid fa-badge-check icon"></i>
+        <h3>{% trans "Confirmadas" %}</h3><i class="fa-solid fa-circle-check icon"></i>
       </div>
       <div class="big">{{ estados_reservas.confirmada|default:"0" }}</div>
       <div class="muted">{% trans "listas" %}</div>
     </a>
 
     <!-- Modificadas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=modificada" class="kpi" style="--from:#4f46e5;--to:#6366f1">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=modificada" class="kpi" style="--from:#4f46e5;--to:#6366f1">
       <div class="flex items-center justify-between">
         <h3>{% trans "Modificadas" %}</h3><i class="fa-solid fa-screwdriver-wrench icon"></i>
       </div>
@@ -91,7 +96,7 @@
     </a>
 
     <!-- Ejecutadas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=ejecutada" class="kpi" style="--from:#0284c7;--to:#0ea5e9">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=ejecutada" class="kpi" style="--from:#0284c7;--to:#0ea5e9">
       <div class="flex items-center justify-between">
         <h3>{% trans "Ejecutadas" %}</h3><i class="fa-solid fa-circle-play icon"></i>
       </div>
@@ -100,7 +105,7 @@
     </a>
 
     <!-- Canceladas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=cancelada" class="kpi" style="--from:#e11d48;--to:#fb7185">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=cancelada" class="kpi" style="--from:#e11d48;--to:#fb7185">
       <div class="flex items-center justify-between">
         <h3>{% trans "Canceladas" %}</h3><i class="fa-solid fa-circle-xmark icon"></i>
       </div>
@@ -109,7 +114,7 @@
     </a>
 
     <!-- Reembolsadas -->
-    <a href="{% url 'booking:listar_reservas' %}?estado=reembolsada" class="kpi" style="--from:#334155;--to:#64748b">
+    <a href="{% url 'backoffice:listar_reservas' %}?estado=reembolsada" class="kpi" style="--from:#334155;--to:#64748b">
       <div class="flex items-center justify-between">
         <h3>{% trans "Reembolsadas" %}</h3><i class="fa-solid fa-rotate-left icon"></i>
       </div>
@@ -130,33 +135,33 @@
 
   <!-- GRÁFICO 12 MESES -->
   <section class="mb-12">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">{% trans "Evolución (últimos 12 meses)" %}</h2>
-    <div class="rounded-2xl border border-gray-200 bg-white p-4">
-      <canvas id="chart12m" class="w-full" height="110"></canvas>
+    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{% trans "Evolución (últimos 12 meses)" %}</h2>
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <canvas id="chart12m" class="w-full" height="110" aria-label="{% trans 'Gráfico de evolución 12 meses' %}" role="img"></canvas>
     </div>
   </section>
 
   <!-- OFERTAS ESPECIALES (ACORDEÓN) -->
   <section class="mb-12">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-bold text-gray-800">{% trans "Ofertas Especiales" %}</h2>
-      <span class="text-sm text-gray-500">{{ ofertas_especiales|length }} {% trans "disponibles" %}</span>
+      <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">{% trans "Ofertas Especiales" %}</h2>
+      <span class="text-sm text-gray-500 dark:text-gray-400">{{ ofertas_especiales|length }} {% trans "disponibles" %}</span>
     </div>
 
     {% if ofertas_especiales %}
     <div id="ofertasGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {% for oferta in ofertas_especiales %}
-      <article class="oferta-card rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden" data-id="oferta-{{ oferta.pk }}">
-        <header class="p-4 border-b border-gray-100 flex items-start justify-between gap-3">
+      <article class="oferta-card rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden" data-id="oferta-{{ oferta.pk }}">
+        <header class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-3">
           <div>
-            <h3 class="font-semibold text-gray-900">{{ oferta.nombre|default:oferta.codigo }}</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ oferta.nombre|default:oferta.codigo }}</h3>
             {% if oferta.codigo %}
-            <span class="inline-flex items-center gap-1 text-[11px] mt-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+            <span class="inline-flex items-center gap-1 text-[11px] mt-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
               <i class="fa-solid fa-tag"></i> {{ oferta.codigo }}
             </span>
             {% endif %}
           </div>
-          <button type="button" class="toggle-oferta shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700"
+          <button type="button" class="toggle-oferta shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 focus:outline-none"
                   aria-expanded="false" aria-controls="desc-{{ oferta.pk }}" data-target="desc-{{ oferta.pk }}">
             <i class="fa-solid fa-chevron-down"></i>
           </button>
@@ -165,21 +170,21 @@
         <div id="desc-{{ oferta.pk }}" class="oferta-descripcion px-4 pt-3 pb-4 transition-[max-height] duration-300 ease-in-out"
              style="max-height:96px;overflow:hidden;">
           {% if oferta.descripcion %}
-            <p class="text-sm text-gray-700 whitespace-pre-line">{{ oferta.descripcion }}</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ oferta.descripcion }}</p>
           {% else %}
             <p class="text-sm italic text-gray-400">{% trans "Sin descripción." %}</p>
           {% endif %}
         </div>
 
-        <footer class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-          <span class="text-xs text-gray-500">{% trans "Click para ver más" %}</span>
-          <a href="{% url 'backoffice:editar_oferta_especial' oferta.pk %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700">{% trans "Editar" %}</a>
+        <footer class="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400">{% trans "Click para ver más" %}</span>
+          <a href="{% url 'backoffice:editar_oferta_especial' oferta.pk %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">{% trans "Editar" %}</a>
         </footer>
       </article>
       {% endfor %}
     </div>
     {% else %}
-      <div class="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 p-4 text-sm">
+      <div class="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 p-4 text-sm">
         {% trans "No hay ofertas disponibles por ahora." %}
       </div>
     {% endif %}
@@ -187,10 +192,10 @@
 
   <!-- ACTIVIDAD RECIENTE -->
   <section class="mb-6">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">{% trans "Actividad Reciente" %}</h2>
-    <div id="contenedor_reservas" class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{% trans "Actividad Reciente" %}</h2>
+    <div id="contenedor_reservas" class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-gray-50 text-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
           <tr>
             <th class="px-3 py-2 text-left">{% trans "ID" %}</th>
             <th class="px-3 py-2 text-left">{% trans "Tipo" %}</th>
@@ -199,17 +204,17 @@
             <th class="px-3 py-2 text-left">{% trans "Fecha" %}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
           {% for r in reservas_recientes %}
-          <tr class="hover:bg-gray-50">
-            <td class="px-3 py-2">{{ r.id }}</td>
-            <td class="px-3 py-2">{{ r.tipo|capfirst }}</td>
-            <td class="px-3 py-2">{% if r.tipo == 'hoteles' and r.hotel %}{{ r.hotel.hotel_nombre }}{% else %}—{% endif %}</td>
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/60">
+            <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ r.id }}</td>
+            <td class="px-3 py-2 text-gray-900 dark:text-gray-100">{{ r.tipo|capfirst }}</td>
+            <td class="px-3 py-2 text-gray-700 dark:text-gray-300">{% if r.tipo == 'hoteles' and r.hotel %}{{ r.hotel.hotel_nombre }}{% else %}—{% endif %}</td>
             <td class="px-3 py-2">{% include "includes/estatus_badge.html" with estatus=r.estatus %}</td>
-            <td class="px-3 py-2">{{ r.fecha_reserva|date:"d/m/Y H:i" }}</td>
+            <td class="px-3 py-2 text-gray-700 dark:text-gray-300">{{ r.fecha_reserva|date:"d/m/Y H:i" }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" class="px-3 py-6 text-center text-gray-500">{% trans "Sin actividad reciente." %}</td></tr>
+          <tr><td colspan="5" class="px-3 py-6 text-center text-gray-500 dark:text-gray-400">{% trans "Sin actividad reciente." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -220,15 +225,21 @@
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Gráfico 12 meses
+  // Gráfico 12 meses con soporte de modo oscuro
   (() => {
-    const ctx = document.getElementById('chart12m'); if (!ctx) return;
+    const el = document.getElementById('chart12m'); if (!el) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(226,232,240,0.12)' : 'rgba(0,0,0,0.06)';
+    const tickColor = isDark ? '#cbd5e1' : '#475569';
+    const legendColor = isDark ? '#e2e8f0' : '#0f172a';
+
     const labels = {{ labels|safe }};
     const reservasData = {{ reservas_data|safe }};
     const ingresosData = {{ ingresos_data|safe }};
     const deudasData   = {{ deudas_data|safe }};
 
-    new Chart(ctx, {
+    new Chart(el, {
       type: 'line',
       data: {
         labels,
@@ -238,7 +249,17 @@
           { label: '{% trans "Deudas" %}',   data: deudasData,   borderWidth:2, fill:false, tension:.25, borderColor:'#EF4444', pointBackgroundColor:'#EF4444' }
         ]
       },
-      options: { responsive:true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, grid:{ color:'rgba(0,0,0,.05)'}}, x:{ grid:{ display:false }}} }
+      options: {
+        responsive:true,
+        plugins:{
+          legend:{ position:'bottom', labels:{ color: legendColor } },
+          tooltip:{ titleColor: legendColor, bodyColor: legendColor, backgroundColor: isDark ? '#0b1220' : '#ffffff', borderColor: isDark ? '#1f2937' : '#e5e7eb', borderWidth: 1 }
+        },
+        scales:{
+          y:{ beginAtZero:true, ticks:{ color: tickColor }, grid:{ color: gridColor } },
+          x:{ ticks:{ color: tickColor }, grid:{ color: 'transparent' } }
+        }
+      }
     });
   })();
 

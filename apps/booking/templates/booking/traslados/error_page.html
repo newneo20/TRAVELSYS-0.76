@@ -1,11 +1,73 @@
 {% extends 'booking/traslados/base_traslados.html' %}
 
-{% block title %}Error{% endblock %}
+{% block title %}Acceso inválido{% endblock %}
 
 {% block content %}
-<div class="container mt-5 text-center">
-    <h2 class="text-danger">Error no POST</h2>
-    <p>No puedes acceder a esta página directamente. Intenta realizar una búsqueda primero.</p>
-    
-</div>
+<main class="min-h-[60vh] w-full flex items-center justify-center px-4 py-10">
+  <section
+    class="w-full max-w-xl rounded-2xl border border-gray-200/60 bg-white/80 backdrop-blur-sm shadow-xl p-8 text-center
+           dark:bg-gray-900/70 dark:border-gray-800"
+  >
+    <!-- Icono -->
+    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full
+                bg-red-100 dark:bg-red-900/30">
+      <!-- Lucide 'circle-alert' inline -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 8v4m0 4h.01"/>
+        <circle cx="12" cy="12" r="10"/>
+      </svg>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+      Método no permitido (405)
+    </h1>
+    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+      No puedes acceder a esta página directamente. Primero realiza la búsqueda de <span class="font-medium">traslados</span> y continúa el flujo normal.
+    </p>
+
+    {% if reason %}
+      <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Detalle: {{ reason }}
+      </p>
+    {% endif %}
+
+    <!-- Acciones -->
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <button
+        type="button"
+        onclick="history.back()"
+        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-medium
+               border border-gray-300/70 hover:border-gray-400 bg-white hover:bg-gray-50
+               text-gray-800 shadow-sm transition
+               dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-750"
+      >
+        ← Volver
+      </button>
+
+      <a
+        href="{% url 'booking:dashboard' %}"
+        class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold
+               bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition"
+      >
+        Ir al Panel
+      </a>
+    </div>
+
+    <!-- Sugerencias -->
+    <ul class="mt-6 text-left text-sm text-gray-600 dark:text-gray-300 space-y-2">
+      <li class="flex gap-2">
+        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+        Vuelve al buscador y envía el formulario correctamente.
+      </li>
+      <li class="flex gap-2">
+        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+        No abras esta URL directamente en una pestaña nueva.
+      </li>
+      <li class="flex gap-2">
+        <span class="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+        Si persiste, revisa tu sesión e inténtalo nuevamente.
+      </li>
+    </ul>
+  </section>
+</main>
 {% endblock %}

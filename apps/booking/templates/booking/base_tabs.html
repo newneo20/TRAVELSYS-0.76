@@ -1,10 +1,10 @@
 {% load static %}
 {% load i18n %}
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es" class="h-full" x-data="shell()" x-init="init()" :class="dark ? 'dark' : ''">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}TravelSYS Booking{% endblock %}</title>
 
   <!-- jQuery -->
@@ -22,83 +22,104 @@
   <!-- Tailwind CSS (v2) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
 
-  <!-- CSS propio -->
+  <!-- CSS propio (build Tailwind del proyecto) -->
   <link rel="stylesheet" href="{% static 'css/output_booking.css' %}"/>
 
   <link rel="icon" href="{% static 'images/LOGO_TRAVEL-SYS_claro.png' %}" type="image/x-icon"/>
+
+  <!-- Alpine -->
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <style>
-    /* utilidades suaves para el header */
-    .glassbar{backdrop-filter: saturate(150%) blur(8px);}
-    .menu-pill{transition: transform .18s ease, box-shadow .18s ease;}
-    .menu-pill:hover{transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.15);}
+    /* Evita FOUC en elementos Alpine */
+    [x-cloak]{display:none !important;}
+
+    /* Utilidades suaves */
+    .glassbar{backdrop-filter:saturate(150%) blur(8px);}
+    .menu-pill{transition:transform .18s ease, box-shadow .18s ease, background-color .18s ease;}
+    .menu-pill:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.15);}
+    .focus-ring:focus-visible{outline:2px solid rgba(99,102,241,.7); outline-offset:2px; border-radius:.75rem;}
+
+    /* Dark helpers para librerías externas */
+    .dark .select2-container--default .select2-selection--single{
+      background-color: rgba(2,6,23,.6);
+      border-color: #334155; color: #e2e8f0;
+    }
+    .dark .select2-dropdown{background:#0f172a; color:#e2e8f0; border-color:#334155;}
+    .dark .select2-results__option--highlighted{background:#1d4ed8;}
+    .dark .daterangepicker{background:#0f172a; color:#e2e8f0; border-color:#334155;}
+    .dark .daterangepicker .calendar-table{background:#0f172a; border-color:#334155;}
   </style>
+
+  {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-full flex flex-col">
+<body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 h-full flex flex-col">
 
 {% block navbar %}
-<header
-  x-data="{ mobileOpen:false, userOpen:false, dark: (localStorage.theme || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))==='dark' }"
-  x-init="if(dark){ document.documentElement.classList.add('dark') }">
+<header role="banner" x-data="{ mobileOpen:false, userOpen:false }" x-cloak>
 
   <!-- Topbar (fluye con la página: NO fijo) -->
-  <div class="glassbar border-b bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="glassbar border-b bg-white/90 dark:bg-gray-900/80 border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <!-- Brand -->
       <div class="flex items-center space-x-3">
-        <a href="{% url 'dashboard' %}" class="flex items-center space-x-2">
+        <a href="{% url 'dashboard' %}" class="flex items-center space-x-2 focus-ring">
           <img src="{% static 'images/LOGO_TRAVEL-SYS_claro.png' %}" class="h-9 w-auto" alt="TravelSYS"/>
-          <span class="text-xl font-bold">
+          <span class="text-xl font-bold tracking-tight">
             <span class="text-indigo-600">Travel</span><span class="text-blue-500">SYS</span>
           </span>
         </a>
       </div>
 
-      <!-- Right: theme + user -->
-      <div class="flex items-center space-x-3">
-        <!-- Theme toggle -->
+      <!-- Right: theme + user + mobile -->
+      <div class="flex items-center space-x-2">
+        <!-- Toggle Modo Oscuro -->
         <button
-          @click="dark=!dark; document.documentElement.classList.toggle('dark'); localStorage.theme=dark?'dark':'light'"
-          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-          :aria-label="dark ? 'Light mode' : 'Dark mode'">
-          <i class="fa-solid" :class="dark ? 'fa-sun text-yellow-300' : 'fa-moon text-gray-600'"></i>
+          @click="toggleTheme()"
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus-ring"
+          :aria-label="dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+          <i class="fa-solid" :class="dark ? 'fa-sun text-yellow-300' : 'fa-moon text-gray-700 dark:text-gray-300'"></i>
         </button>
 
         {% if user.is_authenticated %}
         <!-- User dropdown -->
-        <div class="relative" x-data="{open:false}">
-          <button @click="open=!open" class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+        <div class="relative">
+          <button @click="userOpen=!userOpen" @keydown.escape="userOpen=false"
+                  class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus-ring"
+                  aria-haspopup="menu" :aria-expanded="userOpen ? 'true' : 'false'">
             {% if user.logo %}
-              <img src="{{ user.logo.url }}" class="h-9 w-9 rounded-full border-2 border-indigo-400" alt="Avatar"/>
+              <img src="{{ user.logo.url }}" class="h-9 w-9 rounded-full border-2 border-indigo-400" alt="{% trans 'Avatar' %}"/>
             {% else %}
-              <img src="{% static 'images/user_default_logo.png' %}" class="h-9 w-9 rounded-full border-2 border-indigo-400" alt="Avatar por defecto"/>
+              <img src="{% static 'images/user_default_logo.png' %}" class="h-9 w-9 rounded-full border-2 border-indigo-400" alt="{% trans 'Avatar por defecto' %}"/>
             {% endif %}
             <span class="hidden sm:inline text-sm font-medium">{{ user.agencia|default:"Usuario" }}</span>
-            <i class="fa-solid fa-chevron-down text-xs"></i>
+            <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
           </button>
-          <div x-show="open" @click.away="open=false" x-transition
-               class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
-            <a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+          <div x-show="userOpen" @click.outside="userOpen=false" x-transition
+               class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg overflow-hidden"
+               role="menu" aria-label="{% trans 'Menú de usuario' %}">
+            <a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800" role="menuitem">
               <i class="fa-solid fa-user mr-2"></i>{% trans "Perfil" %}
             </a>
-            <div class="border-t border-gray-200 dark:border-gray-700"></div>
-            <form method="post" action="{% url 'logout' %}">{% csrf_token %}
-              <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <div class="border-t border-gray-200 dark:border-gray-800"></div>
+            <form method="post" action="{% url 'logout' %}" role="none">{% csrf_token %}
+              <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800" role="menuitem">
                 <i class="fa-solid fa-right-from-bracket mr-2"></i>{% trans "Cerrar sesión" %}
               </button>
             </form>
           </div>
         </div>
         {% else %}
-          <a href="{% url 'login' %}" class="px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50">
+          <a href="{% url 'login' %}" class="px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 focus-ring">
             {% trans "Iniciar sesión" %}
           </a>
         {% endif %}
 
         <!-- Mobile menu -->
-        <button @click="mobileOpen=!mobileOpen" class="sm:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button @click="mobileOpen=!mobileOpen" @keydown.escape="mobileOpen=false"
+                class="sm:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus-ring"
+                aria-controls="primary-navigation" :aria-expanded="mobileOpen ? 'true' : 'false'">
           <i class="fa-solid fa-bars"></i>
         </button>
       </div>
@@ -106,56 +127,69 @@
   </div>
 
   <!-- Main nav (desktop) -->
-  <nav class="hidden sm:block bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 shadow">
+  <nav class="hidden sm:block bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 shadow" role="navigation" aria-label="{% trans 'Navegación principal' %}">
     {% with current=request.resolver_match.url_name %}
-    <div class="max-w-6xl mx-auto px-3 py-3">
+    <div class="max-w-7xl mx-auto px-3 py-3">
       <ul class="flex flex-wrap items-center gap-3">
         <li>
           <a href="{% url 'booking:user_dashboard' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'user_dashboard' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+                    {% if current == 'user_dashboard' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'user_dashboard' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-house"></i> Home
           </a>
         </li>
+
         <li>
           <a href="{% url 'booking:hotel_dashboard' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current in 'hotel_dashboard hotel_results hotel_detalle hotel_pago_reserva' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+               {% if current == 'hotel_dashboard' or current == 'hotel_results' or current == 'hotel_detalle' or current == 'hotel_pago_reserva_local' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'hotel_dashboard' or current == 'hotel_results' or current == 'hotel_detalle' or current == 'hotel_pago_reserva_local' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-hotel"></i> Hoteles
           </a>
         </li>
+
         <li>
           <a href="{% url 'booking:hotel_dashboard_distal' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'hotel_dashboard_distal' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+               {% if current == 'hotel_dashboard_distal' or current == 'hotel_results_distal' or current == 'hotel_detalle_distal' or current == 'hotel_pago_reserva_distal' or current == 'confirmar_reserva_distal' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'hotel_dashboard_distal' or current == 'hotel_results_distal' or current == 'hotel_detalle_distal' or current == 'hotel_pago_reserva_distal' or current == 'confirmar_reserva_distal' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-hotel"></i> Hoteles Distal
           </a>
         </li>
+
         <li>
           <a href="{% url 'booking:remesas' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'remesas' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+                    {% if current == 'remesas' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'remesas' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-hand-holding-dollar"></i> Remesas
           </a>
         </li>
+
         <li>
           <a href="{% url 'booking:traslado_dashboard' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'traslado_dashboard' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+                    {% if current == 'traslado_dashboard' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'traslado_dashboard' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-bus"></i> Traslados
           </a>
         </li>
+
         <li>
           <a href="{% url 'booking:crear_reserva_envio' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'crear_reserva_envio' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+                    {% if current == 'crear_reserva_envio' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'crear_reserva_envio' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-truck-fast"></i> Crear Envío
           </a>
         </li>
+
         <li class="ml-auto">
           <a href="{% url 'booking:perfil_cliente' %}"
              class="menu-pill inline-flex items-center gap-2 px-5 py-2 rounded-full text-white font-semibold
-                    {% if current == 'perfil_cliente' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}">
+                    {% if current == 'perfil_cliente' %}bg-white/20 ring-2 ring-white/40{% else %}bg-white/10 hover:bg-white/20{% endif %}"
+             {% if current == 'perfil_cliente' %}aria-current="page"{% endif %}>
             <i class="fa-solid fa-gear"></i> Settings
           </a>
         </li>
@@ -164,31 +198,31 @@
     {% endwith %}
   </nav>
 
-  <!-- Mobile nav (fluye, no fijo) -->
-  <nav class="sm:hidden" x-show="mobileOpen" x-transition.origin.top>
+  <!-- Mobile nav -->
+  <nav id="primary-navigation" class="sm:hidden" x-show="mobileOpen" x-transition.origin.top role="navigation" aria-label="{% trans 'Navegación móvil' %}">
     {% with current=request.resolver_match.url_name %}
-    <ul class="mx-3 my-2 rounded-xl overflow-hidden border border-blue-600 bg-gradient-to-b from-blue-700 via-blue-600 to-blue-500 text-white">
-      <li><a href="{% url 'booking:user_dashboard' %}" class="block px-4 py-3 {% if current == 'user_dashboard' %}bg-white/20{% endif %}"><i class="fa-solid fa-house mr-2"></i>Home</a></li>
-      <li><a href="{% url 'booking:hotel_dashboard' %}" class="block px-4 py-3 {% if current in 'hotel_dashboard hotel_results hotel_detalle hotel_pago_reserva' %}bg-white/20{% endif %}"><i class="fa-solid fa-hotel mr-2"></i>Hoteles</a></li>
-      <li><a href="{% url 'booking:hotel_dashboard_distal' %}" class="block px-4 py-3 {% if current == 'hotel_dashboard_distal' %}bg-white/20{% endif %}"><i class="fa-solid fa-hotel mr-2"></i>Hoteles Distal</a></li>
-      <li><a href="{% url 'booking:remesas' %}" class="block px-4 py-3 {% if current == 'remesas' %}bg-white/20{% endif %}"><i class="fa-solid fa-hand-holding-dollar mr-2"></i>Remesas</a></li>
-      <li><a href="{% url 'booking:traslado_dashboard' %}" class="block px-4 py-3 {% if current == 'traslado_dashboard' %}bg-white/20{% endif %}"><i class="fa-solid fa-bus mr-2"></i>Traslados</a></li>
-      <li><a href="{% url 'booking:crear_reserva_envio' %}" class="block px-4 py-3 {% if current == 'crear_reserva_envio' %}bg-white/20{% endif %}"><i class="fa-solid fa-truck-fast mr-2"></i>Crear Envío</a></li>
-      <li><a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-3 {% if current == 'perfil_cliente' %}bg-white/20{% endif %}"><i class="fa-solid fa-gear mr-2"></i>Settings</a></li>
+    <ul class="mx-3 my-2 rounded-xl overflow-hidden border border-blue-600 bg-gradient-to-b from-blue-700 via-blue-600 to-blue-500 text-white shadow-lg">
+      <li><a href="{% url 'booking:user_dashboard' %}" class="block px-4 py-3 {% if current == 'user_dashboard' %}bg-white/20{% endif %}" {% if current == 'user_dashboard' %}aria-current="page"{% endif %}><i class="fa-solid fa-house mr-2"></i>Home</a></li>
+      <li><a href="{% url 'booking:hotel_dashboard' %}" class="block px-4 py-3 {% if current == 'hotel_dashboard' or current == 'hotel_results' or current == 'hotel_detalle' or current == 'hotel_pago_reserva_local' %}bg-white/20{% endif %}" {% if current == 'hotel_dashboard' or current == 'hotel_results' or current == 'hotel_detalle' or current == 'hotel_pago_reserva_local' %}aria-current="page"{% endif %}><i class="fa-solid fa-hotel mr-2"></i>Hoteles</a></li>
+      <li><a href="{% url 'booking:hotel_dashboard_distal' %}" class="block px-4 py-3 {% if current == 'hotel_dashboard_distal' or current == 'hotel_results_distal' or current == 'hotel_detalle_distal' or current == 'hotel_pago_reserva_distal' or current == 'confirmar_reserva_distal' %}bg-white/20{% endif %}" {% if current == 'hotel_dashboard_distal' or current == 'hotel_results_distal' or current == 'hotel_detalle_distal' or current == 'hotel_pago_reserva_distal' or current == 'confirmar_reserva_distal' %}aria-current="page"{% endif %}><i class="fa-solid fa-hotel mr-2"></i>Hoteles Distal</a></li>
+      <li><a href="{% url 'booking:remesas' %}" class="block px-4 py-3 {% if current == 'remesas' %}bg-white/20{% endif %}" {% if current == 'remesas' %}aria-current="page"{% endif %}><i class="fa-solid fa-hand-holding-dollar mr-2"></i>Remesas</a></li>
+      <li><a href="{% url 'booking:traslado_dashboard' %}" class="block px-4 py-3 {% if current == 'traslado_dashboard' %}bg-white/20{% endif %}" {% if current == 'traslado_dashboard' %}aria-current="page"{% endif %}><i class="fa-solid fa-bus mr-2"></i>Traslados</a></li>
+      <li><a href="{% url 'booking:crear_reserva_envio' %}" class="block px-4 py-3 {% if current == 'crear_reserva_envio' %}bg-white/20{% endif %}" {% if current == 'crear_reserva_envio' %}aria-current="page"{% endif %}><i class="fa-solid fa-truck-fast mr-2"></i>Crear Envío</a></li>
+      <li><a href="{% url 'booking:perfil_cliente' %}" class="block px-4 py-3 {% if current == 'perfil_cliente' %}bg-white/20{% endif %}" {% if current == 'perfil_cliente' %}aria-current="page"{% endif %}><i class="fa-solid fa-gear mr-2"></i>Settings</a></li>
     </ul>
     {% endwith %}
   </nav>
 </header>
 {% endblock navbar %}
 
-<!-- MAIN (sin padding-top extra, ya que el header NO es fijo) -->
-<main class="container mx-auto px-4 py-4 flex-1">
+<!-- MAIN -->
+<main class="container mx-auto px-4 py-4 flex-1" role="main">
   {% block content %}{% endblock %}
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 text-white mt-12">
-  <div class="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+<footer class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 text-white mt-12" role="contentinfo">
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
     <div>
       <h5 class="text-xl font-bold flex items-center">
         <i class="fas fa-globe-americas mr-3 text-blue-300"></i> {% trans "Sobre Nosotros" %}
@@ -218,7 +252,7 @@
       </div>
     </div>
   </div>
-  <div class="border-t border-blue-500 text-center text-sm text-blue-200 py-6">
+  <div class="border-t border-blue-500/60 text-center text-sm text-blue-200 py-6">
     &copy; 2025 TravelSYS Miami. {% trans "Todos los derechos reservados." %}
   </div>
 </footer>
@@ -231,7 +265,9 @@
 {% block extra_js %}
 <script>
   $(function(){
-    $('.select2').select2({ placeholder: "Selecciona una opción...", allowClear: true });
+    if ($('.select2').length){
+      $('.select2').select2({ placeholder: "Selecciona una opción...", allowClear: true, width: '100%' });
+    }
   });
 </script>
 {% endblock extra_js %}
@@ -239,11 +275,31 @@
 <!-- Keepalive de sesión -->
 <script>
   setInterval(function () {
-    fetch("{% url 'check_session' %}")
+    fetch("{% url 'booking:check_session' %}")
       .then(r => { if (!r.ok) location.href = "{% url 'login' %}"; return r.json(); })
-      .then(d => { if (d.status !== 'active') location.href = "{% url 'login' %}"; })
+      .then(d => { if (!d || d.status !== 'active') location.href = "{% url 'login' %}"; })
       .catch(() => location.href = "{% url 'login' %}");
-  }, 300000);
+  }, 300000); // 5 min
+</script>
+
+<script>
+  /* Alpine global: modo oscuro persistente */
+  function shell(){
+    return {
+      dark: false,
+      init(){
+        const saved = localStorage.getItem('tsys_theme');
+        const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.dark = saved ? (saved === 'dark') : prefers;
+        if(this.dark){ document.documentElement.classList.add('dark'); }
+      },
+      toggleTheme(){
+        this.dark = !this.dark;
+        document.documentElement.classList.toggle('dark', this.dark);
+        localStorage.setItem('tsys_theme', this.dark ? 'dark' : 'light');
+      }
+    }
+  }
 </script>
 
 </body>

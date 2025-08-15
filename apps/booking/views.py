@@ -1941,6 +1941,7 @@ def obtener_hoteles_por_polo(destino):
         return Hotel.objects.all()
 
 
+login_required
 @transaction.atomic
 def complete_solicitud_traslado(request, traslado_id):
     traslado = get_object_or_404(Traslado, id=traslado_id)
